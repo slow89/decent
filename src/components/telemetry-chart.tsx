@@ -26,9 +26,9 @@ export function TelemetryChart({
 }) {
   const isMinimal = mode === "minimal";
   const width = 760;
-  const height = isMinimal ? 560 : 350;
+  const height = isMinimal ? 400 : 350;
   const margin = isMinimal
-    ? { top: 22, right: 20, bottom: 28, left: 20 }
+    ? { top: 16, right: 18, bottom: 20, left: 18 }
     : { top: 28, right: 20, bottom: 36, left: 20 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
@@ -157,7 +157,7 @@ export function TelemetryChart({
           {!hasSignal && !isMinimal ? (
             <text
               fill="var(--muted-foreground)"
-              fontSize="16"
+              fontSize="14"
               textAnchor="middle"
               x={innerWidth / 2}
               y={innerHeight / 2}

@@ -340,7 +340,7 @@ export function DashboardPage() {
           </aside>
 
           <div className="min-w-0 xl:flex xl:flex-col">
-            <div className="px-3 py-3 md:px-5 md:py-4 xl:flex-1">
+            <div className="px-2 py-2 md:px-4 md:py-3 xl:flex-1">
               <TelemetryChart
                 className="rounded-[0px] border-0 bg-transparent p-0 shadow-none"
                 data={telemetry}
