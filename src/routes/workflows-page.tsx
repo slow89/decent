@@ -124,9 +124,9 @@ export function WorkflowsPage() {
 
   return (
     <div>
-      <div className="panel min-h-[calc(100svh-6.5rem)] overflow-hidden rounded-none border-x-0 border-t-0 bg-[#08090b]/98">
-        <section className="px-3 py-3 md:px-4">
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+      <div className="panel min-h-[calc(100svh-6.5rem)] overflow-hidden rounded-none border-x-0 border-t-0 bg-[#08090b]/98 md:flex md:h-[calc(100svh-6.5rem)] md:flex-col">
+        <section className="px-3 py-3 md:flex-1 md:min-h-0 md:px-4">
+          <div className="grid gap-3 md:h-full md:grid-cols-[minmax(290px,320px)_minmax(0,1fr)] md:items-stretch xl:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
             <WorkflowProfileChooserPanel
               activeProfile={activeProfile}
               availableProfiles={availableProfiles}

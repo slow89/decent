@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { useRouter } from "@tanstack/react-router";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,8 +34,16 @@ export function SettingsPage() {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
       <Card>
-        <CardHeader>
-          <CardTitle>Gateway settings</CardTitle>
+        <CardHeader className="gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
+                Routing desk
+              </p>
+              <CardTitle className="mt-2">Gateway settings</CardTitle>
+            </div>
+            <Badge variant="secondary">Bridge control</Badge>
+          </div>
           <CardDescription>
             Keep the browser skin dumb and point it at a Streamline Bridge
             instance. The bridge remains the owner of machine and scale state.
@@ -43,7 +52,7 @@ export function SettingsPage() {
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
             <label
-              className="text-xs uppercase tracking-[0.24em] text-muted-foreground"
+              className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-muted-foreground"
               htmlFor="gatewayUrl"
             >
               Bridge URL
@@ -69,8 +78,13 @@ export function SettingsPage() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Connection preview</CardTitle>
+        <CardHeader className="gap-3">
+          <div>
+            <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
+              Endpoint ladder
+            </p>
+            <CardTitle className="mt-2">Connection preview</CardTitle>
+          </div>
           <CardDescription>
             These are the main endpoints the initial scaffold uses.
           </CardDescription>
@@ -97,11 +111,11 @@ function PreviewRow({
   value: string;
 }) {
   return (
-    <div className="rounded-3xl border border-border/80 bg-background/70 p-4">
-      <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+    <div className="rounded-[18px] border border-border/80 bg-background/70 p-4">
+      <p className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-2 break-all text-sm font-medium text-foreground">
+      <p className="mt-2 break-all font-mono text-[0.76rem] font-semibold tracking-[0.04em] text-foreground">
         {value}
       </p>
     </div>

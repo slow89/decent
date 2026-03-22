@@ -1,7 +1,7 @@
 import { DashboardControlRail } from "@/components/dashboard/dashboard-control-rail";
 import { DashboardTopBar } from "@/components/dashboard/dashboard-top-bar";
 import { TelemetryChart } from "@/components/telemetry-chart";
-import { formatSecondaryNumber, getStatusLabel, metricCell } from "@/lib/dashboard-utils";
+import { formatSecondaryNumber, getStatusLabel } from "@/lib/dashboard-utils";
 import { formatPrimaryNumber, roundValue } from "@/lib/recipe-utils";
 import {
   useMachineStateQuery,
@@ -214,39 +214,30 @@ export function DashboardPage() {
     },
   ] as const;
 
-  const metrics = [
-    { accent: false, label: "Mix", value: metricCell(snapshot?.mixTemperature, "°C") },
-    { accent: false, label: "Group", value: metricCell(snapshot?.groupTemperature, "°C") },
-    { accent: false, label: "Steam", value: metricCell(snapshot?.steamTemperature, "°C", 0) },
-    { accent: true, label: "Flow", value: metricCell(snapshot?.flow, " ml/s") },
-  ];
-
   return (
     <div>
-      <div className="panel min-h-[calc(100svh-6.5rem)] overflow-hidden rounded-none border-x-0 border-t-0 bg-[#08090b]/98">
+      <div className="panel min-h-[calc(100svh-6.5rem)] overflow-hidden rounded-none border-x-0 border-t-0 bg-[#08090b]/98 md:flex md:h-[calc(100svh-6.5rem)] md:flex-col">
         <DashboardTopBar
           activeRecipe={activeRecipe}
           isOffline={isOffline}
           isShotRunning={isShotRunning}
           liveConnection={liveConnection}
-          metrics={metrics}
           onToggleShot={() => void requestState(isShotRunning ? "idle" : "espresso")}
           statusLabel={statusLabel}
         />
 
-        <section className="grid xl:grid-cols-[264px_minmax(0,1fr)]">
+        <section className="grid md:min-h-0 md:flex-1 md:grid-cols-[228px_minmax(0,1fr)] xl:grid-cols-[264px_minmax(0,1fr)]">
           <DashboardControlRail
             controlRows={controlRows}
             disabled={isUpdatingWorkflow}
             recipeControls={recipeControls}
           />
 
-          <div className="min-w-0 xl:flex xl:flex-col">
-            <div className="px-2 py-2 md:px-4 md:py-3 xl:flex-1">
+          <div className="min-w-0 md:flex md:min-h-0 md:flex-col">
+            <div className="px-2 py-2 md:flex-1 md:min-h-0 md:px-3 md:py-3 xl:px-4">
               <TelemetryChart
-                className="rounded-[0px] border-0 bg-transparent p-0 shadow-none"
+                className="h-full rounded-[18px] border-0 bg-transparent p-0 shadow-none"
                 data={telemetry}
-                mode="minimal"
               />
             </div>
           </div>

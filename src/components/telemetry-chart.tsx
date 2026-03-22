@@ -1,238 +1,125 @@
-import { Grid, Group, Scale, Shape } from "@visx/visx";
+import { useState } from "react";
 
-import { cn, formatNumber } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import {
+  getTelemetrySeriesDefinition,
+  getTelemetryTimelineSample,
+  type TelemetrySample,
+  type TelemetrySeriesDefinition,
+} from "@/lib/telemetry";
+import { useTelemetryChartStore } from "@/stores/telemetry-chart-store";
 
-type TelemetryPoint = {
-  timestamp: string;
-  pressure: number;
-  flow: number;
-  temperature: number;
-};
-
-const chartSeries = [
-  { key: "pressure", label: "Pressure", color: "#f7b437", unit: "bar" },
-  { key: "flow", label: "Flow", color: "#39c97b", unit: "ml/s" },
-  { key: "temperature", label: "Temp", color: "#ff7b57", unit: "C" },
-] as const;
-
-const chartTheme = {
-  surface: "var(--surface-chart)",
-  border: "var(--border)",
-  grid: "var(--surface-chart-grid)",
-  axis: "var(--surface-chart-axis)",
-  text: "var(--muted-foreground)",
-  mono: '"SF Mono", "JetBrains Mono", "Menlo", monospace',
-} as const;
+import { TelemetryConfigOverlay } from "@/components/telemetry-chart/config";
+import {
+  DesktopTelemetryMonitor,
+  TabletTelemetryMonitor,
+} from "@/components/telemetry-chart/monitor";
+import type {
+  TelemetryChartDataModel,
+  TelemetryLayoutMode,
+} from "@/components/telemetry-chart/shared";
 
 export function TelemetryChart({
-  data,
   className,
-  mode = "full",
+  data,
+  layout = "auto",
 }: {
-  data: TelemetryPoint[];
   className?: string;
-  mode?: "full" | "minimal";
+  data: TelemetrySample[];
+  layout?: TelemetryLayoutMode;
 }) {
-  const isMinimal = mode === "minimal";
-  const width = 760;
-  const height = isMinimal ? 336 : 350;
-  const margin = isMinimal
-    ? { top: 16, right: 18, bottom: 20, left: 28 }
-    : { top: 28, right: 20, bottom: 36, left: 20 };
-  const innerWidth = width - margin.left - margin.right;
-  const innerHeight = height - margin.top - margin.bottom;
-  const hasLiveData = data.length > 1;
-  const hasSignal = data.some((point) => (
-    point.pressure > 0.05 ||
-    point.flow > 0.05 ||
-    point.temperature > 1
-  ));
-  const points = hasLiveData ? data : seedTelemetry(data.at(0));
-  const values = points.flatMap((point) => [
-    point.pressure,
-    point.flow,
-    point.temperature / 10,
-  ]);
-  const maxY = Math.max(12, ...values);
+  const activePreset = useTelemetryChartStore((state) => state.activePreset);
+  const laneVisibility = useTelemetryChartStore((state) => state.laneVisibility);
+  const resetToDefaultPreset = useTelemetryChartStore((state) => state.resetToDefaultPreset);
+  const selectedSeriesIds = useTelemetryChartStore((state) => state.selectedSeriesIds);
+  const setPreset = useTelemetryChartStore((state) => state.setPreset);
+  const toggleLane = useTelemetryChartStore((state) => state.toggleLane);
+  const toggleSeries = useTelemetryChartStore((state) => state.toggleSeries);
+  const [hoveredSampleIndex, setHoveredSampleIndex] = useState<number | null>(null);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
 
-  const xScale = Scale.scaleLinear<number>({
-    domain: [0, Math.max(points.length - 1, 1)],
-    range: [0, innerWidth],
-  });
-
-  const yScale = Scale.scaleLinear<number>({
-    domain: [0, maxY],
-    range: [innerHeight, 0],
-  });
+  const timelineSamples = getTelemetryTimelineSample(data);
+  const latestSample = timelineSamples.at(-1) ?? data.at(-1) ?? null;
+  const hoveredSample =
+    hoveredSampleIndex == null ? null : timelineSamples[hoveredSampleIndex] ?? null;
+  const activeSample = hoveredSample ?? latestSample;
+  const usesShotTimeline =
+    timelineSamples.length > 0 &&
+    latestSample?.state === "espresso" &&
+    timelineSamples.every((sample) => sample.shotElapsedSeconds != null);
+  const selectedSeries = selectedSeriesIds
+    .map((seriesId) => getTelemetrySeriesDefinition(seriesId))
+    .filter((series): series is TelemetrySeriesDefinition => series != null);
+  const summarySeries = selectedSeries.filter((series) => laneVisibility[series.family]);
+  const model = {
+    activePreset,
+    activeSample,
+    hoveredSampleIndex,
+    laneVisibility,
+    latestSample,
+    selectedSeries,
+    selectedSeriesIds,
+    summarySeries,
+    timelineSamples,
+    usesShotTimeline,
+  } satisfies TelemetryChartDataModel;
 
   return (
-    <div className={cn("panel rounded-[20px] p-5", isMinimal ? "p-2" : "", className)}>
-      {!isMinimal ? (
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              Live extraction
-            </p>
-            <h3 className="mt-2 font-display text-[2rem] leading-none text-foreground">
-              Brew curves
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Pressure, flow, and brew temperature aligned in one glance so
-              decisions stay near the chart.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {chartSeries.map((series) => (
-              <div
-                key={series.key}
-                className="rounded-full border border-border bg-background/82 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground"
-              >
-                <span
-                  className="mr-2 inline-block size-2 rounded-full"
-                  style={{ backgroundColor: series.color }}
-                />
-                {series.label}
-              </div>
-            ))}
-          </div>
+    <div
+      className={cn(
+        "panel flex h-full min-h-0 flex-col rounded-[20px] border-border/70 bg-[#06080b]/92 p-3 md:p-4 xl:p-5",
+        className,
+      )}
+    >
+      {layout === "auto" || layout === "tablet" ? (
+        <div
+          className={cn(
+            layout === "auto"
+              ? "flex min-h-0 flex-1 flex-col space-y-3 xl:hidden"
+              : "flex min-h-0 flex-1 flex-col space-y-3",
+          )}
+        >
+          <TabletTelemetryMonitor
+            model={model}
+            onOpenConfig={() => setIsConfigOpen(true)}
+            onPointerLeave={() => setHoveredSampleIndex(null)}
+            onPointerMove={setHoveredSampleIndex}
+          />
         </div>
       ) : null}
 
-      <svg
-        aria-label="espresso telemetry chart"
-        className="h-auto w-full"
-        viewBox={`0 0 ${width} ${height}`}
-      >
-        <rect
-          x={0}
-          y={0}
-          width={width}
-          height={height}
-          fill={chartTheme.surface}
-          rx={16}
-          stroke={chartTheme.border}
-        />
-
-        <Group.Group left={margin.left} top={margin.top}>
-          <Grid.GridColumns
-            height={innerHeight}
-            numTicks={7}
-            scale={xScale}
-            width={innerWidth}
-            stroke={chartTheme.grid}
+      {layout === "auto" || layout === "desktop" ? (
+        <div
+          className={cn(
+            layout === "auto"
+              ? "hidden h-full min-h-0 flex-1 xl:block"
+              : "h-full min-h-0 flex-1",
+          )}
+        >
+          <DesktopTelemetryMonitor
+            model={model}
+            onPointerLeave={() => setHoveredSampleIndex(null)}
+            onPointerMove={setHoveredSampleIndex}
+            onReset={resetToDefaultPreset}
+            onSetPreset={setPreset}
+            onToggleLane={toggleLane}
+            onToggleSeries={toggleSeries}
           />
-
-          <Grid.GridRows
-            height={innerHeight}
-            scale={yScale}
-            width={innerWidth}
-            stroke={chartTheme.grid}
-            numTicks={6}
-          />
-
-          <line
-            x1={0}
-            y1={innerHeight}
-            x2={innerWidth}
-            y2={innerHeight}
-            stroke={chartTheme.axis}
-          />
-
-          {isMinimal
-            ? [0, 2, 4, 6, 8, 10].map((tick) => (
-                <text
-                  key={tick}
-                  x={0}
-                  y={yScale(tick) + 4}
-                  fill={chartTheme.text}
-                  fontFamily={chartTheme.mono}
-                  fontSize="11"
-                >
-                  {tick}
-                </text>
-              ))
-            : null}
-
-          {hasSignal
-            ? chartSeries.map((series) => (
-                <Shape.LinePath
-                  key={series.key}
-                  data={points}
-                  x={(_point: TelemetryPoint, index: number) => xScale(index)}
-                  y={(point: TelemetryPoint) =>
-                    yScale(
-                      series.key === "temperature"
-                        ? point.temperature / 10
-                        : point[series.key],
-                    )
-                  }
-                  stroke={series.color}
-                  strokeWidth={3}
-                  strokeLinecap="round"
-                  opacity={0.96}
-                />
-              ))
-            : null}
-
-          {!hasSignal && !isMinimal ? (
-            <text
-              fill={chartTheme.text}
-              fontSize="14"
-              textAnchor="middle"
-              x={innerWidth / 2}
-              y={innerHeight / 2}
-            >
-              Waiting for shot data
-            </text>
-          ) : null}
-        </Group.Group>
-      </svg>
-
-      {!isMinimal ? (
-        <div className="mt-5 grid grid-cols-3 gap-3">
-          {chartSeries.map((series) => {
-            const last = points.at(-1);
-            const rawValue =
-              series.key === "temperature"
-                ? last?.temperature
-                : last?.[series.key];
-
-            return (
-              <div
-                key={series.key}
-                className="rounded-[22px] border border-border bg-background/84 px-4 py-3"
-              >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  {series.label}
-                </p>
-                <p className="mt-2 text-[1.65rem] font-semibold leading-none text-foreground">
-                  {formatNumber(rawValue)}{" "}
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {series.unit}
-                  </span>
-                </p>
-              </div>
-            );
-          })}
         </div>
+      ) : null}
+
+      {layout !== "desktop" && isConfigOpen ? (
+        <TelemetryConfigOverlay
+          activePreset={activePreset}
+          laneVisibility={laneVisibility}
+          onClose={() => setIsConfigOpen(false)}
+          onReset={resetToDefaultPreset}
+          onSetPreset={setPreset}
+          onToggleLane={toggleLane}
+          onToggleSeries={toggleSeries}
+          selectedSeriesIds={selectedSeriesIds}
+        />
       ) : null}
     </div>
   );
-}
-
-function seedTelemetry(point?: TelemetryPoint) {
-  const base = point ?? {
-    timestamp: new Date().toISOString(),
-    pressure: 0,
-    flow: 0,
-    temperature: 0,
-  };
-
-  return Array.from({ length: 24 }, (_, index) => ({
-    timestamp: base.timestamp,
-    pressure: base.pressure,
-    flow: base.flow,
-    temperature: base.temperature,
-  }));
 }

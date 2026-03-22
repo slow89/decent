@@ -24,6 +24,7 @@
   --shadow-panel-strong: 0 24px 54px rgba(2, 6, 23, 0.42);
   --font-display: "Canela", "Iowan Old Style", "Palatino Linotype", serif;
   --font-sans: "Suisse Intl", "Avenir Next", "Segoe UI", sans-serif;
+  --font-mono: "Berkeley Mono", "JetBrains Mono", "SF Mono", "Menlo", monospace;
 }
 
 :root {

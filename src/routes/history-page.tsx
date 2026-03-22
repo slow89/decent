@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,12 +12,24 @@ import { useShotsQuery } from "@/rest/queries";
 
 export function HistoryPage() {
   const { data: shots = [], isFetching, error, refetch } = useShotsQuery();
+  const visibleShots = shots.slice(0, 12);
 
   return (
     <div className="flex flex-col gap-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Shot history</CardTitle>
+        <CardHeader className="gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
+                Session tape
+              </p>
+              <CardTitle className="mt-2">Shot history</CardTitle>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">{visibleShots.length} loaded</Badge>
+              <Badge>{isFetching ? "Syncing" : "Ready"}</Badge>
+            </div>
+          </div>
           <CardDescription>
             The bridge keeps history separate from the legacy app, so this page
             is a clean place to design your own brew journal and filtering
@@ -23,15 +37,11 @@ export function HistoryPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
-          <button
-            className="rounded-full border border-border bg-secondary px-4 py-2 text-sm font-medium text-foreground transition hover:bg-secondary/80"
-            onClick={() => void refetch()}
-            type="button"
-          >
+          <Button onClick={() => void refetch()} variant="secondary">
             {isFetching ? "Refreshing..." : "Refresh history"}
-          </button>
+          </Button>
           {error ? (
-            <span className="text-sm text-destructive">{error.message}</span>
+            <span className="font-mono text-[0.72rem] text-destructive">{error.message}</span>
           ) : null}
         </CardContent>
       </Card>
@@ -40,6 +50,9 @@ export function HistoryPage() {
         {shots.length === 0 ? (
           <Card>
             <CardHeader>
+              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                Queue
+              </p>
               <CardTitle>No shots yet</CardTitle>
               <CardDescription>
                 Once the bridge returns shot records, they will appear here.
@@ -47,9 +60,12 @@ export function HistoryPage() {
             </CardHeader>
           </Card>
         ) : (
-          shots.slice(0, 12).map((shot, index) => (
-            <Card key={shot.id ?? `${shot.timestamp ?? "shot"}-${index}`}>
-              <CardContent className="mt-0 grid gap-4 md:grid-cols-4">
+          visibleShots.map((shot, index) => (
+            <Card
+              className="overflow-hidden border-border/70 bg-[#06080b]/96 p-0"
+              key={shot.id ?? `${shot.timestamp ?? "shot"}-${index}`}
+            >
+              <CardContent className="mt-0 grid gap-px bg-border/60 md:grid-cols-[1.05fr_1fr_1fr_0.7fr]">
                 <HistoryCell
                   label="Pulled"
                   value={formatRelativeTimestamp(shot.timestamp)}
@@ -83,11 +99,13 @@ function HistoryCell({
   value: string;
 }) {
   return (
-    <div className="rounded-3xl border border-border/70 bg-background/60 p-4">
-      <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+    <div className="bg-[#06080b] px-4 py-4">
+      <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-2 text-sm font-medium text-foreground">{value}</p>
+      <p className="mt-2 font-mono text-[0.82rem] font-semibold tracking-[0.04em] text-foreground">
+        {value}
+      </p>
     </div>
   );
 }

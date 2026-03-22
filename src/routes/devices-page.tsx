@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -14,33 +16,36 @@ export function DevicesPage() {
   return (
     <div className="flex flex-col gap-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Devices</CardTitle>
+        <CardHeader className="gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
+                Machine bus
+              </p>
+              <CardTitle className="mt-2">Devices</CardTitle>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">{devices.length} tracked</Badge>
+              <Badge>{scanMutation.isPending ? "Scanning" : "Standing by"}</Badge>
+            </div>
+          </div>
           <CardDescription>
             Streamline Bridge already owns scan and connection policy. The skin
             should mostly visualize state and let the bridge stay authoritative.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
-          <button
-            className="rounded-full border border-border bg-secondary px-4 py-2 text-sm font-medium text-foreground transition hover:bg-secondary/80"
-            onClick={() => void refetch()}
-            type="button"
-          >
+          <Button onClick={() => void refetch()} variant="secondary">
             Refresh list
-          </button>
-          <button
-            className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
-            onClick={() => void scanMutation.mutateAsync()}
-            type="button"
-          >
+          </Button>
+          <Button onClick={() => void scanMutation.mutateAsync()}>
             {scanMutation.isPending ? "Scanning..." : "Scan and connect"}
-          </button>
+          </Button>
           {error ? (
-            <span className="text-sm text-destructive">{error.message}</span>
+            <span className="font-mono text-[0.72rem] text-destructive">{error.message}</span>
           ) : null}
           {scanMutation.error ? (
-            <span className="text-sm text-destructive">
+            <span className="font-mono text-[0.72rem] text-destructive">
               {scanMutation.error.message}
             </span>
           ) : null}
@@ -49,10 +54,19 @@ export function DevicesPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {devices.map((device) => (
-          <Card key={device.id}>
+          <Card className="bg-[#06080b]/96" key={device.id}>
             <CardHeader>
-              <CardTitle className="text-xl">{device.name}</CardTitle>
-              <CardDescription>{device.type}</CardDescription>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    {device.type}
+                  </p>
+                  <CardTitle className="mt-2 text-[1.3rem]">{device.name}</CardTitle>
+                </div>
+                <Badge variant={device.state === "connected" ? "default" : "secondary"}>
+                  {device.state}
+                </Badge>
+              </div>
             </CardHeader>
             <CardContent className="grid gap-3">
               <DeviceRow label="State" value={device.state} />
@@ -85,11 +99,11 @@ function DeviceRow({
   value: string;
 }) {
   return (
-    <div className="rounded-3xl border border-border/70 bg-background/60 p-4">
-      <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+    <div className="rounded-[18px] border border-border/70 bg-background/50 p-4">
+      <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-2 break-all text-sm font-medium text-foreground">
+      <p className="mt-2 break-all font-mono text-[0.8rem] font-semibold tracking-[0.04em] text-foreground">
         {value}
       </p>
     </div>

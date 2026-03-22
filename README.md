@@ -40,3 +40,5 @@ server.
 - Target visual language: neo-brutalism
 - Favor bold outlines, hard shadows, high-contrast surfaces, oversized type, and intentionally assertive layout rhythm over soft glassmorphism
 - Prefer `@visx/visx` for charts so telemetry visuals feel custom, structural, and consistent with the neo-brutalist UI direction
+- The primary device is a small tablet mounted near the machine. Optimize dashboard and brew surfaces for compact, data-dense display rather than spacious editorial layout.
+- Do not add explanatory filler copy, decorative empty states, or large content blocks that reduce live telemetry/control density on the brew route.

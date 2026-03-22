@@ -41,11 +41,13 @@ export function WorkflowShotSetupPanel({
 }) {
   return (
     <WorkflowPanel
+      className="md:flex md:h-full md:min-h-0 md:flex-col"
+      contentClassName="md:flex md:min-h-0 md:flex-1"
       description="Name the workflow if needed, then set the dose, yield, grinder, and coffee details for the shot you are preparing."
       title="Shot Setup"
     >
       <form
-        className="grid gap-3"
+        className="grid gap-3 md:min-h-0 md:flex-1 md:content-start md:overflow-y-auto md:pr-1"
         key={JSON.stringify(workflow ?? null)}
         onSubmit={onSubmit}
       >
@@ -70,9 +72,9 @@ export function WorkflowShotSetupPanel({
 
         <section className="rounded-[10px] border border-border bg-[#090a0c] px-2.5 py-2.5">
           <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Workflow metadata
+            Shot details
           </p>
-          <div className="mt-2 grid gap-2.5 md:grid-cols-[minmax(180px,0.8fr)_minmax(0,1.2fr)]">
+          <div className="mt-2 grid gap-2.5 xl:grid-cols-[minmax(180px,0.8fr)_minmax(0,1.2fr)]">
             <Field label="Workflow name">
               <Input
                 className="rounded-[10px] border-border bg-[#060709] font-mono"
@@ -90,7 +92,7 @@ export function WorkflowShotSetupPanel({
           </div>
         </section>
 
-        <div className="grid gap-2.5 md:grid-cols-2">
+        <div className="grid gap-2.5 xl:grid-cols-2">
           <Field label="Grinder model">
             <Input
               className="rounded-[10px] border-border bg-[#090a0c] font-mono"
@@ -107,7 +109,7 @@ export function WorkflowShotSetupPanel({
           </Field>
         </div>
 
-        <div className="grid gap-2.5 md:grid-cols-2">
+        <div className="grid gap-2.5 xl:grid-cols-2">
           <Field label="Coffee name">
             <Input
               className="rounded-[10px] border-border bg-[#090a0c] font-mono"

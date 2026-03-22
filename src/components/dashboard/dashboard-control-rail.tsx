@@ -45,7 +45,7 @@ export function DashboardControlRail({
   recipeControls: DashboardRecipeControls;
 }) {
   return (
-    <aside className="border-b border-border xl:border-b-0 xl:border-r">
+    <aside className="border-b border-border md:border-b-0 md:border-r">
       <DoseDrinkControlRow disabled={disabled} {...recipeControls} />
       {controlRows.map((row) => (
         <ControlRailRow

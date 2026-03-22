@@ -10,6 +10,10 @@ import {
   machineSnapshotSchema,
   type MachineStateChange,
 } from "@/rest/types";
+import {
+  appendTelemetryHistory,
+  type TelemetrySample,
+} from "@/lib/telemetry";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 
 type LiveConnectionState = "idle" | "connecting" | "live" | "error";
@@ -18,12 +22,7 @@ interface MachineState {
   error: string | null;
   liveConnection: LiveConnectionState;
   socket: WebSocket | null;
-  telemetry: Array<{
-    timestamp: string;
-    pressure: number;
-    flow: number;
-    temperature: number;
-  }>;
+  telemetry: TelemetrySample[];
   connectLive: () => Promise<void>;
   disconnectLive: () => void;
   requestState: (nextState: MachineStateChange) => Promise<void>;
@@ -75,15 +74,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
         queryClient.setQueryData(bridgeQueryKeys.machineState(), snapshot);
         set((state) => ({
           error: null,
-          telemetry: [
-            ...state.telemetry,
-            {
-              timestamp: snapshot.timestamp,
-              pressure: snapshot.pressure,
-              flow: snapshot.flow,
-              temperature: snapshot.mixTemperature,
-            },
-          ].slice(-180),
+          telemetry: appendTelemetryHistory(state.telemetry, snapshot),
         }));
       };
 

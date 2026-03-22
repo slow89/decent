@@ -344,7 +344,7 @@ function FrameSeriesChart({
 
       <text
         fill="var(--muted-foreground)"
-        fontFamily='"SF Mono", "JetBrains Mono", "Menlo", monospace'
+        fontFamily="var(--font-mono)"
         fontSize="11"
         x={margin.left}
         y={height - 10}
@@ -353,7 +353,7 @@ function FrameSeriesChart({
       </text>
       <text
         fill="var(--muted-foreground)"
-        fontFamily='"SF Mono", "JetBrains Mono", "Menlo", monospace'
+        fontFamily="var(--font-mono)"
         fontSize="11"
         x={margin.left}
         y={margin.top - 4}

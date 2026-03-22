@@ -19,7 +19,7 @@ export function RecipeControlButton({
   return (
     <button
       aria-label={ariaLabel}
-      className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-[#1e170b] bg-[#08090b] text-foreground transition hover:bg-[#111317] disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-[#2d2110] bg-[#08090b] text-foreground transition hover:bg-[#111317] disabled:cursor-not-allowed disabled:opacity-50"
       disabled={disabled}
       onClick={onClick}
       type="button"
@@ -93,8 +93,8 @@ export function RecipePresetRow({
             "rounded-[7px] border border-transparent font-mono transition",
             align === "left" ? "px-1.5 py-1 text-left" : "px-1 py-1 text-center",
             isPresetActive(activePresetValue, preset.value)
-              ? "border-[#27415f] bg-[#132030] text-foreground"
-              : "hover:border-[#1a2a3b] hover:bg-[#101824] hover:text-foreground",
+              ? "border-[#36547a] bg-[#16253a] text-foreground"
+              : "hover:border-[#1f3550] hover:bg-[#101824] hover:text-foreground",
             itemClassName,
           )}
           disabled={disabled}
