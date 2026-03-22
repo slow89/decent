@@ -1,19 +1,10 @@
-import type { ReactNode } from "react";
-
-import { Link } from "@tanstack/react-router";
-import {
-  Minus,
-  Plus,
-  Square,
-  Zap,
-} from "lucide-react";
-
+import { DashboardControlRail } from "@/components/dashboard/dashboard-control-rail";
+import { DashboardTopBar } from "@/components/dashboard/dashboard-top-bar";
 import { TelemetryChart } from "@/components/telemetry-chart";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { formatSecondaryNumber, getStatusLabel, metricCell } from "@/lib/dashboard-utils";
+import { formatPrimaryNumber, roundValue } from "@/lib/recipe-utils";
 import {
   useMachineStateQuery,
-  useShotsQuery,
   useUpdateWorkflowMutation,
   useWorkflowQuery,
 } from "@/rest/queries";
@@ -26,7 +17,6 @@ export function DashboardPage() {
   const requestState = useMachineStore((state) => state.requestState);
   const { data: snapshot, error: machineQueryError } = useMachineStateQuery();
   const { data: workflow, error: workflowQueryError } = useWorkflowQuery();
-  const { data: shots } = useShotsQuery();
   const updateWorkflowMutation = useUpdateWorkflowMutation();
 
   const hasQueryError = Boolean(machineError || machineQueryError || workflowQueryError);
@@ -44,7 +34,6 @@ export function DashboardPage() {
   const targetYield = workflow?.context?.targetYield;
   const ratio =
     targetDose && targetYield ? `${(targetYield / targetDose).toFixed(1)}:1` : "1:2.0";
-
   const isUpdatingWorkflow = updateWorkflowMutation.isPending;
 
   function updateWorkflow(patch: Record<string, unknown>) {
@@ -125,13 +114,28 @@ export function DashboardPage() {
     { label: "20g", value: 20 },
     { label: "22g", value: 22 },
   ] as const;
-
   const drinkPresets = [
     { label: "1:1.5", value: 1.5 },
     { label: "1:2.0", value: 2.0 },
     { label: "1:2.5", value: 2.5 },
     { label: "1:3.0", value: 3.0 },
   ] as const;
+
+  const recipeControls = {
+    doseActivePresetValue: targetDose ?? 18,
+    dosePresets,
+    doseValue: formatPrimaryNumber(targetDose, "g", "18g", 0),
+    drinkActivePresetValue: targetDose && targetYield ? targetYield / targetDose : 2.0,
+    drinkDetail: `(${ratio})`,
+    drinkPresets,
+    drinkValue: formatPrimaryNumber(targetYield, "g", "36g", 0),
+    onDecreaseDose: () => updateDose(Math.max(8, Math.round((targetDose ?? 18) - 1))),
+    onDecreaseDrink: () => updateYield(Math.max(1, Math.round((targetYield ?? 36) - 1))),
+    onIncreaseDose: () => updateDose(Math.round((targetDose ?? 18) + 1)),
+    onIncreaseDrink: () => updateYield(Math.round((targetYield ?? 36) + 1)),
+    onSelectDosePreset: (value: number) => updateDose(value),
+    onSelectDrinkPreset: (value: number) => updateYield((targetDose ?? 18) * value),
+  };
 
   const controlRows = [
     {
@@ -210,144 +214,32 @@ export function DashboardPage() {
     },
   ] as const;
 
-  const extractionRows = [
-    {
-      label: "Preinfusion",
-      values: ["-", "-", "-", "-", "-", "-"],
-    },
-    {
-      label: "Extraction",
-      values: [
-        "-",
-        metricCell(targetYield, "g", 0),
-        "-",
-        metricCell(snapshot?.mixTemperature, "°C", 0),
-        metricCell(snapshot?.flow, "", 1),
-        metricCell(snapshot?.pressure, "", 1),
-      ],
-    },
-    {
-      label: "Total",
-      values: ["-", metricCell(targetYield, "g", 0), "-", "-", "-", "-"],
-    },
+  const metrics = [
+    { accent: false, label: "Mix", value: metricCell(snapshot?.mixTemperature, "°C") },
+    { accent: false, label: "Group", value: metricCell(snapshot?.groupTemperature, "°C") },
+    { accent: false, label: "Steam", value: metricCell(snapshot?.steamTemperature, "°C", 0) },
+    { accent: true, label: "Flow", value: metricCell(snapshot?.flow, " ml/s") },
   ];
-
-  const latestShot = shots?.[0];
-  const latestShotDose = latestShot?.context?.targetDoseWeight;
-  const latestShotYield = latestShot?.weight ?? latestShot?.context?.targetYield;
 
   return (
     <div>
       <div className="panel min-h-[calc(100svh-6.5rem)] overflow-hidden rounded-none border-x-0 border-t-0 bg-[#08090b]/98">
-        <section className="border-b border-border px-3 py-2.5 md:px-4">
-          <div className="grid gap-2 xl:grid-cols-[auto_minmax(0,1fr)_auto] xl:items-center">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <Button
-                  asChild
-                  className="min-h-[38px] min-w-[196px] justify-between rounded-[10px] border-[#35260d] bg-[#0b0c0f] px-3 font-mono text-[0.82rem] font-medium text-foreground hover:bg-[#101216]"
-                  variant="outline"
-                >
-                  <Link to="/workflows">
-                    <span className="truncate">{activeRecipe}</span>
-                    <span className="text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">
-                      Profiles
-                    </span>
-                  </Link>
-                </Button>
-                <Button
-                  className={cn(
-                    "min-h-[38px] min-w-[138px] rounded-[10px] border px-3 font-mono text-[0.74rem] font-semibold uppercase tracking-[0.18em]",
-                    isShotRunning
-                      ? "border-[#5f3438] bg-[#261316] text-[#ff9b9b] hover:bg-[#31181c]"
-                      : "border-[#1d5a3d] bg-[#0f2018] text-[#6be79f] hover:bg-[#13281d]",
-                  )}
-                  disabled={isOffline}
-                  onClick={() => void requestState(isShotRunning ? "idle" : "espresso")}
-                >
-                  {isShotRunning ? <Square className="size-4" /> : <Zap className="size-4" />}
-                  {isShotRunning ? "Stop shot" : "Start shot"}
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4 xl:min-w-[420px]">
-                <StatusMetric
-                  accent={false}
-                  label="Mix"
-                  value={metricCell(snapshot?.mixTemperature, "°C")}
-                />
-                <StatusMetric
-                  accent={false}
-                  label="Group"
-                  value={metricCell(snapshot?.groupTemperature, "°C")}
-                />
-                <StatusMetric
-                  accent={false}
-                  label="Steam"
-                  value={metricCell(snapshot?.steamTemperature, "°C", 0)}
-                />
-                <StatusMetric
-                  accent
-                  label="Flow"
-                  value={metricCell(snapshot?.flow, " ml/s")}
-                />
-            </div>
-
-            <div className="w-full rounded-[8px] border border-border bg-[#0b0c0f] px-2.5 py-1.5 sm:w-[196px] sm:shrink-0">
-              <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                State
-              </p>
-              <div className="mt-0.5 flex min-w-0 items-baseline gap-2">
-                <p
-                  className={cn(
-                    "min-w-0 truncate font-mono text-[0.82rem] font-semibold uppercase tracking-[0.16em]",
-                    isOffline ? "text-[#f0b37a]" : "text-[#51d193]",
-                  )}
-                  title={statusLabel}
-                >
-                  {statusLabel}
-                </p>
-                <p className="shrink-0 font-mono text-[0.64rem] text-muted-foreground">
-                  {liveConnection}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <DashboardTopBar
+          activeRecipe={activeRecipe}
+          isOffline={isOffline}
+          isShotRunning={isShotRunning}
+          liveConnection={liveConnection}
+          metrics={metrics}
+          onToggleShot={() => void requestState(isShotRunning ? "idle" : "espresso")}
+          statusLabel={statusLabel}
+        />
 
         <section className="grid xl:grid-cols-[264px_minmax(0,1fr)]">
-          <aside className="border-b border-border xl:border-b-0 xl:border-r">
-            <DoseDrinkControlRow
-              doseActivePresetValue={targetDose ?? 18}
-              doseValue={formatPrimaryNumber(targetDose, "g", "18g", 0)}
-              drinkActivePresetValue={targetDose && targetYield ? targetYield / targetDose : 2.0}
-              drinkDetail={`(${ratio})`}
-              drinkValue={formatPrimaryNumber(targetYield, "g", "36g", 0)}
-              dosePresets={dosePresets}
-              drinkPresets={drinkPresets}
-              disabled={isUpdatingWorkflow}
-              onDecreaseDose={() => updateDose(Math.max(8, Math.round((targetDose ?? 18) - 1)))}
-              onIncreaseDose={() => updateDose(Math.round((targetDose ?? 18) + 1))}
-              onDecreaseDrink={() => updateYield(Math.max(1, Math.round((targetYield ?? 36) - 1)))}
-              onIncreaseDrink={() => updateYield(Math.round((targetYield ?? 36) + 1))}
-              onSelectDosePreset={(value) => updateDose(value)}
-              onSelectDrinkPreset={(value) => updateYield((targetDose ?? 18) * value)}
-            />
-            {controlRows.map((row) => (
-              <ControlRailRow
-                activePresetValue={row.activePresetValue}
-                disabled={isUpdatingWorkflow}
-                key={row.label}
-                detail={row.detail}
-                label={row.label}
-                onDecrease={row.onDecrease}
-                onIncrease={row.onIncrease}
-                onPresetClick={row.onPresetClick}
-                presets={row.presets}
-                tint={row.tint}
-                value={row.value}
-              />
-            ))}
-          </aside>
+          <DashboardControlRail
+            controlRows={controlRows}
+            disabled={isUpdatingWorkflow}
+            recipeControls={recipeControls}
+          />
 
           <div className="min-w-0 xl:flex xl:flex-col">
             <div className="px-2 py-2 md:px-4 md:py-3 xl:flex-1">
@@ -362,378 +254,4 @@ export function DashboardPage() {
       </div>
     </div>
   );
-}
-
-function DoseDrinkControlRow({
-  doseActivePresetValue,
-  dosePresets,
-  doseValue,
-  disabled,
-  drinkActivePresetValue,
-  drinkDetail,
-  drinkPresets,
-  drinkValue,
-  onDecreaseDose,
-  onDecreaseDrink,
-  onIncreaseDose,
-  onIncreaseDrink,
-  onSelectDosePreset,
-  onSelectDrinkPreset,
-}: {
-  doseActivePresetValue: number;
-  dosePresets: ReadonlyArray<{ label: string; value: number }>;
-  doseValue: string;
-  disabled: boolean;
-  drinkActivePresetValue: number;
-  drinkDetail: string;
-  drinkPresets: ReadonlyArray<{ label: string; value: number }>;
-  drinkValue: string;
-  onDecreaseDose: () => void;
-  onDecreaseDrink: () => void;
-  onIncreaseDose: () => void;
-  onIncreaseDrink: () => void;
-  onSelectDosePreset: (value: number) => void;
-  onSelectDrinkPreset: (value: number) => void;
-}) {
-  return (
-    <div className="border-b border-border px-3 py-3">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-[#d99826]">
-          Recipe
-        </p>
-        <p className="min-w-[56px] text-right font-mono text-[0.8rem] font-medium text-muted-foreground">
-          {drinkDetail}
-        </p>
-      </div>
-
-      <div className="mt-2 space-y-2">
-        <div className="space-y-1">
-          <DenseRecipeControl
-            disabled={disabled}
-            label="Dose"
-            onDecrease={onDecreaseDose}
-            onIncrease={onIncreaseDose}
-            value={doseValue}
-          />
-          <PresetRow
-            activePresetValue={doseActivePresetValue}
-            disabled={disabled}
-            onPresetClick={onSelectDosePreset}
-            presets={dosePresets}
-          />
-        </div>
-
-        <div className="space-y-1">
-          <DenseRecipeControl
-            disabled={disabled}
-            label="Yield"
-            onDecrease={onDecreaseDrink}
-            onIncrease={onIncreaseDrink}
-            value={drinkValue}
-          />
-          <PresetRow
-            activePresetValue={drinkActivePresetValue}
-            disabled={disabled}
-            onPresetClick={onSelectDrinkPreset}
-            presets={drinkPresets}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DenseRecipeControl({
-  disabled,
-  label,
-  onDecrease,
-  onIncrease,
-  value,
-}: {
-  disabled: boolean;
-  label: string;
-  onDecrease: () => void;
-  onIncrease: () => void;
-  value: string;
-}) {
-  return (
-    <div className="grid grid-cols-[48px_minmax(0,1fr)] items-center gap-2">
-      <p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        {label}
-      </p>
-      <div className="grid grid-cols-[26px_minmax(0,1fr)_26px] items-center gap-1 rounded-[8px] border border-border/80 bg-[#0b0c0f] px-1 py-1">
-        <ControlButton
-          ariaLabel={`Decrease ${label}`}
-          disabled={disabled}
-          onClick={onDecrease}
-        >
-          <Minus className="size-3.5" />
-        </ControlButton>
-
-        <div className="min-w-0 text-center">
-          <p className="font-mono text-[0.88rem] font-semibold text-foreground">{value}</p>
-        </div>
-
-        <ControlButton
-          ariaLabel={`Increase ${label}`}
-          disabled={disabled}
-          onClick={onIncrease}
-        >
-          <Plus className="size-3.5" />
-        </ControlButton>
-      </div>
-    </div>
-  );
-}
-
-function PresetRow({
-  activePresetValue,
-  disabled,
-  onPresetClick,
-  presets,
-}: {
-  activePresetValue: number;
-  disabled: boolean;
-  onPresetClick: (value: number) => void;
-  presets: ReadonlyArray<{ label: string; value: number }>;
-}) {
-  return (
-    <div className="grid grid-cols-4 gap-1 text-[0.72rem] font-medium text-muted-foreground">
-      {presets.map((preset) => (
-        <button
-          key={preset.label}
-          className={cn(
-            "rounded-[7px] border border-transparent px-1 py-1 font-mono text-center transition",
-            isPresetActive(activePresetValue, preset.value)
-              ? "border-[#27415f] bg-[#132030] text-foreground"
-              : "hover:border-[#1a2a3b] hover:bg-[#101824] hover:text-foreground",
-          )}
-          disabled={disabled}
-          onClick={() => onPresetClick(preset.value)}
-          type="button"
-        >
-          {preset.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function ControlRailRow({
-  activePresetValue,
-  detail,
-  disabled,
-  label,
-  onDecrease,
-  onIncrease,
-  onPresetClick,
-  presets,
-  tint,
-  value,
-}: {
-  activePresetValue: number;
-  detail?: string;
-  disabled: boolean;
-  label: string;
-  onDecrease: () => void;
-  onIncrease: () => void;
-  onPresetClick: (value: number) => void;
-  presets: ReadonlyArray<{ label: string; value: number }>;
-  tint: string;
-  value: string;
-}) {
-  return (
-    <div className="border-b border-border px-3 py-3 last:border-b-0">
-      <div className="grid grid-cols-[52px_minmax(0,1fr)] items-start gap-3">
-        <p
-          className={cn(
-            "pt-2 text-[0.74rem] font-semibold uppercase tracking-[0.16em]",
-            tint,
-          )}
-        >
-          {label}
-        </p>
-
-        <div className="grid grid-cols-[40px_minmax(0,1fr)_40px] items-center gap-2">
-          <ControlButton
-            ariaLabel={`Decrease ${label}`}
-            disabled={disabled}
-            onClick={onDecrease}
-          >
-            <Minus className="size-4" />
-          </ControlButton>
-
-          <div className="min-w-0 text-center">
-            <p className="font-mono text-[0.92rem] font-semibold text-foreground">{value}</p>
-            {detail ? (
-              <p className="mt-0.5 font-mono text-[0.72rem] text-muted-foreground">{detail}</p>
-            ) : null}
-          </div>
-
-          <ControlButton
-            ariaLabel={`Increase ${label}`}
-            disabled={disabled}
-            onClick={onIncrease}
-          >
-            <Plus className="size-4" />
-          </ControlButton>
-        </div>
-      </div>
-
-      <div className="mt-2 grid grid-cols-4 gap-1.5 text-[0.72rem] font-medium text-muted-foreground">
-        {presets.map((preset) => (
-          <button
-            key={preset.label}
-            className={cn(
-              "rounded-[7px] border border-transparent px-1.5 py-1 font-mono text-left transition",
-              isPresetActive(activePresetValue, preset.value)
-                ? "border-[#27415f] bg-[#132030] text-foreground"
-                : "hover:border-[#1a2a3b] hover:bg-[#101824] hover:text-foreground",
-            )}
-            disabled={disabled}
-            onClick={() => onPresetClick(preset.value)}
-            type="button"
-          >
-            {preset.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ControlButton({
-  ariaLabel,
-  children,
-  disabled,
-  onClick,
-}: {
-  ariaLabel: string;
-  children: ReactNode;
-  disabled?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      aria-label={ariaLabel}
-      className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-[#1e170b] bg-[#08090b] text-foreground transition hover:bg-[#111317] disabled:cursor-not-allowed disabled:opacity-50"
-      disabled={disabled}
-      onClick={onClick}
-      type="button"
-    >
-      {children}
-    </button>
-  );
-}
-
-function isPresetActive(currentValue: number, presetValue: number) {
-  return Math.abs(currentValue - presetValue) < 0.11;
-}
-
-function roundValue(value: number, digits: number) {
-  const factor = 10 ** digits;
-
-  return Math.round(value * factor) / factor;
-}
-
-function StatusMetric({
-  accent,
-  label,
-  value,
-}: {
-  accent?: boolean;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-[8px] border border-border bg-[#0b0c0f] px-2.5 py-1.5",
-        accent ? "border-[#1f4738] bg-[#0a1712]" : "",
-      )}
-    >
-      <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </p>
-      <p
-        className={cn(
-          "mt-0.5 font-mono text-[0.82rem] font-semibold text-foreground",
-          accent ? "text-[#6de0a1]" : "",
-        )}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function formatPrimaryNumber(
-  value: number | null | undefined,
-  suffix: string,
-  fallback: string,
-  digits = 1,
-) {
-  if (value == null || Number.isNaN(value)) {
-    return fallback;
-  }
-
-  return `${value.toFixed(digits)}${suffix}`;
-}
-
-function formatSecondaryNumber(
-  value: number | null | undefined,
-  suffix: string,
-  fallback: string,
-  digits = 1,
-) {
-  if (value == null || Number.isNaN(value)) {
-    return fallback;
-  }
-
-  return `${value.toFixed(digits)}${suffix}`;
-}
-
-function metricCell(
-  value: number | null | undefined,
-  suffix: string,
-  digits = 1,
-) {
-  if (value == null || Number.isNaN(value)) {
-    return "-";
-  }
-
-  return `${value.toFixed(digits)}${suffix}`;
-}
-
-function getStatusLabel({
-  isOffline,
-  liveConnection,
-  machineSubstate,
-  machineState,
-}: {
-  isOffline: boolean;
-  liveConnection: "idle" | "connecting" | "live" | "error";
-  machineSubstate?: string;
-  machineState?: string;
-}) {
-  if (liveConnection === "connecting") {
-    return "Connecting";
-  }
-
-  if (isOffline) {
-    return "Offline";
-  }
-
-  if (machineSubstate === "ready") {
-    return "Ready";
-  }
-
-  return startCase(machineSubstate ?? machineState ?? "Idle");
-}
-
-function startCase(value: string) {
-  return value
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
 }

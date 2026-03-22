@@ -1,135 +1,169 @@
+import type { FormEvent } from "react";
+import { useState } from "react";
+
+import { FramePreviewOverlay } from "@/components/workflows/frame-preview-overlay";
+import { WorkflowProfileChooserPanel } from "@/components/workflows/workflow-profile-chooser-panel";
+import { WorkflowShotSetupPanel } from "@/components/workflows/workflow-shot-setup-panel";
+import { roundValue } from "@/lib/recipe-utils";
+import { getProfileFingerprint, getProfileTitle, readString } from "@/lib/workflow-utils";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { formatNumber } from "@/lib/utils";
-import { useWorkflowQuery } from "@/rest/queries";
+  useProfilesQuery,
+  useUpdateWorkflowMutation,
+  useWorkflowQuery,
+} from "@/rest/queries";
+import type {
+  ProfileRecord,
+  WorkflowContext,
+  WorkflowProfile,
+} from "@/rest/types";
 
 export function WorkflowsPage() {
-  const { data: workflow, isFetching, error, refetch } = useWorkflowQuery();
+  const workflowQuery = useWorkflowQuery();
+  const profilesQuery = useProfilesQuery();
+  const updateWorkflowMutation = useUpdateWorkflowMutation();
+  const [framePreviewProfile, setFramePreviewProfile] = useState<WorkflowProfile | null>(null);
 
-  return (
-    <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Workflow model</CardTitle>
-          <CardDescription>
-            This page is intentionally centered on the bridge&apos;s workflow
-            object, since that is the recommended write surface for recipes.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-3">
-          <button
-            className="rounded-full border border-border bg-secondary px-4 py-2 text-sm font-medium text-foreground transition hover:bg-secondary/80"
-            onClick={() => void refetch()}
-            type="button"
-          >
-            {isFetching ? "Refreshing..." : "Refresh workflow"}
-          </button>
-          {error ? (
-            <span className="text-sm text-destructive">{error.message}</span>
-          ) : null}
-        </CardContent>
-      </Card>
+  const workflow = workflowQuery.data;
+  const activeProfile = workflow?.profile;
+  const activeProfileKey = getProfileFingerprint(activeProfile);
+  const visibleProfiles = (profilesQuery.data ?? [])
+    .filter((profile) => profile.visibility == null || profile.visibility === "visible")
+    .sort((left, right) => {
+      const defaultRank = Number(Boolean(right.isDefault)) - Number(Boolean(left.isDefault));
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>{workflow?.name ?? "Current workflow"}</CardTitle>
-            <CardDescription>
-              {workflow?.description ?? "No workflow description from bridge."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <InfoBlock
-                label="Dose target"
-                value={`${formatNumber(workflow?.context?.targetDoseWeight)} g`}
-              />
-              <InfoBlock
-                label="Yield target"
-                value={`${formatNumber(workflow?.context?.targetYield)} g`}
-              />
-              <InfoBlock
-                label="Grinder"
-                value={workflow?.context?.grinderModel ?? "Not linked"}
-              />
-              <InfoBlock
-                label="Coffee"
-                value={workflow?.context?.coffeeName ?? "Not linked"}
-              />
-            </div>
-            <Separator />
-            <div className="grid gap-4 md:grid-cols-3">
-              <InfoBlock
-                label="Steam temp"
-                value={`${formatNumber(workflow?.steamSettings?.targetTemperature)} C`}
-              />
-              <InfoBlock
-                label="Water volume"
-                value={`${formatNumber(workflow?.hotWaterData?.volume)} ml`}
-              />
-              <InfoBlock
-                label="Rinse duration"
-                value={`${formatNumber(workflow?.rinseData?.duration)} s`}
-              />
-            </div>
-          </CardContent>
-        </Card>
+      if (defaultRank !== 0) {
+        return defaultRank;
+      }
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile summary</CardTitle>
-            <CardDescription>
-              Good next step: add an editor that operates on a local workflow
-              draft, then pushes one cohesive update through the bridge API.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <InfoBlock
-              label="Title"
-              value={workflow?.profile?.title ?? "No title"}
-            />
-            <InfoBlock
-              label="Author"
-              value={workflow?.profile?.author ?? "Unknown"}
-            />
-            <InfoBlock
-              label="Beverage type"
-              value={workflow?.profile?.beverage_type ?? "espresso"}
-            />
-            <InfoBlock
-              label="Target weight"
-              value={`${formatNumber(workflow?.profile?.target_weight)} g`}
-            />
-            <InfoBlock
-              label="Steps"
-              value={`${workflow?.profile?.steps?.length ?? 0} frames`}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+      return getProfileTitle(left.profile).localeCompare(getProfileTitle(right.profile));
+    });
+  const availableProfiles = visibleProfiles.filter(
+    (profile) => getProfileFingerprint(profile.profile) !== activeProfileKey,
   );
-}
+  const targetDose = workflow?.context?.targetDoseWeight;
+  const targetYield = workflow?.context?.targetYield;
+  const ratio =
+    targetDose && targetYield ? `${(targetYield / targetDose).toFixed(1)}:1` : "1:2.0";
+  const isUpdating = updateWorkflowMutation.isPending;
 
-function InfoBlock({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+  const dosePresets = [
+    { label: "16g", value: 16 },
+    { label: "18g", value: 18 },
+    { label: "20g", value: 20 },
+    { label: "22g", value: 22 },
+  ] as const;
+  const drinkPresets = [
+    { label: "1:1.5", value: 1.5 },
+    { label: "1:2.0", value: 2.0 },
+    { label: "1:2.5", value: 2.5 },
+    { label: "1:3.0", value: 3.0 },
+  ] as const;
+
+  function updateWorkflow(patch: Record<string, unknown>) {
+    updateWorkflowMutation.mutate(patch);
+  }
+
+  function applyProfile(record: ProfileRecord) {
+    updateWorkflow({
+      profile: record.profile,
+    });
+  }
+
+  function openFramePreview(profile: WorkflowProfile | undefined) {
+    if (!profile?.steps?.length) {
+      return;
+    }
+
+    setFramePreviewProfile(profile);
+  }
+
+  function closeFramePreview() {
+    setFramePreviewProfile(null);
+  }
+
+  function updateDose(nextDose: number) {
+    updateWorkflow({
+      context: {
+        targetDoseWeight: roundValue(nextDose, 0),
+      },
+    });
+  }
+
+  function updateYield(nextYield: number) {
+    updateWorkflow({
+      context: {
+        targetYield: roundValue(nextYield, 0),
+      },
+    });
+  }
+
+  function handleShotSetupSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+
+    updateWorkflow({
+      name: readString(formData, "name", workflow?.name ?? "Workflow"),
+      description: readString(formData, "description", workflow?.description ?? ""),
+      context: {
+        grinderModel: readString(formData, "grinderModel", workflow?.context?.grinderModel ?? ""),
+        grinderSetting: readString(
+          formData,
+          "grinderSetting",
+          workflow?.context?.grinderSetting ?? "",
+        ),
+        coffeeName: readString(formData, "coffeeName", workflow?.context?.coffeeName ?? ""),
+        coffeeRoaster: readString(
+          formData,
+          "coffeeRoaster",
+          workflow?.context?.coffeeRoaster ?? "",
+        ),
+      } satisfies Partial<WorkflowContext>,
+    });
+  }
+
   return (
-    <div className="rounded-3xl border border-border/80 bg-background/70 p-4">
-      <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-2 text-base font-medium text-foreground">{value}</p>
+    <div>
+      <div className="panel min-h-[calc(100svh-6.5rem)] overflow-hidden rounded-none border-x-0 border-t-0 bg-[#08090b]/98">
+        <section className="px-3 py-3 md:px-4">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+            <WorkflowProfileChooserPanel
+              activeProfile={activeProfile}
+              availableProfiles={availableProfiles}
+              isApplying={isUpdating}
+              onApplyProfile={applyProfile}
+              onOpenFrames={openFramePreview}
+            />
+
+            <WorkflowShotSetupPanel
+              dosePresets={dosePresets}
+              drinkPresets={drinkPresets}
+              isUpdating={isUpdating}
+              onDecreaseDose={() => updateDose(Math.max(8, Math.round((targetDose ?? 18) - 1)))}
+              onDecreaseDrink={() =>
+                updateYield(Math.max(1, Math.round((targetYield ?? 36) - 1)))
+              }
+              onIncreaseDose={() => updateDose(Math.round((targetDose ?? 18) + 1))}
+              onIncreaseDrink={() => updateYield(Math.round((targetYield ?? 36) + 1))}
+              onSelectDosePreset={updateDose}
+              onSelectDrinkPreset={(value) => updateYield((targetDose ?? 18) * value)}
+              onSubmit={handleShotSetupSubmit}
+              ratio={ratio}
+              targetDose={targetDose}
+              targetYield={targetYield}
+              workflow={workflow}
+            />
+          </div>
+        </section>
+      </div>
+
+      {framePreviewProfile ? (
+        <FramePreviewOverlay
+          key={getProfileFingerprint(framePreviewProfile)}
+          onClose={closeFramePreview}
+          profile={framePreviewProfile}
+        />
+      ) : null}
     </div>
   );
 }

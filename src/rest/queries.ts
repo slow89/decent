@@ -18,6 +18,8 @@ export const bridgeQueryKeys = {
   all: ["bridge"] as const,
   machineState: () => [...bridgeQueryKeys.all, "machine-state"] as const,
   workflow: () => [...bridgeQueryKeys.all, "workflow"] as const,
+  profiles: () => [...bridgeQueryKeys.all, "profiles"] as const,
+  profile: (id: string) => [...bridgeQueryKeys.all, "profiles", id] as const,
   devices: () => [...bridgeQueryKeys.all, "devices"] as const,
   shots: () => [...bridgeQueryKeys.all, "shots"] as const,
 };
@@ -40,6 +42,12 @@ export const devicesQueryOptions = () =>
     queryFn: () => getClient().listDevices(),
   });
 
+export const profilesQueryOptions = () =>
+  queryOptions({
+    queryKey: bridgeQueryKeys.profiles(),
+    queryFn: () => getClient().listProfiles(),
+  });
+
 export const shotsQueryOptions = () =>
   queryOptions({
     queryKey: bridgeQueryKeys.shots(),
@@ -56,6 +64,10 @@ export function useWorkflowQuery() {
 
 export function useDevicesQuery() {
   return useQuery(devicesQueryOptions());
+}
+
+export function useProfilesQuery() {
+  return useQuery(profilesQueryOptions());
 }
 
 export function useShotsQuery() {
@@ -108,7 +120,10 @@ export async function prefetchOverviewQueries() {
 }
 
 export async function prefetchWorkflowQuery() {
-  await queryClient.prefetchQuery(workflowQueryOptions());
+  await Promise.all([
+    queryClient.prefetchQuery(workflowQueryOptions()),
+    queryClient.prefetchQuery(profilesQueryOptions()),
+  ]);
 }
 
 export async function prefetchShotsQuery() {

@@ -120,7 +120,7 @@ function RootLayout() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
-  const isHome = pathname === "/";
+  const isImmersiveRoute = pathname === "/" || pathname === "/workflows";
 
   useEffect(() => {
     void machineStore.getState().connectLive();
@@ -135,12 +135,12 @@ function RootLayout() {
       <div
         className={cn(
           "flex min-h-screen flex-col",
-          isHome
+          isImmersiveRoute
             ? "w-full"
             : "mx-auto max-w-[1400px] px-3 pb-5 pt-3 md:px-5 md:pt-5",
         )}
       >
-        {!isHome ? (
+        {!isImmersiveRoute ? (
           <header className="top-strip rounded-[28px] px-4 py-3 md:px-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
@@ -166,7 +166,7 @@ function RootLayout() {
         <main
           className={cn(
             "flex-1 min-h-0 tablet-safe",
-            isHome ? "py-0" : "py-4",
+            isImmersiveRoute ? "py-0" : "py-4",
           )}
         >
           <Outlet />
@@ -175,7 +175,7 @@ function RootLayout() {
         <nav
           className={cn(
             "fixed inset-x-0 bottom-0 z-30",
-            isHome
+            isImmersiveRoute
               ? "w-full px-0"
               : "mx-auto w-full max-w-[1400px] px-3 pb-3 md:px-5",
           )}
@@ -183,7 +183,9 @@ function RootLayout() {
           <div
             className={cn(
               "nav-surface grid grid-cols-5 gap-2 p-2",
-              isHome ? "rounded-none border-x-0 border-b-0 px-4 pb-3 pt-2" : "rounded-[28px]",
+              isImmersiveRoute
+                ? "rounded-none border-x-0 border-b-0 px-4 pb-3 pt-2"
+                : "rounded-[28px]",
             )}
           >
             {navigation.map((item) => {

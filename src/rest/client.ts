@@ -4,6 +4,8 @@ import {
   deviceSummaryListSchema,
   machineSnapshotSchema,
   machineStateChangeSchema,
+  profileRecordListSchema,
+  profileRecordSchema,
   shotRecordListSchema,
   workflowRecordSchema,
 } from "@/rest/types";
@@ -78,6 +80,12 @@ export function createBridgeClient(baseUrl: string) {
         method: "PUT",
         body: JSON.stringify(patch),
       });
+    },
+    async listProfiles() {
+      return request("/api/v1/profiles", profileRecordListSchema);
+    },
+    async getProfile(id: string) {
+      return request(`/api/v1/profiles/${encodeURIComponent(id)}`, profileRecordSchema);
     },
     async listDevices() {
       return request("/api/v1/devices", deviceSummaryListSchema);

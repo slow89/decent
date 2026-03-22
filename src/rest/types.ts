@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-const optionalNumber = z.number().optional();
-const optionalString = z.string().optional();
+const optionalNumber = z.number().nullish();
+const optionalString = z.string().nullish();
 
 export const machinePhaseSchema = z.object({
   state: z.string(),
@@ -31,13 +31,17 @@ export const deviceSummarySchema = z.object({
 });
 
 export const workflowProfileSchema = z.object({
+  version: optionalString,
   title: optionalString,
+  notes: optionalString,
   author: optionalString,
   beverage_type: optionalString,
   target_weight: optionalNumber,
   target_volume: optionalNumber,
+  target_volume_count_start: optionalNumber,
+  tank_temperature: optionalNumber,
   steps: z.array(z.record(z.string(), z.unknown())).optional(),
-});
+}).passthrough();
 
 export const workflowContextSchema = z.object({
   targetDoseWeight: optionalNumber,
@@ -57,7 +61,7 @@ export const workflowSettingsSchema = z.object({
 });
 
 export const workflowRecordSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().nullish(),
   name: optionalString,
   description: optionalString,
   profile: workflowProfileSchema.optional(),
@@ -67,13 +71,26 @@ export const workflowRecordSchema = z.object({
   rinseData: workflowSettingsSchema.optional(),
 });
 
+export const profileRecordSchema = z.object({
+  id: z.string(),
+  profile: workflowProfileSchema,
+  metadataHash: z.string().nullish(),
+  compoundHash: z.string().nullish(),
+  parentId: z.string().nullish(),
+  visibility: z.enum(["visible", "hidden", "deleted"]).nullish(),
+  isDefault: z.boolean().nullish(),
+  createdAt: z.string().nullish(),
+  updatedAt: z.string().nullish(),
+  metadata: z.record(z.string(), z.unknown()).nullish(),
+});
+
 export const shotRecordSchema = z
   .object({
-    id: z.string().optional(),
-    timestamp: z.string().optional(),
+    id: z.string().nullish(),
+    timestamp: z.string().nullish(),
     workflow: z
       .object({
-        name: z.string().optional(),
+        name: z.string().nullish(),
       })
       .optional(),
     context: workflowContextSchema.optional(),
@@ -92,6 +109,7 @@ export const machineStateChangeSchema = z.enum([
 ]);
 
 export const deviceSummaryListSchema = z.array(deviceSummarySchema);
+export const profileRecordListSchema = z.array(profileRecordSchema);
 export const shotRecordListSchema = z.array(shotRecordSchema);
 
 export type MachinePhase = z.infer<typeof machinePhaseSchema>;
@@ -101,5 +119,6 @@ export type WorkflowProfile = z.infer<typeof workflowProfileSchema>;
 export type WorkflowContext = z.infer<typeof workflowContextSchema>;
 export type WorkflowSettings = z.infer<typeof workflowSettingsSchema>;
 export type WorkflowRecord = z.infer<typeof workflowRecordSchema>;
+export type ProfileRecord = z.infer<typeof profileRecordSchema>;
 export type ShotRecord = z.infer<typeof shotRecordSchema>;
 export type MachineStateChange = z.infer<typeof machineStateChangeSchema>;
