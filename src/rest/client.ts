@@ -6,7 +6,8 @@ import {
   machineStateChangeSchema,
   profileRecordListSchema,
   profileRecordSchema,
-  shotRecordListSchema,
+  shotDetailSchema,
+  shotListResponseSchema,
   workflowRecordSchema,
 } from "@/rest/types";
 
@@ -94,7 +95,10 @@ export function createBridgeClient(baseUrl: string) {
       return request("/api/v1/devices/scan?connect=true", deviceSummaryListSchema);
     },
     async listShots() {
-      return request("/api/v1/shots", shotRecordListSchema);
+      return request("/api/v1/shots", shotListResponseSchema);
+    },
+    async getShot(id: string) {
+      return request(`/api/v1/shots/${encodeURIComponent(id)}`, shotDetailSchema);
     },
     async requestMachineState(nextState: string) {
       const parsedState = machineStateChangeSchema.parse(nextState);
@@ -109,8 +113,23 @@ export function createBridgeClient(baseUrl: string) {
         );
       }
     },
+    async tareScale() {
+      const response = await fetch(`${origin}/api/v1/scale/tare`, {
+        method: "PUT",
+      });
+
+      if (!response.ok) {
+        throw new BridgeClientError("Unable to tare scale", response.status);
+      }
+    },
     createMachineSnapshotSocket() {
       return new WebSocket(`${toWebSocketUrl(origin)}/ws/v1/machine/snapshot`);
+    },
+    createScaleSnapshotSocket() {
+      return new WebSocket(`${toWebSocketUrl(origin)}/ws/v1/scale/snapshot`);
+    },
+    createMachineWaterLevelsSocket() {
+      return new WebSocket(`${toWebSocketUrl(origin)}/ws/v1/machine/waterLevels`);
     },
   };
 }

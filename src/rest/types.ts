@@ -21,7 +21,20 @@ export const machineSnapshotSchema = z.object({
   targetGroupTemperature: z.number(),
   profileFrame: z.number(),
   steamTemperature: z.number(),
-});
+}).passthrough();
+
+export const scaleSnapshotSchema = z.object({
+  timestamp: z.string(),
+  weight: optionalNumber,
+  weightFlow: optionalNumber,
+  timerValue: optionalNumber,
+  batteryLevel: optionalNumber,
+}).passthrough();
+
+export const machineWaterLevelsSchema = z.object({
+  currentLevel: optionalNumber,
+  refillLevel: optionalNumber,
+}).passthrough();
 
 export const deviceSummarySchema = z.object({
   name: z.string(),
@@ -84,20 +97,66 @@ export const profileRecordSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).nullish(),
 });
 
-export const shotRecordSchema = z
+export const shotSummarySchema = z
   .object({
     id: z.string().nullish(),
     timestamp: z.string().nullish(),
-    workflow: z
-      .object({
-        name: z.string().nullish(),
-      })
-      .optional(),
-    context: workflowContextSchema.optional(),
-    weight: z.number().optional(),
-    volume: z.number().optional(),
+    workflow: workflowRecordSchema.optional(),
   })
   .catchall(z.unknown());
+
+export const shotScaleMeasurementSchema = z.object({
+  timestamp: z.string(),
+  weight: optionalNumber,
+  weightFlow: optionalNumber,
+  timerValue: optionalNumber,
+  batteryLevel: optionalNumber,
+}).passthrough();
+
+export const shotMeasurementSchema = z.object({
+  machine: machineSnapshotSchema,
+  scale: shotScaleMeasurementSchema.nullish(),
+  volume: optionalNumber,
+});
+
+export const shotDetailSchema = z
+  .object({
+    id: z.string().nullish(),
+    timestamp: z.string().nullish(),
+    measurements: z.array(shotMeasurementSchema),
+    workflow: workflowRecordSchema.optional(),
+  })
+  .catchall(z.unknown());
+
+export const shotListResponseSchema = z
+  .union([
+    z.array(shotSummarySchema),
+    z.object({
+      items: z.array(shotSummarySchema),
+      total: optionalNumber,
+      limit: optionalNumber,
+      offset: optionalNumber,
+    }),
+  ])
+  .transform((value) => {
+    if (Array.isArray(value)) {
+      return {
+        items: value,
+        total: value.length,
+        limit: value.length,
+        offset: 0,
+      };
+    }
+
+    const itemCount = value.items.length;
+
+    return {
+      items: value.items,
+      total: value.total ?? itemCount,
+      limit: value.limit ?? itemCount,
+      offset: value.offset ?? 0,
+    };
+  });
 
 export const machineStateChangeSchema = z.enum([
   "idle",
@@ -110,15 +169,19 @@ export const machineStateChangeSchema = z.enum([
 
 export const deviceSummaryListSchema = z.array(deviceSummarySchema);
 export const profileRecordListSchema = z.array(profileRecordSchema);
-export const shotRecordListSchema = z.array(shotRecordSchema);
 
 export type MachinePhase = z.infer<typeof machinePhaseSchema>;
 export type MachineSnapshot = z.infer<typeof machineSnapshotSchema>;
+export type ScaleSnapshot = z.infer<typeof scaleSnapshotSchema>;
+export type MachineWaterLevels = z.infer<typeof machineWaterLevelsSchema>;
 export type DeviceSummary = z.infer<typeof deviceSummarySchema>;
 export type WorkflowProfile = z.infer<typeof workflowProfileSchema>;
 export type WorkflowContext = z.infer<typeof workflowContextSchema>;
 export type WorkflowSettings = z.infer<typeof workflowSettingsSchema>;
 export type WorkflowRecord = z.infer<typeof workflowRecordSchema>;
 export type ProfileRecord = z.infer<typeof profileRecordSchema>;
-export type ShotRecord = z.infer<typeof shotRecordSchema>;
+export type ShotRecord = z.infer<typeof shotSummarySchema>;
+export type ShotMeasurement = z.infer<typeof shotMeasurementSchema>;
+export type ShotDetailRecord = z.infer<typeof shotDetailSchema>;
+export type ShotListResponse = z.infer<typeof shotListResponseSchema>;
 export type MachineStateChange = z.infer<typeof machineStateChangeSchema>;

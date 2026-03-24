@@ -121,17 +121,17 @@ export function FramePreviewOverlay({
                       : "Unavailable"}
                   </span>
                 </summary>
-                <div className="mt-2.5 grid max-h-[34svh] gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2">
+                <div className="mt-2 grid max-h-[30svh] gap-1 overflow-y-auto pr-1 sm:grid-cols-2 md:grid-cols-3">
                   {selectedFrame ? (
                     Object.entries(selectedFrame).map(([key, value]) => (
                       <div
-                        className="rounded-[9px] border border-border bg-[#090a0c] px-2 py-1.5"
+                        className="rounded-[8px] border border-border bg-[#090a0c] px-1.5 py-1 md:px-2 md:py-1.5"
                         key={key}
                       >
-                        <p className="font-mono text-[0.5rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                        <p className="font-mono text-[0.46rem] font-medium uppercase tracking-[0.14em] text-muted-foreground md:text-[0.5rem]">
                           {formatSeriesKey(key)}
                         </p>
-                        <p className="mt-0.5 break-words font-mono text-[0.68rem] leading-5 text-foreground">
+                        <p className="mt-0.5 break-words font-mono text-[0.64rem] leading-4 text-foreground md:text-[0.68rem]">
                           {formatFrameValue(value)}
                         </p>
                       </div>

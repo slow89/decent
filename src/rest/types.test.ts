@@ -1,0 +1,61 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  machineSnapshotSchema,
+  machineWaterLevelsSchema,
+  scaleSnapshotSchema,
+} from "./types";
+
+describe("bridge realtime schemas", () => {
+  it("accepts websocket scale snapshots", () => {
+    expect(
+      scaleSnapshotSchema.parse({
+        timestamp: "2026-03-22T17:44:32.386380",
+        weight: 26.334892905092403,
+        batteryLevel: 100,
+        timerValue: null,
+      }),
+    ).toMatchObject({
+      batteryLevel: 100,
+      weight: 26.334892905092403,
+    });
+  });
+
+  it("accepts machine water level updates", () => {
+    expect(
+      machineWaterLevelsSchema.parse({
+        currentLevel: 50,
+        refillLevel: 5,
+      }),
+    ).toEqual({
+      currentLevel: 50,
+      refillLevel: 5,
+    });
+  });
+
+  it("allows forward-compatible machine snapshots", () => {
+    expect(
+      machineSnapshotSchema.parse({
+        timestamp: "2026-03-22T17:42:56.193771",
+        state: {
+          state: "idle",
+          substate: "idle",
+        },
+        flow: 0,
+        pressure: 0,
+        targetFlow: 0,
+        targetPressure: 0,
+        mixTemperature: 83.5,
+        groupTemperature: 83.5,
+        targetMixTemperature: 83.5,
+        targetGroupTemperature: 83.5,
+        profileFrame: 0,
+        steamTemperature: 150,
+        extraField: "future",
+      }),
+    ).toMatchObject({
+      extraField: "future",
+      mixTemperature: 83.5,
+    });
+  });
+});

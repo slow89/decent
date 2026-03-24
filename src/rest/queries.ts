@@ -22,6 +22,7 @@ export const bridgeQueryKeys = {
   profile: (id: string) => [...bridgeQueryKeys.all, "profiles", id] as const,
   devices: () => [...bridgeQueryKeys.all, "devices"] as const,
   shots: () => [...bridgeQueryKeys.all, "shots"] as const,
+  shot: (id: string) => [...bridgeQueryKeys.all, "shots", id] as const,
 };
 
 export const machineStateQueryOptions = () =>
@@ -54,6 +55,13 @@ export const shotsQueryOptions = () =>
     queryFn: () => getClient().listShots(),
   });
 
+export const shotQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: bridgeQueryKeys.shot(id),
+    queryFn: () => getClient().getShot(id),
+    enabled: Boolean(id),
+  });
+
 export function useMachineStateQuery() {
   return useQuery(machineStateQueryOptions());
 }
@@ -72,6 +80,13 @@ export function useProfilesQuery() {
 
 export function useShotsQuery() {
   return useQuery(shotsQueryOptions());
+}
+
+export function useShotQuery(id: string | null | undefined) {
+  return useQuery({
+    ...shotQueryOptions(id ?? ""),
+    enabled: Boolean(id),
+  });
 }
 
 export function useScanDevicesMutation() {
@@ -111,10 +126,17 @@ export function useRequestMachineStateMutation() {
   });
 }
 
+export function useTareScaleMutation() {
+  return useMutation({
+    mutationFn: () => getClient().tareScale(),
+  });
+}
+
 export async function prefetchOverviewQueries() {
   await Promise.all([
     queryClient.prefetchQuery(machineStateQueryOptions()),
     queryClient.prefetchQuery(workflowQueryOptions()),
+    queryClient.prefetchQuery(devicesQueryOptions()),
     queryClient.prefetchQuery(shotsQueryOptions()),
   ]);
 }

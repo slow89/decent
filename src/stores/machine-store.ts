@@ -7,8 +7,12 @@ import {
 import { queryClient } from "@/rest/query-client";
 import { bridgeQueryKeys } from "@/rest/queries";
 import {
+  machineWaterLevelsSchema,
   machineSnapshotSchema,
+  scaleSnapshotSchema,
+  type MachineWaterLevels,
   type MachineStateChange,
+  type ScaleSnapshot,
 } from "@/rest/types";
 import {
   appendTelemetryHistory,
@@ -16,13 +20,19 @@ import {
 } from "@/lib/telemetry";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 
-type LiveConnectionState = "idle" | "connecting" | "live" | "error";
+export type LiveConnectionState = "idle" | "connecting" | "live" | "error";
 
 interface MachineState {
   error: string | null;
   liveConnection: LiveConnectionState;
-  socket: WebSocket | null;
+  machineSocket: WebSocket | null;
+  scaleConnection: LiveConnectionState;
+  scaleSnapshot: ScaleSnapshot | null;
+  scaleSocket: WebSocket | null;
   telemetry: TelemetrySample[];
+  waterConnection: LiveConnectionState;
+  waterLevels: MachineWaterLevels | null;
+  waterSocket: WebSocket | null;
   connectLive: () => Promise<void>;
   disconnectLive: () => void;
   requestState: (nextState: MachineStateChange) => Promise<void>;
@@ -47,19 +57,28 @@ function getErrorMessage(error: unknown) {
 export const useMachineStore = create<MachineState>((set, get) => ({
   error: null,
   liveConnection: "idle",
-  socket: null,
+  machineSocket: null,
+  scaleConnection: "idle",
+  scaleSnapshot: null,
+  scaleSocket: null,
   telemetry: [],
+  waterConnection: "idle",
+  waterLevels: null,
+  waterSocket: null,
   async connectLive() {
     get().disconnectLive();
 
     try {
-      const socket = getClient().createMachineSnapshotSocket();
+      const client = getClient();
+      const machineSocket = client.createMachineSnapshotSocket();
+      const scaleSocket = client.createScaleSnapshotSocket();
+      const waterSocket = client.createMachineWaterLevelsSocket();
 
-      socket.onopen = () => {
+      machineSocket.onopen = () => {
         set({ liveConnection: "live", error: null });
       };
 
-      socket.onmessage = (event) => {
+      machineSocket.onmessage = (event) => {
         const parsed = machineSnapshotSchema.safeParse(JSON.parse(event.data));
 
         if (!parsed.success) {
@@ -78,43 +97,142 @@ export const useMachineStore = create<MachineState>((set, get) => ({
         }));
       };
 
-      socket.onerror = () => {
+      machineSocket.onerror = () => {
         set({
           liveConnection: "error",
           error: "Live machine stream failed",
         });
       };
 
-      socket.onclose = () => {
+      machineSocket.onclose = () => {
         set((state) => ({
-          socket: state.socket === socket ? null : state.socket,
+          machineSocket:
+            state.machineSocket === machineSocket ? null : state.machineSocket,
           liveConnection: "idle",
         }));
       };
 
+      scaleSocket.onopen = () => {
+        set({ scaleConnection: "live" });
+      };
+
+      scaleSocket.onmessage = (event) => {
+        const parsed = scaleSnapshotSchema.safeParse(JSON.parse(event.data));
+
+        if (!parsed.success) {
+          set({
+            scaleConnection: "error",
+            scaleSnapshot: null,
+          });
+          return;
+        }
+
+        set({
+          scaleConnection: "live",
+          scaleSnapshot: parsed.data,
+        });
+      };
+
+      scaleSocket.onerror = () => {
+        set({
+          scaleConnection: "error",
+          scaleSnapshot: null,
+        });
+      };
+
+      scaleSocket.onclose = () => {
+        set((state) => ({
+          scaleConnection: "idle",
+          scaleSnapshot:
+            state.scaleSocket === scaleSocket ? null : state.scaleSnapshot,
+          scaleSocket: state.scaleSocket === scaleSocket ? null : state.scaleSocket,
+        }));
+      };
+
+      waterSocket.onopen = () => {
+        set({ waterConnection: "live" });
+      };
+
+      waterSocket.onmessage = (event) => {
+        const parsed = machineWaterLevelsSchema.safeParse(JSON.parse(event.data));
+
+        if (!parsed.success) {
+          set({
+            waterConnection: "error",
+            waterLevels: null,
+          });
+          return;
+        }
+
+        set({
+          waterConnection: "live",
+          waterLevels: parsed.data,
+        });
+      };
+
+      waterSocket.onerror = () => {
+        set({
+          waterConnection: "error",
+          waterLevels: null,
+        });
+      };
+
+      waterSocket.onclose = () => {
+        set((state) => ({
+          waterConnection: "idle",
+          waterLevels:
+            state.waterSocket === waterSocket ? null : state.waterLevels,
+          waterSocket: state.waterSocket === waterSocket ? null : state.waterSocket,
+        }));
+      };
+
       set({
-        socket,
         liveConnection: "connecting",
+        machineSocket,
+        scaleConnection: "connecting",
+        scaleSocket,
+        waterConnection: "connecting",
+        waterSocket,
       });
     } catch (error) {
       set({
         error: getErrorMessage(error),
         liveConnection: "error",
+        scaleConnection: "error",
+        waterConnection: "error",
       });
     }
   },
   disconnectLive() {
-    const currentSocket = get().socket;
+    const currentMachineSocket = get().machineSocket;
+    const currentScaleSocket = get().scaleSocket;
+    const currentWaterSocket = get().waterSocket;
 
-    if (currentSocket) {
-      currentSocket.onclose = null;
-      currentSocket.close();
+    if (currentMachineSocket) {
+      currentMachineSocket.onclose = null;
+      currentMachineSocket.close();
+    }
+
+    if (currentScaleSocket) {
+      currentScaleSocket.onclose = null;
+      currentScaleSocket.close();
+    }
+
+    if (currentWaterSocket) {
+      currentWaterSocket.onclose = null;
+      currentWaterSocket.close();
     }
 
     set({
-      socket: null,
       liveConnection: "idle",
+      machineSocket: null,
+      scaleConnection: "idle",
+      scaleSnapshot: null,
+      scaleSocket: null,
       telemetry: [],
+      waterConnection: "idle",
+      waterLevels: null,
+      waterSocket: null,
     });
   },
   async requestState(nextState) {

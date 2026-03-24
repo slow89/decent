@@ -4,7 +4,9 @@ import { TelemetryChart } from "@/components/telemetry-chart";
 import { formatSecondaryNumber, getStatusLabel } from "@/lib/dashboard-utils";
 import { formatBrewRatio, formatPrimaryNumber, roundValue } from "@/lib/recipe-utils";
 import {
+  useDevicesQuery,
   useMachineStateQuery,
+  useTareScaleMutation,
   useUpdateWorkflowMutation,
   useWorkflowQuery,
 } from "@/rest/queries";
@@ -13,10 +15,15 @@ import { useMachineStore } from "@/stores/machine-store";
 export function DashboardPage() {
   const liveConnection = useMachineStore((state) => state.liveConnection);
   const machineError = useMachineStore((state) => state.error);
+  const scaleConnection = useMachineStore((state) => state.scaleConnection);
+  const scaleSnapshot = useMachineStore((state) => state.scaleSnapshot);
   const telemetry = useMachineStore((state) => state.telemetry);
   const requestState = useMachineStore((state) => state.requestState);
+  const waterLevels = useMachineStore((state) => state.waterLevels);
   const { data: snapshot, error: machineQueryError } = useMachineStateQuery();
+  const { data: devices } = useDevicesQuery();
   const { data: workflow, error: workflowQueryError } = useWorkflowQuery();
+  const tareScaleMutation = useTareScaleMutation();
   const updateWorkflowMutation = useUpdateWorkflowMutation();
 
   const hasQueryError = Boolean(machineError || machineQueryError || workflowQueryError);
@@ -34,6 +41,16 @@ export function DashboardPage() {
   const targetYield = workflow?.context?.targetYield;
   const ratio = formatBrewRatio(targetDose, targetYield);
   const isUpdatingWorkflow = updateWorkflowMutation.isPending;
+  const connectedScale = devices?.find(
+    (device) => device.type === "scale" && device.state === "connected",
+  );
+  const isScalePaired = Boolean(connectedScale || scaleConnection === "live");
+  const scaleWeight = scaleSnapshot?.weight ?? null;
+  const canUseScaleWeightForDose =
+    isScalePaired &&
+    scaleWeight != null &&
+    Number.isFinite(scaleWeight) &&
+    scaleWeight > 0;
 
   function updateWorkflow(patch: Record<string, unknown>) {
     updateWorkflowMutation.mutate(patch);
@@ -219,9 +236,28 @@ export function DashboardPage() {
         <DashboardTopBar
           activeRecipe={activeRecipe}
           isOffline={isOffline}
+          isScalePaired={isScalePaired}
+          isScaleTaring={tareScaleMutation.isPending}
+          isScaleWeightActionDisabled={!canUseScaleWeightForDose || isUpdatingWorkflow}
           isShotRunning={isShotRunning}
           liveConnection={liveConnection}
+          onSetDoseFromScale={() => {
+            if (
+              isScalePaired &&
+              scaleWeight != null &&
+              Number.isFinite(scaleWeight) &&
+              scaleWeight > 0
+            ) {
+              updateDose(scaleWeight);
+            }
+          }}
+          onTareScale={() => tareScaleMutation.mutate()}
           onToggleShot={() => void requestState(isShotRunning ? "idle" : "espresso")}
+          reservoirLevel={waterLevels?.currentLevel ?? null}
+          reservoirRefillLevel={waterLevels?.refillLevel ?? null}
+          scaleBatteryLevel={scaleSnapshot?.batteryLevel ?? null}
+          scaleConnection={scaleConnection}
+          scaleWeight={scaleWeight}
           statusLabel={statusLabel}
         />
 
