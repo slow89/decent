@@ -115,7 +115,7 @@ export function WorkflowFrameChart({
   return (
     <div
       className={cn(
-        "panel flex h-full min-h-0 flex-col rounded-[20px] border-border/70 bg-[#06080b]/92 p-3 md:p-4 xl:p-5",
+        "panel flex h-full min-h-0 flex-col rounded-[20px] border-chart-border bg-chart-surface p-3 md:p-4 xl:p-5",
         className,
       )}
     >
@@ -263,7 +263,7 @@ function WorkflowFrameCanvas({
     <div
       ref={containerRef}
       className={cn(
-        "min-h-0 overflow-hidden rounded-[18px] border border-border/70 bg-[#080b10]",
+        "min-h-0 overflow-hidden rounded-[18px] border border-chart-border bg-chart-surface",
         density === "regular" ? "h-full flex-1" : "flex-1",
       )}
     >
@@ -632,7 +632,7 @@ export function WorkflowFrameMetricGrid({
 
   return (
     <div className="grid gap-2 sm:grid-cols-2">
-      <div className="rounded-[10px] border border-border bg-[#090c10] px-3 py-2.5">
+      <div className="rounded-[10px] border border-chart-border bg-panel-muted px-3 py-2.5">
         <p className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-muted-foreground">
           Frame
         </p>
@@ -643,7 +643,7 @@ export function WorkflowFrameMetricGrid({
 
       {series.map((seriesDefinition) => (
         <div
-          className="rounded-[10px] border border-border bg-[#090c10] px-3 py-2.5"
+          className="rounded-[10px] border border-chart-border bg-panel-muted px-3 py-2.5"
           key={seriesDefinition.id}
         >
           <p className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-muted-foreground">

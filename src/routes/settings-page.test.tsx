@@ -5,6 +5,7 @@ import { queryClient } from "@/rest/query-client";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 import { useDisplayStore } from "@/stores/display-store";
 import { usePresenceStore } from "@/stores/presence-store";
+import { useThemeStore } from "@/stores/theme-store";
 
 import { SettingsPage } from "./settings-page";
 
@@ -58,6 +59,10 @@ describe("SettingsPage", () => {
       lastHeartbeatAt: null,
       timeoutSeconds: 1800,
     });
+    useThemeStore.setState({
+      theme: "dark",
+    });
+    document.documentElement.dataset.theme = "dark";
 
     routerInvalidate.mockResolvedValue(undefined);
     useDevicesQueryMock.mockReturnValue({
@@ -165,5 +170,15 @@ describe("SettingsPage", () => {
       screen.getByText((content) => content.includes("Device state is unavailable right now.")),
     ).toBeInTheDocument();
     expect(screen.getByText((content) => content.includes("Bridge offline"))).toBeInTheDocument();
+  });
+
+  it("switches the app theme from settings", () => {
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Light" }));
+
+    expect(useThemeStore.getState().theme).toBe("light");
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(screen.getByText("light")).toBeInTheDocument();
   });
 });

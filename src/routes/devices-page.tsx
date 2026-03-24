@@ -19,7 +19,7 @@ export function DevicesPage() {
         <CardHeader className="gap-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
+              <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.18em] text-highlight">
                 Machine bus
               </p>
               <CardTitle className="mt-2">Devices</CardTitle>
@@ -54,7 +54,7 @@ export function DevicesPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {devices.map((device) => (
-          <Card className="bg-[#06080b]/96" key={device.id}>
+          <Card className="bg-panel" key={device.id}>
             <CardHeader>
               <div className="flex items-start justify-between gap-3">
                 <div>

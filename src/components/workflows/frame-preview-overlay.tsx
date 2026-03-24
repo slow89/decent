@@ -66,15 +66,15 @@ export function FramePreviewOverlay({
   return (
     <div
       aria-modal="true"
-      className="fixed inset-0 z-50 bg-[#030508]/88 backdrop-blur-sm"
+      className="fixed inset-0 z-50 bg-overlay backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
     >
       <div
-        className="flex min-h-screen flex-col bg-[#07090b] text-foreground"
+        className="flex min-h-screen flex-col bg-shell text-foreground"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="sticky top-0 z-10 border-b border-border bg-[#07090b]/96 px-3 py-1.5 backdrop-blur md:px-4 md:py-1.5 xl:px-6 xl:py-3">
+        <header className="sticky top-0 z-10 border-b border-border bg-shell/96 px-3 py-1.5 backdrop-blur md:px-4 md:py-1.5 xl:px-6 xl:py-3">
           <div className="flex items-center justify-between gap-2 md:gap-3">
             <div className="min-w-0 flex-1">
               <h2 className="truncate font-display text-[0.98rem] leading-none text-foreground md:text-[1.1rem] xl:text-[1.8rem]">
@@ -91,7 +91,7 @@ export function FramePreviewOverlay({
 
             <Button
               autoFocus
-              className="size-8 rounded-[10px] border-[#35260d] bg-[#0b0c0f] px-0 text-muted-foreground md:size-9 xl:min-h-[36px] xl:w-auto xl:px-3 xl:font-mono xl:text-[0.68rem] xl:uppercase xl:tracking-[0.16em] xl:text-foreground"
+              className="size-8 rounded-[10px] border-border bg-panel px-0 text-muted-foreground hover:bg-panel-muted md:size-9 xl:min-h-[36px] xl:w-auto xl:px-3 xl:font-mono xl:text-[0.68rem] xl:uppercase xl:tracking-[0.16em] xl:text-foreground"
               onClick={onClose}
               type="button"
               variant="outline"
@@ -112,7 +112,7 @@ export function FramePreviewOverlay({
                 selectedFrameIndex={selectedFrameIndex}
               />
 
-              <details className="rounded-[14px] border border-border bg-[#0b0c0f] p-2.5 md:p-3 xl:hidden">
+              <details className="rounded-[14px] border border-border bg-panel p-2.5 md:p-3 xl:hidden">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">
                   <span>Selected frame fields</span>
                   <span>
@@ -125,7 +125,7 @@ export function FramePreviewOverlay({
                   {selectedFrame ? (
                     Object.entries(selectedFrame).map(([key, value]) => (
                       <div
-                        className="rounded-[8px] border border-border bg-[#090a0c] px-1.5 py-1 md:px-2 md:py-1.5"
+                        className="rounded-[8px] border border-border bg-panel-muted px-1.5 py-1 md:px-2 md:py-1.5"
                         key={key}
                       >
                         <p className="font-mono text-[0.46rem] font-medium uppercase tracking-[0.14em] text-muted-foreground md:text-[0.5rem]">
@@ -142,19 +142,19 @@ export function FramePreviewOverlay({
                 </div>
               </details>
 
-              <details className="rounded-[14px] border border-border bg-[#0b0c0f] p-2.5 md:p-3 xl:hidden">
+              <details className="rounded-[14px] border border-border bg-panel p-2.5 md:p-3 xl:hidden">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">
                   <span>Raw frame JSON</span>
                   <span>F{selectedFrameIndex + 1}</span>
                 </summary>
-                <pre className="mt-2.5 overflow-x-auto rounded-[10px] border border-border bg-[#090a0c] p-2.5 font-mono text-[0.64rem] leading-5 text-muted-foreground">
+                <pre className="mt-2.5 overflow-x-auto rounded-[10px] border border-border bg-panel-muted p-2.5 font-mono text-[0.64rem] leading-5 text-muted-foreground">
                   {JSON.stringify(selectedFrame ?? {}, null, 2)}
                 </pre>
               </details>
             </section>
 
             <aside className="hidden xl:grid xl:content-start xl:gap-4">
-              <div className="rounded-[14px] border border-border bg-[#0b0c0f] p-3 md:p-4">
+              <div className="rounded-[14px] border border-border bg-panel p-3 md:p-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                     Selected frame
@@ -172,7 +172,7 @@ export function FramePreviewOverlay({
                 </div>
               </div>
 
-              <div className="rounded-[14px] border border-border bg-[#0b0c0f] p-3 md:p-4">
+              <div className="rounded-[14px] border border-border bg-panel p-3 md:p-4">
                 <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                   Structured frame
                 </p>
@@ -180,7 +180,7 @@ export function FramePreviewOverlay({
                   {selectedFrame ? (
                     Object.entries(selectedFrame).map(([key, value]) => (
                       <div
-                        className="rounded-[9px] border border-border bg-[#090a0c] px-2.5 py-2"
+                        className="rounded-[9px] border border-border bg-panel-muted px-2.5 py-2"
                         key={key}
                       >
                         <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -197,11 +197,11 @@ export function FramePreviewOverlay({
                 </div>
               </div>
 
-              <div className="rounded-[14px] border border-border bg-[#0b0c0f] p-3 md:p-4">
+              <div className="rounded-[14px] border border-border bg-panel p-3 md:p-4">
                 <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                   Raw frame
                 </p>
-                <pre className="mt-3 overflow-x-auto rounded-[10px] border border-border bg-[#090a0c] p-3 font-mono text-[0.68rem] leading-5 text-muted-foreground">
+                <pre className="mt-3 overflow-x-auto rounded-[10px] border border-border bg-panel-muted p-3 font-mono text-[0.68rem] leading-5 text-muted-foreground">
                   {JSON.stringify(selectedFrame ?? {}, null, 2)}
                 </pre>
               </div>

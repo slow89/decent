@@ -18,7 +18,6 @@ export function DashboardPage() {
   const scaleConnection = useMachineStore((state) => state.scaleConnection);
   const scaleSnapshot = useMachineStore((state) => state.scaleSnapshot);
   const telemetry = useMachineStore((state) => state.telemetry);
-  const requestState = useMachineStore((state) => state.requestState);
   const waterLevels = useMachineStore((state) => state.waterLevels);
   const { data: snapshot, error: machineQueryError } = useMachineStateQuery();
   const { data: devices } = useDevicesQuery();
@@ -29,7 +28,6 @@ export function DashboardPage() {
   const hasQueryError = Boolean(machineError || machineQueryError || workflowQueryError);
   const isOffline = liveConnection !== "live" || hasQueryError;
   const activeRecipe = workflow?.profile?.title ?? workflow?.name ?? "PSPH";
-  const isShotRunning = snapshot?.state.state === "espresso";
   const statusLabel = getStatusLabel({
     isOffline,
     liveConnection,
@@ -165,7 +163,7 @@ export function DashboardPage() {
         { label: "85°C", value: 85 },
         { label: "92°C", value: 92 },
       ],
-      tint: "text-[#d99826]",
+      tint: "text-highlight-muted",
       onDecrease: () =>
         updateBrewTemperature(Math.max(70, Math.round((snapshot?.mixTemperature ?? 87) - 1))),
       onIncrease: () =>
@@ -183,7 +181,7 @@ export function DashboardPage() {
         { label: "45s", value: 45 },
         { label: "60s", value: 60 },
       ],
-      tint: "text-[#d99826]",
+      tint: "text-highlight-muted",
       onDecrease: () =>
         updateSteamDuration(Math.max(5, (workflow?.steamSettings?.duration ?? 50) - 5)),
       onIncrease: () => updateSteamDuration((workflow?.steamSettings?.duration ?? 50) + 5),
@@ -200,7 +198,7 @@ export function DashboardPage() {
         { label: "15s", value: 15 },
         { label: "20s", value: 20 },
       ],
-      tint: "text-[#d99826]",
+      tint: "text-highlight-muted",
       onDecrease: () =>
         updateFlushDuration(Math.max(1, (workflow?.rinseData?.duration ?? 10) - 1)),
       onIncrease: () => updateFlushDuration((workflow?.rinseData?.duration ?? 10) + 1),
@@ -222,7 +220,7 @@ export function DashboardPage() {
         { label: "150ml", value: 150 },
         { label: "200ml", value: 200 },
       ],
-      tint: "text-[#d99826]",
+      tint: "text-highlight-muted",
       onDecrease: () =>
         updateHotWaterVolume(Math.max(10, (workflow?.hotWaterData?.volume ?? 50) - 10)),
       onIncrease: () => updateHotWaterVolume((workflow?.hotWaterData?.volume ?? 50) + 10),
@@ -232,14 +230,13 @@ export function DashboardPage() {
 
   return (
     <div>
-      <div className="panel min-h-[calc(100svh-6.5rem)] overflow-hidden rounded-none border-x-0 border-t-0 bg-[#08090b]/98 md:flex md:h-[calc(100svh-6.5rem)] md:flex-col">
+      <div className="panel min-h-[calc(100svh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100svh-var(--app-footer-height))] md:flex-col">
         <DashboardTopBar
           activeRecipe={activeRecipe}
           isOffline={isOffline}
           isScalePaired={isScalePaired}
           isScaleTaring={tareScaleMutation.isPending}
           isScaleWeightActionDisabled={!canUseScaleWeightForDose || isUpdatingWorkflow}
-          isShotRunning={isShotRunning}
           liveConnection={liveConnection}
           onSetDoseFromScale={() => {
             if (
@@ -252,7 +249,6 @@ export function DashboardPage() {
             }
           }}
           onTareScale={() => tareScaleMutation.mutate()}
-          onToggleShot={() => void requestState(isShotRunning ? "idle" : "espresso")}
           reservoirLevel={waterLevels?.currentLevel ?? null}
           reservoirRefillLevel={waterLevels?.refillLevel ?? null}
           scaleBatteryLevel={scaleSnapshot?.batteryLevel ?? null}
@@ -261,15 +257,15 @@ export function DashboardPage() {
           statusLabel={statusLabel}
         />
 
-        <section className="grid md:min-h-0 md:flex-1 md:grid-cols-[228px_minmax(0,1fr)] xl:grid-cols-[264px_minmax(0,1fr)]">
+        <section className="grid md:h-full md:min-h-0 md:flex-1 md:grid-cols-[228px_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)] md:overflow-hidden xl:grid-cols-[264px_minmax(0,1fr)]">
           <DashboardControlRail
             controlRows={controlRows}
             disabled={isUpdatingWorkflow}
             recipeControls={recipeControls}
           />
 
-          <div className="min-w-0 md:flex md:min-h-0 md:flex-col">
-            <div className="px-2 py-2 md:flex-1 md:min-h-0 md:px-3 md:py-3 xl:px-4">
+          <div className="min-w-0 md:flex md:h-full md:min-h-0 md:flex-col md:overflow-hidden">
+            <div className="px-2 py-2 md:flex-1 md:min-h-0 md:overflow-hidden md:px-3 md:py-3 xl:px-4">
               <TelemetryChart
                 className="h-full rounded-[18px] border-0 bg-transparent p-0 shadow-none"
                 data={telemetry}

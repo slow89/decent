@@ -18,7 +18,7 @@ export function WorkflowPanel({
   return (
     <section
       className={cn(
-        "rounded-[10px] border border-border bg-[#0b0c0f] px-2.5 py-2.5",
+        "rounded-[10px] border border-border bg-panel px-2.5 py-2.5",
         className,
       )}
     >

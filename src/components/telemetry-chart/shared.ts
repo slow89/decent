@@ -17,16 +17,16 @@ import {
 } from "@/lib/telemetry";
 
 export const chartTheme = {
-  surface: "rgba(7, 9, 11, 0.92)",
-  laneSurface: "rgba(9, 12, 16, 0.82)",
-  laneSurfaceAlt: "rgba(8, 10, 14, 0.88)",
-  border: "rgba(255, 196, 72, 0.14)",
-  grid: "rgba(255, 188, 58, 0.09)",
-  axis: "rgba(255, 188, 58, 0.18)",
+  surface: "var(--chart-surface)",
+  laneSurface: "var(--chart-lane)",
+  laneSurfaceAlt: "var(--chart-lane-alt)",
+  border: "var(--chart-border)",
+  grid: "var(--chart-grid)",
+  axis: "var(--chart-axis)",
   text: "var(--foreground)",
   muted: "var(--muted-foreground)",
-  crosshair: "rgba(255, 255, 255, 0.22)",
-  event: "rgba(255, 190, 87, 0.22)",
+  crosshair: "var(--chart-crosshair)",
+  event: "var(--chart-event)",
   mono: "var(--font-mono)",
   sans: "var(--font-sans)",
 } as const;

@@ -19,6 +19,34 @@
   --color-ring: var(--ring);
   --color-canvas: var(--canvas);
   --color-chart: var(--chart);
+  --color-shell: var(--shell);
+  --color-panel: var(--panel);
+  --color-panel-muted: var(--panel-muted);
+  --color-panel-subtle: var(--panel-subtle);
+  --color-panel-strong: var(--panel-strong);
+  --color-overlay: var(--overlay);
+  --color-highlight: var(--highlight);
+  --color-highlight-muted: var(--highlight-muted);
+  --color-status-success-surface: var(--status-success-surface);
+  --color-status-success-border: var(--status-success-border);
+  --color-status-success-foreground: var(--status-success-foreground);
+  --color-status-warning-surface: var(--status-warning-surface);
+  --color-status-warning-border: var(--status-warning-border);
+  --color-status-warning-foreground: var(--status-warning-foreground);
+  --color-status-info-surface: var(--status-info-surface);
+  --color-status-info-border: var(--status-info-border);
+  --color-status-info-foreground: var(--status-info-foreground);
+  --color-status-error-surface: var(--status-error-surface);
+  --color-status-error-border: var(--status-error-border);
+  --color-status-error-foreground: var(--status-error-foreground);
+  --color-chart-surface: var(--chart-surface);
+  --color-chart-border: var(--chart-border);
+  --color-chart-lane: var(--chart-lane);
+  --color-chart-lane-alt: var(--chart-lane-alt);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
+  --color-chart-crosshair: var(--chart-crosshair);
+  --color-chart-event: var(--chart-event);
   --shadow-soft: 0 18px 40px rgba(2, 6, 23, 0.34);
   --shadow-panel: 0 16px 36px rgba(2, 6, 23, 0.28);
   --shadow-panel-strong: 0 24px 54px rgba(2, 6, 23, 0.42);
@@ -27,7 +55,9 @@
   --font-mono: "Berkeley Mono", "JetBrains Mono", "SF Mono", "Menlo", monospace;
 }
 
-:root {
+:root,
+:root[data-theme="dark"] {
+  --app-footer-height: 5.4rem;
   --canvas: #020304;
   --chart: #050608;
   --background: #090a0c;
@@ -46,11 +76,102 @@
   --border: rgba(255, 196, 72, 0.12);
   --input: rgba(255, 196, 72, 0.18);
   --ring: rgba(243, 163, 31, 0.3);
+  --shell: rgba(8, 9, 11, 0.98);
+  --panel: rgba(11, 12, 15, 0.94);
+  --panel-muted: #090a0c;
+  --panel-subtle: #0f0c08;
+  --panel-strong: #060709;
+  --overlay: rgba(3, 5, 8, 0.88);
+  --highlight: #d0a954;
+  --highlight-muted: #d99826;
+  --status-success-surface: #0f2018;
+  --status-success-border: #1d5a3d;
+  --status-success-foreground: #6be79f;
+  --status-warning-surface: #1c160b;
+  --status-warning-border: #6a511f;
+  --status-warning-foreground: #f0b37a;
+  --status-info-surface: #132030;
+  --status-info-border: #27415f;
+  --status-info-foreground: #66c9ff;
+  --status-error-surface: #261316;
+  --status-error-border: #5f3438;
+  --status-error-foreground: #ffb2b2;
+  --chart-surface: rgba(7, 9, 11, 0.92);
+  --chart-border: rgba(255, 196, 72, 0.12);
+  --chart-lane: rgba(9, 12, 16, 0.82);
+  --chart-lane-alt: rgba(8, 10, 14, 0.88);
+  --chart-grid: rgba(255, 188, 58, 0.09);
+  --chart-axis: rgba(255, 188, 58, 0.18);
+  --chart-crosshair: rgba(255, 255, 255, 0.22);
+  --chart-event: rgba(255, 190, 87, 0.22);
   --surface-top-strip: rgba(6, 7, 8, 0.96);
   --surface-nav: rgba(4, 5, 6, 0.98);
   --surface-chart: #07090b;
   --surface-chart-grid: rgba(255, 188, 58, 0.1);
   --surface-chart-axis: rgba(255, 188, 58, 0.18);
+  --body-glow: rgba(243, 163, 31, 0.08);
+  --body-start: rgba(7, 7, 8, 0.98);
+  --body-end: rgba(2, 3, 4, 1);
+}
+
+:root[data-theme="light"] {
+  --canvas: #efe8dc;
+  --chart: #fffdf9;
+  --background: #fbf7f1;
+  --foreground: #1a1c1f;
+  --card: rgba(255, 251, 245, 0.96);
+  --card-foreground: #1f2329;
+  --primary: #b16c12;
+  --primary-foreground: #fff8ef;
+  --secondary: #efe7d8;
+  --secondary-foreground: #2f3440;
+  --muted: #f3ecdf;
+  --muted-foreground: #666d76;
+  --accent: #238b57;
+  --accent-foreground: #f4fff9;
+  --destructive: #c05252;
+  --border: rgba(122, 86, 22, 0.18);
+  --input: rgba(122, 86, 22, 0.16);
+  --ring: rgba(177, 108, 18, 0.24);
+  --shell: rgba(249, 244, 236, 0.98);
+  --panel: rgba(255, 251, 244, 0.94);
+  --panel-muted: #f7f0e4;
+  --panel-subtle: #f2e6d0;
+  --panel-strong: #fffdf9;
+  --overlay: rgba(34, 28, 18, 0.22);
+  --highlight: #a56c16;
+  --highlight-muted: #a56c16;
+  --status-success-surface: #e2f3e8;
+  --status-success-border: #9bc7aa;
+  --status-success-foreground: #246a42;
+  --status-warning-surface: #f9eedc;
+  --status-warning-border: #d0b183;
+  --status-warning-foreground: #975d1c;
+  --status-info-surface: #e6eff8;
+  --status-info-border: #abc0d7;
+  --status-info-foreground: #356b9d;
+  --status-error-surface: #f9e5e5;
+  --status-error-border: #dbb0b0;
+  --status-error-foreground: #9f4040;
+  --chart-surface: rgba(255, 252, 247, 0.98);
+  --chart-border: rgba(92, 78, 49, 0.16);
+  --chart-lane: rgba(246, 239, 228, 0.78);
+  --chart-lane-alt: rgba(241, 233, 220, 0.88);
+  --chart-grid: rgba(177, 108, 18, 0.08);
+  --chart-axis: rgba(177, 108, 18, 0.18);
+  --chart-crosshair: rgba(31, 35, 41, 0.22);
+  --chart-event: rgba(177, 108, 18, 0.18);
+  --surface-top-strip: rgba(255, 251, 244, 0.92);
+  --surface-nav: rgba(251, 246, 238, 0.96);
+  --surface-chart: #f8f3ea;
+  --surface-chart-grid: rgba(177, 108, 18, 0.08);
+  --surface-chart-axis: rgba(177, 108, 18, 0.16);
+  --body-glow: rgba(177, 108, 18, 0.1);
+  --body-start: rgba(255, 251, 245, 0.98);
+  --body-end: rgba(239, 232, 220, 1);
+  --shadow-soft: 0 18px 32px rgba(88, 61, 24, 0.12);
+  --shadow-panel: 0 16px 30px rgba(88, 61, 24, 0.1);
+  --shadow-panel-strong: 0 22px 42px rgba(88, 61, 24, 0.14);
 }
 
 @layer base {
@@ -59,7 +180,6 @@
   }
 
   html {
-    color-scheme: dark;
     font-family: var(--font-sans);
     color: var(--foreground);
     background: var(--canvas);
@@ -68,8 +188,8 @@
   body {
     min-height: 100vh;
     background:
-      radial-gradient(circle at top center, rgba(243, 163, 31, 0.08), transparent 18%),
-      linear-gradient(180deg, rgba(7, 7, 8, 0.98), rgba(2, 3, 4, 1)),
+      radial-gradient(circle at top center, var(--body-glow), transparent 18%),
+      linear-gradient(180deg, var(--body-start), var(--body-end)),
       var(--canvas);
   }
 
@@ -84,28 +204,28 @@
 @utility panel {
   background: var(--card);
   border: 1px solid var(--border);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+  box-shadow: var(--shadow-panel);
   backdrop-filter: blur(6px);
 }
 
 @utility tablet-safe {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--app-footer-height));
 }
 
 @utility top-strip {
   background: var(--surface-top-strip);
-  border: 1px solid rgba(255, 196, 72, 0.14);
+  border: 1px solid var(--border);
   box-shadow:
-    0 14px 32px rgba(0, 0, 0, 0.42),
+    var(--shadow-panel),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
 }
 
 @utility nav-surface {
-  background: rgba(4, 9, 15, 0.98);
-  border: 1px solid rgba(255, 196, 72, 0.14);
+  background: var(--surface-nav);
+  border: 1px solid var(--border);
   box-shadow:
-    0 22px 48px rgba(0, 0, 0, 0.6),
+    var(--shadow-panel-strong),
     inset 0 1px 0 rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(10px);
 }

@@ -67,7 +67,7 @@ export function TelemetryChart({
   return (
     <div
       className={cn(
-        "panel flex h-full min-h-0 flex-col rounded-[20px] border-border/70 bg-[#06080b]/92 p-3 md:p-4 xl:p-5",
+        "panel flex h-full min-h-0 min-w-0 flex-col rounded-[20px] border-chart-border bg-chart-surface p-3 md:p-4 xl:p-5",
         className,
       )}
     >
@@ -75,8 +75,8 @@ export function TelemetryChart({
         <div
           className={cn(
             layout === "auto"
-              ? "flex min-h-0 flex-1 flex-col space-y-3 xl:hidden"
-              : "flex min-h-0 flex-1 flex-col space-y-3",
+              ? "flex min-h-0 min-w-0 flex-1 flex-col space-y-3 xl:hidden"
+              : "flex min-h-0 min-w-0 flex-1 flex-col space-y-3",
           )}
         >
           <TabletTelemetryMonitor
@@ -92,8 +92,8 @@ export function TelemetryChart({
         <div
           className={cn(
             layout === "auto"
-              ? "hidden h-full min-h-0 flex-1 xl:block"
-              : "h-full min-h-0 flex-1",
+              ? "hidden h-full min-h-0 min-w-0 flex-1 xl:block"
+              : "h-full min-h-0 min-w-0 flex-1",
           )}
         >
           <DesktopTelemetryMonitor

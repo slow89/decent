@@ -144,14 +144,14 @@ function RootLayout() {
             "fixed inset-x-0 bottom-0 z-30",
             isImmersiveRoute
               ? "w-full px-0"
-              : "mx-auto w-full max-w-[1400px] px-3 pb-3 md:px-5",
+              : "mx-auto w-full max-w-[1400px] px-3 pb-2 md:px-5",
           )}
         >
           <div
             className={cn(
-              "nav-surface grid grid-cols-4 gap-2 p-2",
+              "nav-surface grid grid-cols-4 gap-1.5 p-1.5",
               isImmersiveRoute
-                ? "rounded-none border-x-0 border-b-0 px-4 pb-3 pt-2"
+                ? "rounded-none border-x-0 border-b-0 px-3 pb-2 pt-1.5"
                 : "rounded-[28px]",
             )}
           >
@@ -163,15 +163,15 @@ function RootLayout() {
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "flex min-h-[74px] flex-col items-center justify-center gap-2 rounded-[20px] border-4 border-transparent px-2 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground transition",
-                    "border border-transparent bg-transparent px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-background hover:text-white",
+                    "flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-[18px] border-4 border-transparent px-2 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-muted-foreground transition",
+                    "border border-transparent bg-transparent px-2 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-background hover:text-foreground",
                   )}
                   activeProps={{
                     className:
-                      "border-primary/25 bg-primary/18 text-white shadow-soft",
+                      "border-primary/25 bg-primary/18 text-foreground shadow-soft",
                   }}
                 >
-                  <Icon className="size-5" />
+                  <Icon className="size-[18px]" />
                   {item.label}
                 </Link>
               );

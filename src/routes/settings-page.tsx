@@ -22,6 +22,7 @@ import type {
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 import { useDisplayStore } from "@/stores/display-store";
 import { usePresenceStore } from "@/stores/presence-store";
+import { useThemeStore } from "@/stores/theme-store";
 
 export function SettingsPage() {
   const router = useRouter();
@@ -41,6 +42,8 @@ export function SettingsPage() {
   const setBrightness = useDisplayStore((state) => state.setBrightness);
   const heartbeatError = usePresenceStore((state) => state.error);
   const timeoutSeconds = usePresenceStore((state) => state.timeoutSeconds);
+  const theme = useThemeStore((state) => state.theme);
+  const setTheme = useThemeStore((state) => state.setTheme);
   const [brightnessDraft, setBrightnessDraft] = useState(100);
 
   useEffect(() => {
@@ -86,7 +89,7 @@ export function SettingsPage() {
 
   return (
     <div>
-      <div className="panel min-h-[calc(100svh-6.5rem)] overflow-hidden rounded-none border-x-0 border-t-0 bg-[#08090b]/98 md:flex md:h-[calc(100svh-6.5rem)] md:flex-col">
+      <div className="panel min-h-[calc(100svh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100svh-var(--app-footer-height))] md:flex-col">
         <section className="px-2 py-2 md:flex-1 md:min-h-0 md:px-3 md:py-3">
           <div className="grid gap-2.5 md:h-full md:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] md:grid-rows-[auto_minmax(0,1fr)] md:items-stretch xl:grid-cols-[minmax(0,1.18fr)_360px]">
             <SettingsPanel
@@ -96,10 +99,10 @@ export function SettingsPage() {
               title="Bridge Routing"
             >
               <div className="grid gap-2 md:min-h-0 md:flex-1 md:content-start">
-                <section className="rounded-[10px] border border-[#2a2112] bg-[#0f0c08] px-2 py-2">
+                <section className="rounded-[10px] border border-border bg-panel-subtle px-2 py-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
+                      <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-highlight">
                         Active target
                       </p>
                       <p className="mt-1 font-mono text-[0.88rem] font-semibold tracking-[0.04em] text-foreground">
@@ -117,7 +120,7 @@ export function SettingsPage() {
                   </p>
                 </section>
 
-                <section className="rounded-[10px] border border-border bg-[#090a0c] px-2 py-2">
+                <section className="rounded-[10px] border border-border bg-panel-muted px-2 py-2">
                   <div className="grid gap-1">
                     <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                       Bridge URL
@@ -134,7 +137,7 @@ export function SettingsPage() {
                         REST origin
                       </span>
                       <Input
-                        className="h-10 rounded-[10px] border-border bg-[#060709] font-mono text-[0.78rem]"
+                        className="h-10 rounded-[10px] border-border bg-panel-strong font-mono text-[0.78rem]"
                         id="gatewayUrl"
                         onChange={(event) => setDraftGatewayUrl(event.target.value)}
                         placeholder="http://localhost:8080"
@@ -197,10 +200,10 @@ export function SettingsPage() {
                   <PreviewRow label="Sleep timer" value={formatSleepTimeout(timeoutSeconds)} />
                 </div>
 
-                <div className="rounded-[10px] border border-border bg-[#090a0c] px-2 py-2">
+                <div className="rounded-[10px] border border-border bg-panel-muted px-2 py-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-[#d0a954]">
+                      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-highlight">
                         Brightness
                       </p>
                       <p className="mt-0.5 text-[0.72rem] leading-4 text-muted-foreground">
@@ -242,6 +245,35 @@ export function SettingsPage() {
                     ) : null}
                   </div>
                 </div>
+
+                <section className="rounded-[10px] border border-border bg-panel-muted px-2 py-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-highlight">
+                        Theme
+                      </p>
+                      <p className="mt-0.5 text-[0.72rem] leading-4 text-muted-foreground">
+                        Switch the skin between dark and light surfaces.
+                      </p>
+                    </div>
+                    <p className="font-mono text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-foreground">
+                      {theme}
+                    </p>
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <ThemeOptionButton
+                      isActive={theme === "dark"}
+                      label="Dark"
+                      onClick={() => setTheme("dark")}
+                    />
+                    <ThemeOptionButton
+                      isActive={theme === "light"}
+                      label="Light"
+                      onClick={() => setTheme("light")}
+                    />
+                  </div>
+                </section>
 
                 <div className="flex flex-wrap gap-1.5">
                   <Button
@@ -314,7 +346,7 @@ function SettingsPanel({
   return (
     <section
       className={cn(
-        "rounded-[10px] border border-border bg-[#0b0c0f] px-2 py-2",
+        "rounded-[10px] border border-border bg-panel px-2 py-2",
         className,
       )}
     >
@@ -335,7 +367,7 @@ function StatusTile({
   value: string;
 }) {
   return (
-    <div className="rounded-[10px] border border-border bg-[#090a0c] px-2 py-1.5">
+    <div className="rounded-[10px] border border-border bg-panel-muted px-2 py-1.5">
       <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
@@ -354,8 +386,8 @@ function PreviewRow({
   value: string;
 }) {
   return (
-    <div className="rounded-[10px] border border-border bg-[#090a0c] px-2 py-1.5">
-      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-[#d0a954]">
+    <div className="rounded-[10px] border border-border bg-panel-muted px-2 py-1.5">
+      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-highlight">
         {label}
       </p>
       <p className="mt-1 break-all font-mono text-[0.7rem] font-semibold tracking-[0.03em] text-foreground">
@@ -398,7 +430,7 @@ function DeviceSummary({
     <div className="grid gap-2">
       {devices.map((device) => (
         <div
-          className="rounded-[10px] border border-border bg-[#090a0c] px-2 py-1.5"
+          className="rounded-[10px] border border-border bg-panel-muted px-2 py-1.5"
           key={device.id}
         >
           <div className="flex flex-wrap items-start justify-between gap-2">
@@ -440,12 +472,34 @@ function StateCallout({
       className={cn(
         "rounded-[10px] border px-2 py-1.5 font-mono text-[0.68rem] leading-4 tracking-[0.04em]",
         tone === "error"
-          ? "border-[#5f3438] bg-[#261316] text-[#ffb2b2]"
-          : "border-border bg-[#090a0c] text-muted-foreground",
+          ? "border-status-error-border bg-status-error-surface text-status-error-foreground"
+          : "border-border bg-panel-muted text-muted-foreground",
       )}
     >
       {children}
     </div>
+  );
+}
+
+function ThemeOptionButton({
+  isActive,
+  label,
+  onClick,
+}: {
+  isActive: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      aria-pressed={isActive}
+      className="min-h-[38px] rounded-[10px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
+      onClick={onClick}
+      size="sm"
+      variant={isActive ? "default" : "secondary"}
+    >
+      {label}
+    </Button>
   );
 }
 

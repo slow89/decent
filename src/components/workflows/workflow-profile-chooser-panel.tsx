@@ -69,12 +69,12 @@ function CurrentProfileRow({
   profile: WorkflowProfile | undefined;
 }) {
   return (
-    <div className="rounded-[10px] border border-[#2a2112] bg-[#0f0c08] px-2.5 py-2.5 md:px-2 md:py-2">
+    <div className="rounded-[10px] border border-border bg-panel-subtle px-2.5 py-2.5 md:px-2 md:py-2">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
+        <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-highlight">
           Applied now
         </p>
-        <span className="rounded-full border border-[#215436] bg-[#0d1d14] px-2 py-0.5 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-[#7ce0a7]">
+        <span className="rounded-full border border-accent/35 bg-accent/12 px-2 py-0.5 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-accent">
           Active
         </span>
       </div>
@@ -139,9 +139,9 @@ function ProfileCard({
       className={cn(
         "rounded-[10px] border px-2.5 py-2.5 transition md:px-2 md:py-2",
         isDisabled
-          ? "border-border bg-[#090a0c] opacity-70"
-          : "cursor-pointer border-border bg-[#090a0c] hover:border-[#4c3914] hover:bg-[#0d0f12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
-        isActive ? "border-[#d99826] bg-[#151008]" : null,
+          ? "border-border bg-panel-muted opacity-70"
+          : "cursor-pointer border-border bg-panel-muted hover:border-highlight/35 hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+        isActive ? "border-highlight bg-primary/10" : null,
       )}
       onClick={handleApply}
       onKeyDown={handleKeyDown}
@@ -154,7 +154,7 @@ function ProfileCard({
             {getProfileTitle(profile)}
           </p>
           {record.isDefault ? (
-            <span className="rounded-full border border-[#4e3a16] bg-[#1c160b] px-2 py-0.5 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-[#f0be57]">
+            <span className="rounded-full border border-highlight/35 bg-primary/12 px-2 py-0.5 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-highlight">
               Default
             </span>
           ) : null}
@@ -198,7 +198,7 @@ function FrameCountButton({
         "rounded-[7px] border px-2 py-0.5 font-mono text-[0.62rem] uppercase tracking-[0.16em] transition",
         disabled
           ? "border-border/50 text-muted-foreground/60"
-          : "border-[#27415f] bg-[#132030] text-foreground hover:border-[#365b84] hover:bg-[#18283a]",
+          : "border-highlight/30 bg-secondary/80 text-foreground hover:border-highlight/45 hover:bg-secondary",
       )}
       disabled={disabled}
       onClick={(event) => {

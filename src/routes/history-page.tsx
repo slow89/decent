@@ -57,16 +57,16 @@ export function HistoryPage() {
   }
 
   return (
-    <div className="panel min-h-[calc(100svh-6.5rem)] overflow-hidden rounded-none border-x-0 border-t-0 bg-[#08090b]/98 md:flex md:h-[calc(100svh-6.5rem)] md:flex-col">
+    <div className="panel min-h-[calc(100svh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100svh-var(--app-footer-height))] md:flex-col">
       <section className="grid min-h-0 flex-1 md:grid-cols-[312px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
-        <aside className="flex min-h-0 min-w-0 flex-col border-b border-border bg-[#090b0f] md:border-b-0 md:border-r">
+        <aside className="flex min-h-0 min-w-0 flex-col border-b border-border bg-panel-muted md:border-b-0 md:border-r">
           <div className="shrink-0 border-b border-border px-3 py-3 md:px-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
+                <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-highlight">
                   Session archive
                 </p>
-                <h1 className="mt-1 font-display text-[1.85rem] leading-none text-white">
+                <h1 className="mt-1 font-display text-[1.85rem] leading-none text-foreground">
                   Shot history
                 </h1>
                 <p className="mt-2 max-w-[22rem] text-[0.8rem] leading-5 text-muted-foreground">
@@ -88,7 +88,7 @@ export function HistoryPage() {
 
           <div className="min-h-0 flex-1 overflow-y-auto p-2 md:p-3">
             {shotList.items.length === 0 ? (
-              <section className="rounded-[14px] border border-dashed border-border/70 bg-[#0b0d10] p-4">
+              <section className="rounded-[14px] border border-dashed border-border/70 bg-panel p-4">
                 <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground">
                   Queue
                 </p>
@@ -271,15 +271,15 @@ function HistoryShotButton({
       className={cn(
         "w-full rounded-[14px] border px-3 py-3 text-left transition",
         isSelected
-          ? "border-[#62451b] bg-[#131821] shadow-[0_0_0_1px_rgba(243,163,31,0.12)]"
-          : "border-border/70 bg-[#0b0d10] hover:border-[#4f3a16] hover:bg-[#0f1217]",
+          ? "border-highlight/50 bg-primary/12 shadow-[0_0_0_1px_var(--ring)]"
+          : "border-border/70 bg-panel hover:border-highlight/35 hover:bg-panel-muted",
       )}
       onClick={onSelect}
       type="button"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-[0.56rem] uppercase tracking-[0.18em] text-[#d0a954]">
+          <p className="font-mono text-[0.56rem] uppercase tracking-[0.18em] text-highlight">
             Shot {String(index + 1).padStart(2, "0")}
           </p>
           <p className="mt-1 truncate font-mono text-[0.86rem] font-semibold tracking-[0.03em] text-foreground">
@@ -324,7 +324,7 @@ function HistoryDetailHeader({
           <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             Selected shot
           </p>
-          <p className="mt-1 truncate font-display text-[1.55rem] leading-none text-white">
+          <p className="mt-1 truncate font-display text-[1.55rem] leading-none text-foreground">
             {displayShot ? getShotDisplayTitle(displayShot) : "No shot selected"}
           </p>
           <p className="mt-2 text-[0.8rem] text-muted-foreground">
@@ -386,11 +386,11 @@ function HistoryInfoPanel({
   return (
     <section
       className={cn(
-        "rounded-[16px] border border-border/70 bg-[#0b0d10] px-3 py-3",
+        "rounded-[16px] border border-border/70 bg-panel px-3 py-3",
         className,
       )}
     >
-      <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
+      <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-highlight">
         {title}
       </p>
       <p className="mt-1 text-[0.76rem] leading-5 text-muted-foreground">{description}</p>
@@ -447,7 +447,7 @@ function HistoryStatRow({
   value: string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-[12px] border border-border/60 bg-[#090c10] px-3 py-2.5">
+    <div className="flex items-start justify-between gap-3 rounded-[12px] border border-border/60 bg-panel-muted px-3 py-2.5">
       <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
@@ -469,11 +469,11 @@ function HistoryStatePanel({
 }) {
   return (
     <div className="flex h-full items-center justify-center p-4">
-      <section className="w-full max-w-[420px] rounded-[18px] border border-dashed border-border/70 bg-[#0b0d10] p-5 text-center">
-        <p className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-[#d0a954]">
+      <section className="w-full max-w-[420px] rounded-[18px] border border-dashed border-border/70 bg-panel p-5 text-center">
+        <p className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-highlight">
           History workspace
         </p>
-        <h2 className="mt-2 font-display text-2xl text-white">{title}</h2>
+        <h2 className="mt-2 font-display text-2xl text-foreground">{title}</h2>
         <p className="mt-2 text-[0.82rem] leading-6 text-muted-foreground">{body}</p>
         {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
       </section>

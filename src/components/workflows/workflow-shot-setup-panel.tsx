@@ -1,10 +1,14 @@
 import type { FormEventHandler, ReactNode } from "react";
 
-import { RecipePresetRow, RecipeValueControl } from "@/components/recipe/recipe-controls";
+import {
+  RecipeControlButton,
+  RecipePresetRow,
+} from "@/components/recipe/recipe-controls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { RecipePreset } from "@/lib/recipe-utils";
 import type { WorkflowRecord } from "@/rest/types";
+import { Minus, Plus } from "lucide-react";
 
 import { WorkflowPanel } from "./workflow-panel";
 
@@ -51,7 +55,7 @@ export function WorkflowShotSetupPanel({
         key={JSON.stringify(workflow ?? null)}
         onSubmit={onSubmit}
       >
-        <section className="rounded-[10px] border border-border bg-[#090a0c] px-2.5 py-2.5">
+        <section className="rounded-[10px] border border-border bg-panel-muted px-2.5 py-2.5">
           <DoseYieldControlRow
             disabled={isUpdating}
             doseActivePresetValue={targetDose ?? 18}
@@ -70,21 +74,21 @@ export function WorkflowShotSetupPanel({
           />
         </section>
 
-        <section className="rounded-[10px] border border-border bg-[#090a0c] px-2.5 py-2.5">
+        <section className="rounded-[10px] border border-border bg-panel-muted px-2.5 py-2.5">
           <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             Shot details
           </p>
           <div className="mt-2 grid gap-2.5 xl:grid-cols-[minmax(180px,0.8fr)_minmax(0,1.2fr)]">
             <Field label="Workflow name">
               <Input
-                className="rounded-[10px] border-border bg-[#060709] font-mono"
+                className="rounded-[10px] border-border bg-panel-strong font-mono"
                 defaultValue={workflow?.name ?? ""}
                 name="name"
               />
             </Field>
             <Field label="Description">
               <Input
-                className="rounded-[10px] border-border bg-[#060709] font-mono"
+                className="rounded-[10px] border-border bg-panel-strong font-mono"
                 defaultValue={workflow?.description ?? ""}
                 name="description"
               />
@@ -95,14 +99,14 @@ export function WorkflowShotSetupPanel({
         <div className="grid gap-2.5 xl:grid-cols-2">
           <Field label="Grinder model">
             <Input
-              className="rounded-[10px] border-border bg-[#090a0c] font-mono"
+              className="rounded-[10px] border-border bg-panel-strong font-mono"
               defaultValue={workflow?.context?.grinderModel ?? ""}
               name="grinderModel"
             />
           </Field>
           <Field label="Grinder setting">
             <Input
-              className="rounded-[10px] border-border bg-[#090a0c] font-mono"
+              className="rounded-[10px] border-border bg-panel-strong font-mono"
               defaultValue={workflow?.context?.grinderSetting ?? ""}
               name="grinderSetting"
             />
@@ -112,14 +116,14 @@ export function WorkflowShotSetupPanel({
         <div className="grid gap-2.5 xl:grid-cols-2">
           <Field label="Coffee name">
             <Input
-              className="rounded-[10px] border-border bg-[#090a0c] font-mono"
+              className="rounded-[10px] border-border bg-panel-strong font-mono"
               defaultValue={workflow?.context?.coffeeName ?? ""}
               name="coffeeName"
             />
           </Field>
           <Field label="Roaster">
             <Input
-              className="rounded-[10px] border-border bg-[#090a0c] font-mono"
+              className="rounded-[10px] border-border bg-panel-strong font-mono"
               defaultValue={workflow?.context?.coffeeRoaster ?? ""}
               name="coffeeRoaster"
             />
@@ -172,7 +176,7 @@ function DoseYieldControlRow({
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-[#d99826]">
+        <p className="text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-highlight-muted">
           Recipe
         </p>
         <p className="min-w-[56px] text-right font-mono text-[0.8rem] font-medium text-muted-foreground">
@@ -227,25 +231,68 @@ function RecipeControlRow({
   value: string;
 }) {
   return (
-    <div className="grid gap-1.5 xl:grid-cols-[48px_220px_minmax(0,1fr)] xl:items-center">
-      <p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground xl:pt-0.5">
+    <div
+      className="grid items-center gap-2 [grid-template-columns:42px_minmax(104px,auto)_minmax(0,1fr)]"
+      data-testid={`workflow-recipe-control-${label.toLowerCase()}`}
+    >
+      <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
-      <RecipeValueControl
+
+      <CompactRecipeValueControl
         disabled={disabled}
         label={label}
         onDecrease={onDecrease}
         onIncrease={onIncrease}
         value={value}
       />
+
       <RecipePresetRow
         activePresetValue={activePresetValue}
-        className="xl:h-full xl:content-center"
+        className="gap-1 text-[0.65rem]"
         disabled={disabled}
-        itemClassName="xl:px-1.5"
+        itemClassName="px-0.5 py-0.5"
         onPresetClick={onPresetClick}
         presets={presets}
       />
+    </div>
+  );
+}
+
+function CompactRecipeValueControl({
+  disabled,
+  label,
+  onDecrease,
+  onIncrease,
+  value,
+}: {
+  disabled: boolean;
+  label: string;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  value: string;
+}) {
+  return (
+    <div className="grid grid-cols-[24px_minmax(0,1fr)_24px] items-center gap-1 rounded-[8px] border border-border/80 bg-panel px-1 py-1">
+      <RecipeControlButton
+        ariaLabel={`Decrease ${label}`}
+        disabled={disabled}
+        onClick={onDecrease}
+      >
+        <Minus className="size-3" />
+      </RecipeControlButton>
+
+      <div className="min-w-0 text-center">
+        <p className="font-mono text-[0.8rem] font-semibold text-foreground">{value}</p>
+      </div>
+
+      <RecipeControlButton
+        ariaLabel={`Increase ${label}`}
+        disabled={disabled}
+        onClick={onIncrease}
+      >
+        <Plus className="size-3" />
+      </RecipeControlButton>
     </div>
   );
 }

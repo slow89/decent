@@ -45,7 +45,7 @@ export function DashboardControlRail({
   recipeControls: DashboardRecipeControls;
 }) {
   return (
-    <aside className="border-b border-border md:border-b-0 md:border-r">
+    <aside className="border-b border-border md:min-h-0 md:overflow-y-auto md:overscroll-contain md:border-b-0 md:border-r">
       <DoseDrinkControlRow disabled={disabled} {...recipeControls} />
       {controlRows.map((row) => (
         <ControlRailRow
@@ -85,7 +85,7 @@ function DoseDrinkControlRow({
   return (
     <div className="border-b border-border px-3 py-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-[#d99826]">
+        <p className="text-[0.76rem] font-semibold uppercase tracking-[0.14em] text-highlight-muted">
           Recipe
         </p>
         <p className="min-w-[56px] text-right font-mono text-[0.8rem] font-medium text-muted-foreground">

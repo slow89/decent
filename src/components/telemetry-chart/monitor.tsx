@@ -89,7 +89,7 @@ export function DesktopTelemetryMonitor({
   onToggleSeries: (seriesId: TelemetrySeriesId) => void;
 }) {
   return (
-    <div className="grid h-full min-h-0 gap-4 xl:grid-cols-[minmax(0,1fr)_290px]">
+    <div className="grid h-full min-h-0 min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_290px]">
       <section className="flex min-h-0 min-w-0 flex-col">
         <DesktopMonitorBar
           activePreset={model.activePreset}
@@ -217,7 +217,7 @@ function TelemetryMonitorCanvas({
     <div
       ref={containerRef}
       className={cn(
-        "min-h-0 overflow-hidden rounded-[18px] border border-border/70 bg-[#080b10]",
+        "min-h-0 min-w-0 overflow-hidden rounded-[18px] border border-chart-border bg-chart-surface",
         density === "regular" ? "h-full flex-1" : "flex-1",
       )}
     >

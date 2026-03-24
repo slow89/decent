@@ -19,7 +19,7 @@ export function RecipeControlButton({
   return (
     <button
       aria-label={ariaLabel}
-      className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-[#2d2110] bg-[#08090b] text-foreground transition hover:bg-[#111317] disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-border bg-panel-strong text-foreground transition hover:bg-panel disabled:cursor-not-allowed disabled:opacity-50"
       disabled={disabled}
       onClick={onClick}
       type="button"
@@ -43,7 +43,7 @@ export function RecipeValueControl({
   value: string;
 }) {
   return (
-    <div className="grid grid-cols-[26px_minmax(0,1fr)_26px] items-center gap-1 rounded-[8px] border border-border/80 bg-[#0b0c0f] px-1 py-1">
+    <div className="grid grid-cols-[26px_minmax(0,1fr)_26px] items-center gap-1 rounded-[8px] border border-border/80 bg-panel px-1 py-1">
       <RecipeControlButton
         ariaLabel={`Decrease ${label}`}
         disabled={disabled}
@@ -93,8 +93,8 @@ export function RecipePresetRow({
             "rounded-[7px] border border-transparent font-mono transition",
             align === "left" ? "px-1.5 py-1 text-left" : "px-1 py-1 text-center",
             isPresetActive(activePresetValue, preset.value)
-              ? "border-[#36547a] bg-[#16253a] text-foreground"
-              : "hover:border-[#1f3550] hover:bg-[#101824] hover:text-foreground",
+              ? "border-highlight/40 bg-primary/14 text-foreground"
+              : "hover:border-highlight/30 hover:bg-secondary/80 hover:text-foreground",
             itemClassName,
           )}
           disabled={disabled}
