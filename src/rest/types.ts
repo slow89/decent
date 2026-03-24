@@ -36,6 +36,24 @@ export const machineWaterLevelsSchema = z.object({
   refillLevel: optionalNumber,
 }).passthrough();
 
+export const heartbeatResponseSchema = z.object({
+  timeout: z.number(),
+}).passthrough();
+
+export const displayPlatformSupportSchema = z.object({
+  brightness: z.boolean(),
+  wakeLock: z.boolean(),
+}).passthrough();
+
+export const displayStateSchema = z.object({
+  wakeLockEnabled: z.boolean(),
+  wakeLockOverride: z.boolean(),
+  brightness: z.number(),
+  requestedBrightness: z.number(),
+  lowBatteryBrightnessActive: z.boolean(),
+  platformSupported: displayPlatformSupportSchema,
+}).passthrough();
+
 export const deviceSummarySchema = z.object({
   name: z.string(),
   id: z.string(),
@@ -174,6 +192,9 @@ export type MachinePhase = z.infer<typeof machinePhaseSchema>;
 export type MachineSnapshot = z.infer<typeof machineSnapshotSchema>;
 export type ScaleSnapshot = z.infer<typeof scaleSnapshotSchema>;
 export type MachineWaterLevels = z.infer<typeof machineWaterLevelsSchema>;
+export type HeartbeatResponse = z.infer<typeof heartbeatResponseSchema>;
+export type DisplayPlatformSupport = z.infer<typeof displayPlatformSupportSchema>;
+export type DisplayState = z.infer<typeof displayStateSchema>;
 export type DeviceSummary = z.infer<typeof deviceSummarySchema>;
 export type WorkflowProfile = z.infer<typeof workflowProfileSchema>;
 export type WorkflowContext = z.infer<typeof workflowContextSchema>;

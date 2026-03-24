@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { queryClient } from "@/rest/query-client";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
+import { useDisplayStore } from "@/stores/display-store";
+import { usePresenceStore } from "@/stores/presence-store";
 
 import { SettingsPage } from "./settings-page";
 
@@ -34,6 +36,28 @@ describe("SettingsPage", () => {
     useBridgeConfigStore.setState({
       gatewayUrl: "http://bridge.local:8080",
     });
+    useDisplayStore.setState({
+      connection: "live",
+      displayState: {
+        wakeLockEnabled: true,
+        wakeLockOverride: false,
+        brightness: 75,
+        requestedBrightness: 75,
+        lowBatteryBrightnessActive: false,
+        platformSupported: {
+          brightness: true,
+          wakeLock: true,
+        },
+      },
+      error: null,
+      socket: null,
+    });
+    usePresenceStore.setState({
+      error: null,
+      isSending: false,
+      lastHeartbeatAt: null,
+      timeoutSeconds: 1800,
+    });
 
     routerInvalidate.mockResolvedValue(undefined);
     useDevicesQueryMock.mockReturnValue({
@@ -58,6 +82,9 @@ describe("SettingsPage", () => {
     expect(
       screen.getByText("ws://bridge.local:8080/ws/v1/machine/snapshot"),
     ).toBeInTheDocument();
+    expect(screen.getByText("ws://bridge.local:8080/ws/v1/display")).toBeInTheDocument();
+    expect(screen.getByText("1800s")).toBeInTheDocument();
+    expect(screen.getByText("Auto-managed on")).toBeInTheDocument();
     expect(screen.getByText("Acaia Lunar")).toBeInTheDocument();
     expect(screen.getByText("connected")).toBeInTheDocument();
   });

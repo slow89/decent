@@ -16,6 +16,7 @@ import {
   TimerReset,
 } from "lucide-react";
 
+import { BridgeShellEffects } from "@/app/bridge-shell-effects";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DashboardPage } from "@/routes/dashboard-page";
@@ -120,6 +121,7 @@ function RootLayout() {
 
   return (
     <div className="min-h-screen bg-canvas text-foreground">
+      <BridgeShellEffects />
       <div
         className={cn(
           "flex min-h-screen flex-col",

@@ -1,7 +1,9 @@
 import { type z } from "zod";
 
 import {
+  displayStateSchema,
   deviceSummaryListSchema,
+  heartbeatResponseSchema,
   machineSnapshotSchema,
   machineStateChangeSchema,
   profileRecordListSchema,
@@ -122,6 +124,30 @@ export function createBridgeClient(baseUrl: string) {
         throw new BridgeClientError("Unable to tare scale", response.status);
       }
     },
+    async signalHeartbeat() {
+      return request("/api/v1/machine/heartbeat", heartbeatResponseSchema, {
+        method: "POST",
+      });
+    },
+    async getDisplayState() {
+      return request("/api/v1/display", displayStateSchema);
+    },
+    async setDisplayBrightness(brightness: number) {
+      return request("/api/v1/display/brightness", displayStateSchema, {
+        method: "PUT",
+        body: JSON.stringify({ brightness }),
+      });
+    },
+    async requestDisplayWakeLock() {
+      return request("/api/v1/display/wakelock", displayStateSchema, {
+        method: "POST",
+      });
+    },
+    async releaseDisplayWakeLock() {
+      return request("/api/v1/display/wakelock", displayStateSchema, {
+        method: "DELETE",
+      });
+    },
     createMachineSnapshotSocket() {
       return new WebSocket(`${toWebSocketUrl(origin)}/ws/v1/machine/snapshot`);
     },
@@ -130,6 +156,9 @@ export function createBridgeClient(baseUrl: string) {
     },
     createMachineWaterLevelsSocket() {
       return new WebSocket(`${toWebSocketUrl(origin)}/ws/v1/machine/waterLevels`);
+    },
+    createDisplaySocket() {
+      return new WebSocket(`${toWebSocketUrl(origin)}/ws/v1/display`);
     },
   };
 }

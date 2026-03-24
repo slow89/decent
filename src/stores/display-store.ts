@@ -1,0 +1,191 @@
+import { create } from "zustand";
+
+import {
+  BridgeClientError,
+  createBridgeClient,
+} from "@/rest/client";
+import {
+  displayStateSchema,
+  type DisplayState,
+} from "@/rest/types";
+import { useBridgeConfigStore } from "@/stores/bridge-config-store";
+
+type DisplayConnectionState = "idle" | "connecting" | "live" | "error";
+
+interface DisplayStoreState {
+  connection: DisplayConnectionState;
+  displayState: DisplayState | null;
+  error: string | null;
+  socket: WebSocket | null;
+  connect: () => Promise<void>;
+  disconnect: () => void;
+  refresh: () => Promise<void>;
+  releaseWakeLock: () => Promise<void>;
+  requestWakeLock: () => Promise<void>;
+  reset: () => void;
+  setBrightness: (brightness: number) => Promise<void>;
+}
+
+function getClient() {
+  return createBridgeClient(useBridgeConfigStore.getState().gatewayUrl);
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof BridgeClientError) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Unexpected bridge error";
+}
+
+export const useDisplayStore = create<DisplayStoreState>((set, get) => ({
+  connection: "idle",
+  displayState: null,
+  error: null,
+  socket: null,
+  async connect() {
+    get().disconnect();
+
+    try {
+      const client = getClient();
+      const socket = client.createDisplaySocket();
+
+      socket.onopen = () => {
+        set({
+          connection: "live",
+          error: null,
+        });
+      };
+
+      socket.onmessage = (event) => {
+        const parsed = displayStateSchema.safeParse(JSON.parse(event.data));
+
+        if (!parsed.success) {
+          set({
+            connection: "error",
+            error: parsed.error.message,
+          });
+          return;
+        }
+
+        set({
+          connection: "live",
+          displayState: parsed.data,
+          error: null,
+        });
+      };
+
+      socket.onerror = () => {
+        set({
+          connection: "error",
+          error: "Live display stream failed",
+        });
+      };
+
+      socket.onclose = () => {
+        set((state) => ({
+          connection: "idle",
+          displayState: state.socket === socket ? null : state.displayState,
+          socket: state.socket === socket ? null : state.socket,
+        }));
+      };
+
+      set({
+        connection: "connecting",
+        displayState: null,
+        error: null,
+        socket,
+      });
+    } catch (error) {
+      set({
+        connection: "error",
+        displayState: null,
+        error: getErrorMessage(error),
+      });
+    }
+  },
+  disconnect() {
+    const socket = get().socket;
+
+    if (socket) {
+      socket.onclose = null;
+      socket.close();
+    }
+
+    set({
+      connection: "idle",
+      displayState: null,
+      error: null,
+      socket: null,
+    });
+  },
+  async refresh() {
+    try {
+      const displayState = await getClient().getDisplayState();
+
+      set((state) => ({
+        connection: state.connection === "idle" ? state.connection : "live",
+        displayState,
+        error: null,
+      }));
+    } catch (error) {
+      set({
+        error: getErrorMessage(error),
+      });
+    }
+  },
+  async releaseWakeLock() {
+    try {
+      const displayState = await getClient().releaseDisplayWakeLock();
+
+      set({
+        connection: "live",
+        displayState,
+        error: null,
+      });
+    } catch (error) {
+      set({
+        error: getErrorMessage(error),
+      });
+    }
+  },
+  async requestWakeLock() {
+    try {
+      const displayState = await getClient().requestDisplayWakeLock();
+
+      set({
+        connection: "live",
+        displayState,
+        error: null,
+      });
+    } catch (error) {
+      set({
+        error: getErrorMessage(error),
+      });
+    }
+  },
+  reset() {
+    get().disconnect();
+  },
+  async setBrightness(brightness) {
+    try {
+      const displayState = await getClient().setDisplayBrightness(brightness);
+
+      set({
+        connection: "live",
+        displayState,
+        error: null,
+      });
+    } catch (error) {
+      set({
+        error: getErrorMessage(error),
+      });
+    }
+  },
+}));
+
+export const displayStore = useDisplayStore;

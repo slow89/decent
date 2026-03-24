@@ -1,4 +1,10 @@
-import { useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 
 import { useRouter } from "@tanstack/react-router";
 
@@ -9,8 +15,13 @@ import { cn } from "@/lib/utils";
 import { toWebSocketUrl } from "@/rest/client";
 import { queryClient } from "@/rest/query-client";
 import { useDevicesQuery, bridgeQueryKeys } from "@/rest/queries";
-import type { DeviceSummary } from "@/rest/types";
+import type {
+  DeviceSummary,
+  DisplayState,
+} from "@/rest/types";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
+import { useDisplayStore } from "@/stores/display-store";
+import { usePresenceStore } from "@/stores/presence-store";
 
 export function SettingsPage() {
   const router = useRouter();
@@ -22,6 +33,19 @@ export function SettingsPage() {
     error: devicesError,
     isFetching: isFetchingDevices,
   } = useDevicesQuery();
+  const connection = useDisplayStore((state) => state.connection);
+  const displayError = useDisplayStore((state) => state.error);
+  const displayState = useDisplayStore((state) => state.displayState);
+  const requestWakeLock = useDisplayStore((state) => state.requestWakeLock);
+  const releaseWakeLock = useDisplayStore((state) => state.releaseWakeLock);
+  const setBrightness = useDisplayStore((state) => state.setBrightness);
+  const heartbeatError = usePresenceStore((state) => state.error);
+  const timeoutSeconds = usePresenceStore((state) => state.timeoutSeconds);
+  const [brightnessDraft, setBrightnessDraft] = useState(100);
+
+  useEffect(() => {
+    setBrightnessDraft(displayState?.requestedBrightness ?? 100);
+  }, [displayState?.requestedBrightness]);
 
   const endpointRows = [
     { label: "REST origin", value: gatewayUrl },
@@ -29,8 +53,13 @@ export function SettingsPage() {
       label: "Machine snapshot",
       value: `${toWebSocketUrl(gatewayUrl)}/ws/v1/machine/snapshot`,
     },
+    {
+      label: "Display stream",
+      value: `${toWebSocketUrl(gatewayUrl)}/ws/v1/display`,
+    },
     { label: "Workflow API", value: `${gatewayUrl}/api/v1/workflow` },
     { label: "Devices API", value: `${gatewayUrl}/api/v1/devices` },
+    { label: "Heartbeat API", value: `${gatewayUrl}/api/v1/machine/heartbeat` },
   ];
 
   async function handleSave() {
@@ -41,25 +70,39 @@ export function SettingsPage() {
     await router.invalidate();
   }
 
+  function handleBrightnessChange(event: ChangeEvent<HTMLInputElement>) {
+    setBrightnessDraft(Number(event.target.value));
+  }
+
+  function commitBrightness(nextBrightness = brightnessDraft) {
+    void setBrightness(nextBrightness);
+  }
+
+  function handleBrightnessKeyUp(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key.startsWith("Arrow") || event.key === "Home" || event.key === "End") {
+      commitBrightness();
+    }
+  }
+
   return (
     <div>
       <div className="panel min-h-[calc(100svh-6.5rem)] overflow-hidden rounded-none border-x-0 border-t-0 bg-[#08090b]/98 md:flex md:h-[calc(100svh-6.5rem)] md:flex-col">
-        <section className="px-3 py-3 md:flex-1 md:min-h-0 md:px-4">
-          <div className="grid gap-3 md:h-full md:grid-cols-[minmax(0,1.14fr)_minmax(300px,0.86fr)] md:items-stretch xl:grid-cols-[minmax(0,1.2fr)_380px]">
+        <section className="px-2 py-2 md:flex-1 md:min-h-0 md:px-3 md:py-3">
+          <div className="grid gap-2.5 md:h-full md:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] md:grid-rows-[auto_minmax(0,1fr)] md:items-stretch xl:grid-cols-[minmax(0,1.18fr)_360px]">
             <SettingsPanel
-              className="md:flex md:h-full md:min-h-0 md:flex-col"
+              className="md:flex md:min-h-0 md:flex-col"
               contentClassName="md:flex md:min-h-0 md:flex-1"
               description="Point the skin at the correct Streamline Bridge host, then keep the bridge authoritative for connection and device state."
               title="Bridge Routing"
             >
-              <div className="grid gap-3 md:min-h-0 md:flex-1 md:content-start">
-                <section className="rounded-[10px] border border-[#2a2112] bg-[#0f0c08] px-2.5 py-2.5">
+              <div className="grid gap-2 md:min-h-0 md:flex-1 md:content-start">
+                <section className="rounded-[10px] border border-[#2a2112] bg-[#0f0c08] px-2 py-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
+                      <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-[#d0a954]">
                         Active target
                       </p>
-                      <p className="mt-1 font-mono text-[0.95rem] font-semibold tracking-[0.04em] text-foreground">
+                      <p className="mt-1 font-mono text-[0.88rem] font-semibold tracking-[0.04em] text-foreground">
                         {gatewayUrl.replace(/^https?:\/\//, "")}
                       </p>
                     </div>
@@ -68,30 +111,30 @@ export function SettingsPage() {
                       <Badge variant="secondary">{devices.length} devices tracked</Badge>
                     </div>
                   </div>
-                  <p className="mt-2 text-[0.76rem] leading-5 text-muted-foreground">
+                  <p className="mt-1.5 text-[0.72rem] leading-4 text-muted-foreground">
                     Scale and machine scan/connect policy stays in Streamline Bridge.
                     This skin only changes which bridge instance it talks to.
                   </p>
                 </section>
 
-                <section className="rounded-[10px] border border-border bg-[#090a0c] px-2.5 py-2.5">
+                <section className="rounded-[10px] border border-border bg-[#090a0c] px-2 py-2">
                   <div className="grid gap-1">
-                    <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                       Bridge URL
                     </p>
-                    <p className="text-[0.76rem] leading-5 text-muted-foreground">
+                    <p className="text-[0.72rem] leading-4 text-muted-foreground">
                       Use the REST origin exposed by the Streamline Bridge process.
                       Save will reconnect queries and the live snapshot stream.
                     </p>
                   </div>
 
-                  <div className="mt-2.5 grid gap-2.5">
+                  <div className="mt-2 grid gap-2">
                     <label className="grid gap-1.5" htmlFor="gatewayUrl">
-                      <span className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                      <span className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                         REST origin
                       </span>
                       <Input
-                        className="rounded-[10px] border-border bg-[#060709] font-mono"
+                        className="h-10 rounded-[10px] border-border bg-[#060709] font-mono text-[0.78rem]"
                         id="gatewayUrl"
                         onChange={(event) => setDraftGatewayUrl(event.target.value)}
                         placeholder="http://localhost:8080"
@@ -101,14 +144,16 @@ export function SettingsPage() {
 
                     <div className="flex flex-wrap gap-2">
                       <Button
-                        className="min-h-[42px] rounded-[10px] text-[0.72rem] uppercase tracking-[0.18em]"
+                        className="min-h-[38px] rounded-[10px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
                         onClick={() => void handleSave()}
+                        size="sm"
                       >
                         Save and reconnect
                       </Button>
                       <Button
-                        className="min-h-[42px] rounded-[10px] text-[0.72rem] uppercase tracking-[0.18em]"
+                        className="min-h-[38px] rounded-[10px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
                         onClick={() => setDraftGatewayUrl(window.location.origin)}
+                        size="sm"
                         variant="secondary"
                       >
                         Use current origin
@@ -117,7 +162,7 @@ export function SettingsPage() {
                   </div>
                 </section>
 
-                <section className="grid gap-2.5 xl:grid-cols-3">
+                <section className="grid gap-2 sm:grid-cols-3">
                   <StatusTile
                     label="Socket target"
                     value={toWebSocketUrl(gatewayUrl).replace(/^wss?:\/\//, "")}
@@ -128,14 +173,105 @@ export function SettingsPage() {
               </div>
             </SettingsPanel>
 
-            <div className="grid gap-3 md:h-full md:min-h-0 md:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]">
+            <SettingsPanel
+              className="md:flex md:min-h-0 md:flex-col"
+              contentClassName="md:min-h-0 md:flex-1"
+              description="Bridge presence and display APIs keep the tablet awake and reset the machine sleep timer while this skin is being used."
+              title="Display & Sleep"
+            >
+                <div className="grid gap-2">
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <PreviewRow label="Display status" value={connection} />
+                  <PreviewRow
+                    label="Wake-lock"
+                    value={
+                      displayState == null
+                        ? "Unknown"
+                        : displayState.wakeLockOverride
+                          ? "Override active"
+                          : displayState.wakeLockEnabled
+                            ? "Auto-managed on"
+                            : "Auto-managed off"
+                    }
+                  />
+                  <PreviewRow label="Sleep timer" value={formatSleepTimeout(timeoutSeconds)} />
+                </div>
+
+                <div className="rounded-[10px] border border-border bg-[#090a0c] px-2 py-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-[#d0a954]">
+                        Brightness
+                      </p>
+                      <p className="mt-0.5 text-[0.72rem] leading-4 text-muted-foreground">
+                        {formatBrightnessSupport(displayState)}
+                      </p>
+                    </div>
+                    <p className="font-mono text-[0.9rem] font-semibold tracking-[0.03em] text-foreground">
+                      {formatBrightnessValue(brightnessDraft)}
+                    </p>
+                  </div>
+
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">
+                      Dim
+                    </span>
+                    <input
+                      className="h-2 w-full cursor-pointer accent-[#d0a954] disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={displayState?.platformSupported.brightness === false}
+                      max={100}
+                      min={0}
+                      onBlur={() => commitBrightness()}
+                      onChange={handleBrightnessChange}
+                      onKeyUp={handleBrightnessKeyUp}
+                      onPointerUp={() => commitBrightness()}
+                      step={1}
+                      type="range"
+                      value={brightnessDraft}
+                    />
+                    <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">
+                      Auto
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {displayState ? (
+                      <p className="self-center font-mono text-[0.62rem] tracking-[0.03em] text-muted-foreground">
+                        Applied: {formatBrightnessValue(displayState.brightness)}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  <Button
+                    disabled={displayState?.platformSupported.wakeLock === false}
+                    onClick={() =>
+                      void (displayState?.wakeLockOverride ? releaseWakeLock() : requestWakeLock())
+                    }
+                    size="sm"
+                  >
+                    {displayState?.wakeLockOverride ? "Release wake-lock" : "Keep screen on"}
+                  </Button>
+                </div>
+
+                {displayError ? (
+                  <p className="font-mono text-[0.7rem] text-destructive">{displayError}</p>
+                ) : null}
+                {heartbeatError ? (
+                  <p className="font-mono text-[0.7rem] text-destructive">{heartbeatError}</p>
+                ) : null}
+              </div>
+            </SettingsPanel>
+
+            <div className="grid gap-2.5 md:col-span-2 md:h-full md:min-h-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <SettingsPanel
                 className="md:flex md:min-h-0 md:flex-col"
                 contentClassName="md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-1"
                 description="The route map below mirrors the endpoints the skin currently uses for live machine state and workflow/device reads."
                 title="Connection Preview"
               >
-                <div className="grid gap-2">
+                <div className="grid gap-1.5 sm:grid-cols-2">
                   {endpointRows.map((row) => (
                     <PreviewRow key={row.label} label={row.label} value={row.value} />
                   ))}
@@ -178,15 +314,15 @@ function SettingsPanel({
   return (
     <section
       className={cn(
-        "rounded-[10px] border border-border bg-[#0b0c0f] px-2.5 py-2.5",
+        "rounded-[10px] border border-border bg-[#0b0c0f] px-2 py-2",
         className,
       )}
     >
-      <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {title}
       </p>
-      <p className="mt-0.5 text-[0.78rem] leading-5 text-muted-foreground">{description}</p>
-      <div className={cn("mt-2.5", contentClassName)}>{children}</div>
+      <p className="mt-0.5 text-[0.72rem] leading-4 text-muted-foreground">{description}</p>
+      <div className={cn("mt-2", contentClassName)}>{children}</div>
     </section>
   );
 }
@@ -199,11 +335,11 @@ function StatusTile({
   value: string;
 }) {
   return (
-    <div className="rounded-[10px] border border-border bg-[#090a0c] px-2.5 py-2.5">
-      <p className="font-mono text-[0.56rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+    <div className="rounded-[10px] border border-border bg-[#090a0c] px-2 py-1.5">
+      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-1.5 break-all font-mono text-[0.74rem] font-semibold tracking-[0.04em] text-foreground">
+      <p className="mt-1 break-all font-mono text-[0.7rem] font-semibold tracking-[0.03em] text-foreground">
         {value}
       </p>
     </div>
@@ -218,11 +354,11 @@ function PreviewRow({
   value: string;
 }) {
   return (
-    <div className="rounded-[10px] border border-border bg-[#090a0c] px-2.5 py-2.5">
-      <p className="font-mono text-[0.56rem] font-medium uppercase tracking-[0.16em] text-[#d0a954]">
+    <div className="rounded-[10px] border border-border bg-[#090a0c] px-2 py-1.5">
+      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-[#d0a954]">
         {label}
       </p>
-      <p className="mt-1.5 break-all font-mono text-[0.74rem] font-semibold tracking-[0.04em] text-foreground">
+      <p className="mt-1 break-all font-mono text-[0.7rem] font-semibold tracking-[0.03em] text-foreground">
         {value}
       </p>
     </div>
@@ -262,15 +398,15 @@ function DeviceSummary({
     <div className="grid gap-2">
       {devices.map((device) => (
         <div
-          className="rounded-[10px] border border-border bg-[#090a0c] px-2.5 py-2.5"
+          className="rounded-[10px] border border-border bg-[#090a0c] px-2 py-1.5"
           key={device.id}
         >
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="truncate font-mono text-[0.9rem] font-semibold tracking-[0.02em] text-foreground">
+              <p className="truncate font-mono text-[0.82rem] font-semibold tracking-[0.02em] text-foreground">
                 {device.name}
               </p>
-              <p className="mt-1 font-mono text-[0.58rem] uppercase tracking-[0.18em] text-muted-foreground">
+              <p className="mt-0.5 font-mono text-[0.54rem] uppercase tracking-[0.18em] text-muted-foreground">
                 {device.type}
               </p>
             </div>
@@ -278,11 +414,11 @@ function DeviceSummary({
               {device.state}
             </Badge>
           </div>
-          <div className="mt-2 grid gap-2 xl:grid-cols-[92px_minmax(0,1fr)]">
-            <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="mt-1.5 grid gap-1.5 xl:grid-cols-[74px_minmax(0,1fr)]">
+            <p className="font-mono text-[0.52rem] uppercase tracking-[0.16em] text-muted-foreground">
               Device ID
             </p>
-            <p className="break-all font-mono text-[0.72rem] font-semibold tracking-[0.04em] text-foreground">
+            <p className="break-all font-mono text-[0.68rem] font-semibold tracking-[0.03em] text-foreground">
               {device.id}
             </p>
           </div>
@@ -302,7 +438,7 @@ function StateCallout({
   return (
     <div
       className={cn(
-        "rounded-[10px] border px-2.5 py-2.5 font-mono text-[0.7rem] leading-5 tracking-[0.04em]",
+        "rounded-[10px] border px-2 py-1.5 font-mono text-[0.68rem] leading-4 tracking-[0.04em]",
         tone === "error"
           ? "border-[#5f3438] bg-[#261316] text-[#ffb2b2]"
           : "border-border bg-[#090a0c] text-muted-foreground",
@@ -311,4 +447,64 @@ function StateCallout({
       {children}
     </div>
   );
+}
+
+function formatBrightness(displayState: DisplayState | null) {
+  if (!displayState) {
+    return "Unknown";
+  }
+
+  const base =
+    displayState.requestedBrightness === 100
+      ? "Auto"
+      : `${displayState.brightness}%`;
+
+  if (
+    displayState.lowBatteryBrightnessActive &&
+    displayState.requestedBrightness !== displayState.brightness
+  ) {
+    return `${base} (capped from ${displayState.requestedBrightness}%)`;
+  }
+
+  if (displayState.requestedBrightness === 100) {
+    return "Auto (OS managed)";
+  }
+
+  return base;
+}
+
+function formatBrightnessValue(brightness: number) {
+  if (brightness === 100) {
+    return "Auto";
+  }
+
+  return `${brightness}%`;
+}
+
+function formatBrightnessSupport(displayState: DisplayState | null) {
+  if (!displayState) {
+    return "Waiting for the bridge to report display state.";
+  }
+
+  if (!displayState.platformSupported.brightness) {
+    return "Brightness control is not available on this platform.";
+  }
+
+  if (displayState.lowBatteryBrightnessActive) {
+    return "Low battery mode may cap the applied brightness.";
+  }
+
+  return "Drag the slider to set screen brightness. Auto uses the OS setting.";
+}
+
+function formatSleepTimeout(timeoutSeconds: number | null) {
+  if (timeoutSeconds == null) {
+    return "Unknown";
+  }
+
+  if (timeoutSeconds < 0) {
+    return "Disabled";
+  }
+
+  return `${timeoutSeconds}s`;
 }

@@ -1,12 +1,24 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  displayStateSchema,
+  heartbeatResponseSchema,
   machineSnapshotSchema,
   machineWaterLevelsSchema,
   scaleSnapshotSchema,
 } from "./types";
 
 describe("bridge realtime schemas", () => {
+  it("accepts heartbeat responses", () => {
+    expect(
+      heartbeatResponseSchema.parse({
+        timeout: 1800,
+      }),
+    ).toEqual({
+      timeout: 1800,
+    });
+  });
+
   it("accepts websocket scale snapshots", () => {
     expect(
       scaleSnapshotSchema.parse({
@@ -56,6 +68,30 @@ describe("bridge realtime schemas", () => {
     ).toMatchObject({
       extraField: "future",
       mixTemperature: 83.5,
+    });
+  });
+
+  it("accepts display websocket snapshots", () => {
+    expect(
+      displayStateSchema.parse({
+        wakeLockEnabled: true,
+        wakeLockOverride: false,
+        brightness: 80,
+        requestedBrightness: 80,
+        lowBatteryBrightnessActive: false,
+        platformSupported: {
+          brightness: true,
+          wakeLock: true,
+        },
+        extraField: "future",
+      }),
+    ).toMatchObject({
+      brightness: 80,
+      extraField: "future",
+      platformSupported: {
+        brightness: true,
+        wakeLock: true,
+      },
     });
   });
 });
