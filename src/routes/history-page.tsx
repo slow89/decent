@@ -57,7 +57,7 @@ export function HistoryPage() {
   }
 
   return (
-    <div className="panel min-h-[calc(100svh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100svh-var(--app-footer-height))] md:flex-col">
+    <div className="panel min-h-[calc(100vh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100vh-var(--app-footer-height))] md:flex-col">
       <section className="grid min-h-0 flex-1 md:grid-cols-[312px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
         <aside className="flex min-h-0 min-w-0 flex-col border-b border-border bg-panel-muted md:border-b-0 md:border-r">
           <div className="shrink-0 border-b border-border px-3 py-3 md:px-4">

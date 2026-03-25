@@ -7,7 +7,7 @@ import {
 
 import { createBridgeClient } from "@/rest/client";
 import { queryClient } from "@/rest/query-client";
-import { type MachineStateChange } from "@/rest/types";
+import { type MachineStateChange, type ProfileRecord } from "@/rest/types";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 
 function getClient() {
@@ -93,9 +93,35 @@ export function useScanDevicesMutation() {
   const client = useQueryClient();
 
   return useMutation({
-    mutationFn: () => getClient().scanDevices(),
+    mutationFn: (options?: { connect?: boolean }) => getClient().scanDevices(options),
     onSuccess: (devices) => {
       client.setQueryData(bridgeQueryKeys.devices(), devices);
+    },
+  });
+}
+
+export function useConnectDeviceMutation() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (deviceId: string) => getClient().connectDevice(deviceId),
+    onSuccess: async () => {
+      await client.invalidateQueries({
+        queryKey: bridgeQueryKeys.devices(),
+      });
+    },
+  });
+}
+
+export function useDisconnectDeviceMutation() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (deviceId: string) => getClient().disconnectDevice(deviceId),
+    onSuccess: async () => {
+      await client.invalidateQueries({
+        queryKey: bridgeQueryKeys.devices(),
+      });
     },
   });
 }
@@ -108,6 +134,38 @@ export function useUpdateWorkflowMutation() {
       getClient().updateWorkflow(patch),
     onSuccess: (workflow) => {
       client.setQueryData(bridgeQueryKeys.workflow(), workflow);
+    },
+  });
+}
+
+export function useImportProfilesMutation() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (records: ProfileRecord[]) => getClient().importProfiles(records),
+    onSuccess: async () => {
+      await client.invalidateQueries({
+        queryKey: bridgeQueryKeys.profiles(),
+      });
+    },
+  });
+}
+
+export function useExportProfilesMutation() {
+  return useMutation({
+    mutationFn: () => getClient().exportProfiles(),
+  });
+}
+
+export function useRestoreDefaultProfileMutation() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (filename: string) => getClient().restoreDefaultProfile(filename),
+    onSuccess: async () => {
+      await client.invalidateQueries({
+        queryKey: bridgeQueryKeys.profiles(),
+      });
     },
   });
 }

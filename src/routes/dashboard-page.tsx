@@ -6,6 +6,7 @@ import { formatBrewRatio, formatPrimaryNumber, roundValue } from "@/lib/recipe-u
 import {
   useDevicesQuery,
   useMachineStateQuery,
+  useRequestMachineStateMutation,
   useTareScaleMutation,
   useUpdateWorkflowMutation,
   useWorkflowQuery,
@@ -22,11 +23,14 @@ export function DashboardPage() {
   const { data: snapshot, error: machineQueryError } = useMachineStateQuery();
   const { data: devices } = useDevicesQuery();
   const { data: workflow, error: workflowQueryError } = useWorkflowQuery();
+  const requestMachineStateMutation = useRequestMachineStateMutation();
   const tareScaleMutation = useTareScaleMutation();
   const updateWorkflowMutation = useUpdateWorkflowMutation();
 
   const hasQueryError = Boolean(machineError || machineQueryError || workflowQueryError);
   const isOffline = liveConnection !== "live" || hasQueryError;
+  const isMachinePoweredOn = snapshot?.state.state !== "sleeping";
+  const isMachinePowerDisabled = snapshot == null || hasQueryError;
   const activeRecipe = workflow?.profile?.title ?? workflow?.name ?? "PSPH";
   const statusLabel = getStatusLabel({
     isOffline,
@@ -234,10 +238,22 @@ export function DashboardPage() {
         <DashboardTopBar
           activeRecipe={activeRecipe}
           isOffline={isOffline}
+          isMachinePowerDisabled={isMachinePowerDisabled}
+          isMachinePowerPending={requestMachineStateMutation.isPending}
+          isMachinePoweredOn={isMachinePoweredOn}
           isScalePaired={isScalePaired}
           isScaleTaring={tareScaleMutation.isPending}
           isScaleWeightActionDisabled={!canUseScaleWeightForDose || isUpdatingWorkflow}
           liveConnection={liveConnection}
+          onToggleMachinePower={() => {
+            if (snapshot == null) {
+              return;
+            }
+
+            requestMachineStateMutation.mutate(
+              snapshot.state.state === "sleeping" ? "idle" : "sleeping",
+            );
+          }}
           onSetDoseFromScale={() => {
             if (
               isScalePaired &&
@@ -260,8 +276,8 @@ export function DashboardPage() {
         <section className="grid md:h-full md:min-h-0 md:flex-1 md:grid-cols-[228px_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)] md:overflow-hidden xl:grid-cols-[264px_minmax(0,1fr)]">
           <DashboardControlRail
             controlRows={controlRows}
-            disabled={isUpdatingWorkflow}
             recipeControls={recipeControls}
+            workflowDisabled={isUpdatingWorkflow}
           />
 
           <div className="min-w-0 md:flex md:h-full md:min-h-0 md:flex-col md:overflow-hidden">

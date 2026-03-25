@@ -39,7 +39,8 @@ export function TelemetryChart({
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   const timelineSamples = getTelemetryTimelineSample(data);
-  const latestSample = timelineSamples.at(-1) ?? data.at(-1) ?? null;
+  const latestSample =
+    timelineSamples[timelineSamples.length - 1] ?? data[data.length - 1] ?? null;
   const hoveredSample =
     hoveredSampleIndex == null ? null : timelineSamples[hoveredSampleIndex] ?? null;
   const activeSample = hoveredSample ?? latestSample;

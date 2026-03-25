@@ -115,6 +115,13 @@ export const profileRecordSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).nullish(),
 });
 
+export const profileImportResultSchema = z.object({
+  imported: z.number(),
+  skipped: z.number(),
+  failed: z.number(),
+  errors: z.array(z.string()).default([]),
+});
+
 export const shotSummarySchema = z
   .object({
     id: z.string().nullish(),
@@ -201,6 +208,7 @@ export type WorkflowContext = z.infer<typeof workflowContextSchema>;
 export type WorkflowSettings = z.infer<typeof workflowSettingsSchema>;
 export type WorkflowRecord = z.infer<typeof workflowRecordSchema>;
 export type ProfileRecord = z.infer<typeof profileRecordSchema>;
+export type ProfileImportResult = z.infer<typeof profileImportResultSchema>;
 export type ShotRecord = z.infer<typeof shotSummarySchema>;
 export type ShotMeasurement = z.infer<typeof shotMeasurementSchema>;
 export type ShotDetailRecord = z.infer<typeof shotDetailSchema>;

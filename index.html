@@ -6,10 +6,96 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>Decent Skin</title>
+    <title>Espresso Cockpit</title>
   </head>
   <body>
+    <div
+      id="boot-status"
+      style="
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: #fff7ed;
+        color: #111827;
+        font: 600 16px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        text-align: center;
+        white-space: pre-wrap;
+      "
+    >
+      Loading Espresso Cockpit...
+    </div>
     <div id="root"></div>
+    <script>
+      (function () {
+        var statusNode = document.getElementById("boot-status");
+
+        function setStatus(message, background, color) {
+          if (!statusNode) {
+            return;
+          }
+
+          statusNode.textContent = message;
+          statusNode.style.background = background;
+          statusNode.style.color = color;
+          statusNode.style.display = "flex";
+        }
+
+        window.__espressoBoot = {
+          fail: function (message) {
+            setStatus("Espresso Cockpit failed to start.\n\n" + message, "#fef2f2", "#7f1d1d");
+          },
+          mark: function (message) {
+            setStatus(message, "#fff7ed", "#111827");
+          },
+          ready: function () {
+            if (!statusNode) {
+              return;
+            }
+
+            statusNode.style.display = "none";
+          },
+        };
+
+        window.addEventListener("error", function (event) {
+          var message = event && event.message ? event.message : "Unknown startup error";
+          var source =
+            event && event.filename
+              ? "\n\nSource: " +
+                event.filename +
+                ":" +
+                (event.lineno || 0) +
+                ":" +
+                (event.colno || 0)
+              : "";
+          var stack =
+            event && event.error && event.error.stack
+              ? "\n\nStack:\n" + String(event.error.stack)
+              : "";
+          window.__espressoBoot.fail(message + source + stack);
+        });
+
+        window.addEventListener("unhandledrejection", function (event) {
+          var reason = event && event.reason;
+          var message =
+            reason && typeof reason === "object" && "message" in reason
+              ? String(reason.message)
+              : String(reason);
+          var stack =
+            reason && typeof reason === "object" && "stack" in reason && reason.stack
+              ? "\n\nStack:\n" + String(reason.stack)
+              : "";
+          window.__espressoBoot.fail((message || "Unhandled promise rejection") + stack);
+        });
+
+        window.__espressoBoot.mark(
+          "Espresso Cockpit booting...\n\nIf this message stays here, the main app bundle did not finish mounting.",
+        );
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

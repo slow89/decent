@@ -9,9 +9,18 @@ import { useThemeStore } from "@/stores/theme-store";
 
 import { SettingsPage } from "./settings-page";
 
-const { routerInvalidate, useDevicesQueryMock } = vi.hoisted(() => ({
+const {
+  routerInvalidate,
+  useConnectDeviceMutationMock,
+  useDevicesQueryMock,
+  useDisconnectDeviceMutationMock,
+  useScanDevicesMutationMock,
+} = vi.hoisted(() => ({
+  useConnectDeviceMutationMock: vi.fn(),
+  useDisconnectDeviceMutationMock: vi.fn(),
   routerInvalidate: vi.fn(async () => undefined),
   useDevicesQueryMock: vi.fn(),
+  useScanDevicesMutationMock: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -25,11 +34,18 @@ vi.mock("@/rest/queries", async () => {
 
   return {
     ...actual,
+    useConnectDeviceMutation: useConnectDeviceMutationMock,
+    useDisconnectDeviceMutation: useDisconnectDeviceMutationMock,
     useDevicesQuery: useDevicesQueryMock,
+    useScanDevicesMutation: useScanDevicesMutationMock,
   };
 });
 
 describe("SettingsPage", () => {
+  const connectMutateAsync = vi.fn(async () => undefined);
+  const disconnectMutateAsync = vi.fn(async () => undefined);
+  const scanMutateAsync = vi.fn(async () => []);
+
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
@@ -65,6 +81,18 @@ describe("SettingsPage", () => {
     document.documentElement.dataset.theme = "dark";
 
     routerInvalidate.mockResolvedValue(undefined);
+    useConnectDeviceMutationMock.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: connectMutateAsync,
+      variables: null,
+    });
+    useDisconnectDeviceMutationMock.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: disconnectMutateAsync,
+      variables: null,
+    });
     useDevicesQueryMock.mockReturnValue({
       data: [
         {
@@ -73,9 +101,21 @@ describe("SettingsPage", () => {
           state: "connected",
           type: "scale",
         },
+        {
+          id: "machine-2",
+          name: "DE1XL",
+          state: "disconnected",
+          type: "machine",
+        },
       ],
       error: null,
       isFetching: false,
+      refetch: vi.fn(async () => undefined),
+    });
+    useScanDevicesMutationMock.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: scanMutateAsync,
     });
   });
 
@@ -91,7 +131,12 @@ describe("SettingsPage", () => {
     expect(screen.getByText("1800s")).toBeInTheDocument();
     expect(screen.getByText("Auto-managed on")).toBeInTheDocument();
     expect(screen.getByText("Acaia Lunar")).toBeInTheDocument();
+    expect(screen.getByText("DE1XL")).toBeInTheDocument();
     expect(screen.getByText("connected")).toBeInTheDocument();
+    expect(screen.getByText("disconnected")).toBeInTheDocument();
+    expect(screen.getByText("Scale Pairing")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Disconnect scale" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Connect machine" })).toBeInTheDocument();
   });
 
   it("saves the updated bridge URL and invalidates bridge data", async () => {
@@ -129,11 +174,65 @@ describe("SettingsPage", () => {
     expect(screen.getByDisplayValue(window.location.origin)).toBeInTheDocument();
   });
 
+  it("connects a disconnected device from device discovery", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Connect machine" }));
+
+    await waitFor(() => {
+      expect(connectMutateAsync).toHaveBeenCalledWith("machine-2");
+    });
+  });
+
+  it("disconnects a connected device from device discovery", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect scale" }));
+
+    await waitFor(() => {
+      expect(disconnectMutateAsync).toHaveBeenCalledWith("scale-1");
+    });
+  });
+
+  it("shows an explicit pair action for discovered scales", () => {
+    useDevicesQueryMock.mockReturnValue({
+      data: [
+        {
+          id: "scale-1",
+          name: "Acaia Lunar",
+          state: "disconnected",
+          type: "scale",
+        },
+      ],
+      error: null,
+      isFetching: false,
+      refetch: vi.fn(async () => undefined),
+    });
+
+    render(<SettingsPage />);
+
+    expect(screen.getByRole("button", { name: "Pair scale" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Discovered scales can be paired directly from this page."),
+    ).toBeInTheDocument();
+  });
+
+  it("can scan without automatically connecting devices", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Scan only" }));
+
+    await waitFor(() => {
+      expect(scanMutateAsync).toHaveBeenCalledWith({ connect: false });
+    });
+  });
+
   it("shows the device loading state when the bridge query is refreshing", () => {
     useDevicesQueryMock.mockReturnValue({
       data: [],
       error: null,
       isFetching: true,
+      refetch: vi.fn(async () => undefined),
     });
 
     render(<SettingsPage />);
@@ -148,12 +247,16 @@ describe("SettingsPage", () => {
       data: [],
       error: null,
       isFetching: false,
+      refetch: vi.fn(async () => undefined),
     });
 
     render(<SettingsPage />);
 
     expect(
       screen.getByText("No tracked devices are currently reported by the bridge."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Run a scan, then pair your scale here."),
     ).toBeInTheDocument();
   });
 
@@ -162,6 +265,7 @@ describe("SettingsPage", () => {
       data: [],
       error: new Error("Bridge offline"),
       isFetching: false,
+      refetch: vi.fn(async () => undefined),
     });
 
     render(<SettingsPage />);

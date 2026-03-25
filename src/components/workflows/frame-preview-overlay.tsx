@@ -121,7 +121,7 @@ export function FramePreviewOverlay({
                       : "Unavailable"}
                   </span>
                 </summary>
-                <div className="mt-2 grid max-h-[30svh] gap-1 overflow-y-auto pr-1 sm:grid-cols-2 md:grid-cols-3">
+                <div className="mt-2 grid max-h-[30vh] gap-1 overflow-y-auto pr-1 sm:grid-cols-2 md:grid-cols-3">
                   {selectedFrame ? (
                     Object.entries(selectedFrame).map(([key, value]) => (
                       <div

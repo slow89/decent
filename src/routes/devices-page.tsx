@@ -38,7 +38,7 @@ export function DevicesPage() {
           <Button onClick={() => void refetch()} variant="secondary">
             Refresh list
           </Button>
-          <Button onClick={() => void scanMutation.mutateAsync()}>
+          <Button onClick={() => void scanMutation.mutateAsync(undefined)}>
             {scanMutation.isPending ? "Scanning..." : "Scan and connect"}
           </Button>
           {error ? (

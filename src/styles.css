@@ -1,109 +1,151 @@
-@import "tailwindcss";
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-canvas: var(--canvas);
-  --color-chart: var(--chart);
-  --color-shell: var(--shell);
-  --color-panel: var(--panel);
-  --color-panel-muted: var(--panel-muted);
-  --color-panel-subtle: var(--panel-subtle);
-  --color-panel-strong: var(--panel-strong);
-  --color-overlay: var(--overlay);
-  --color-highlight: var(--highlight);
-  --color-highlight-muted: var(--highlight-muted);
-  --color-status-success-surface: var(--status-success-surface);
-  --color-status-success-border: var(--status-success-border);
-  --color-status-success-foreground: var(--status-success-foreground);
-  --color-status-warning-surface: var(--status-warning-surface);
-  --color-status-warning-border: var(--status-warning-border);
-  --color-status-warning-foreground: var(--status-warning-foreground);
-  --color-status-info-surface: var(--status-info-surface);
-  --color-status-info-border: var(--status-info-border);
-  --color-status-info-foreground: var(--status-info-foreground);
-  --color-status-error-surface: var(--status-error-surface);
-  --color-status-error-border: var(--status-error-border);
-  --color-status-error-foreground: var(--status-error-foreground);
-  --color-chart-surface: var(--chart-surface);
-  --color-chart-border: var(--chart-border);
-  --color-chart-lane: var(--chart-lane);
-  --color-chart-lane-alt: var(--chart-lane-alt);
-  --color-chart-grid: var(--chart-grid);
-  --color-chart-axis: var(--chart-axis);
-  --color-chart-crosshair: var(--chart-crosshair);
-  --color-chart-event: var(--chart-event);
-  --shadow-soft: 0 18px 40px rgba(2, 6, 23, 0.34);
-  --shadow-panel: 0 16px 36px rgba(2, 6, 23, 0.28);
-  --shadow-panel-strong: 0 24px 54px rgba(2, 6, 23, 0.42);
-  --font-display: "Canela", "Iowan Old Style", "Palatino Linotype", serif;
-  --font-sans: "Suisse Intl", "Avenir Next", "Segoe UI", sans-serif;
-  --font-mono: "Berkeley Mono", "JetBrains Mono", "SF Mono", "Menlo", monospace;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root,
 :root[data-theme="dark"] {
   --app-footer-height: 5.4rem;
-  --canvas: #020304;
-  --chart: #050608;
-  --background: #090a0c;
-  --foreground: #f1f2f4;
-  --card: rgba(7, 8, 10, 0.94);
-  --card-foreground: #edf2f7;
-  --primary: #f3a31f;
-  --primary-foreground: #170d00;
-  --secondary: #0c0d10;
-  --secondary-foreground: #d9e3ec;
-  --muted: #0b0c0f;
-  --muted-foreground: #8f97a3;
-  --accent: #39c97b;
-  --accent-foreground: #06110b;
-  --destructive: #ff6b6b;
-  --border: rgba(255, 196, 72, 0.12);
-  --input: rgba(255, 196, 72, 0.18);
-  --ring: rgba(243, 163, 31, 0.3);
-  --shell: rgba(8, 9, 11, 0.98);
-  --panel: rgba(11, 12, 15, 0.94);
-  --panel-muted: #090a0c;
-  --panel-subtle: #0f0c08;
-  --panel-strong: #060709;
-  --overlay: rgba(3, 5, 8, 0.88);
-  --highlight: #d0a954;
-  --highlight-muted: #d99826;
-  --status-success-surface: #0f2018;
-  --status-success-border: #1d5a3d;
-  --status-success-foreground: #6be79f;
-  --status-warning-surface: #1c160b;
-  --status-warning-border: #6a511f;
-  --status-warning-foreground: #f0b37a;
-  --status-info-surface: #132030;
-  --status-info-border: #27415f;
-  --status-info-foreground: #66c9ff;
-  --status-error-surface: #261316;
-  --status-error-border: #5f3438;
-  --status-error-foreground: #ffb2b2;
-  --chart-surface: rgba(7, 9, 11, 0.92);
-  --chart-border: rgba(255, 196, 72, 0.12);
-  --chart-lane: rgba(9, 12, 16, 0.82);
-  --chart-lane-alt: rgba(8, 10, 14, 0.88);
-  --chart-grid: rgba(255, 188, 58, 0.09);
-  --chart-axis: rgba(255, 188, 58, 0.18);
-  --chart-crosshair: rgba(255, 255, 255, 0.22);
-  --chart-event: rgba(255, 190, 87, 0.22);
+
+  --canvas-rgb: 2, 3, 4;
+  --canvas-alpha: 1;
+  --chart-rgb: 5, 6, 8;
+  --chart-alpha: 1;
+  --background-rgb: 9, 10, 12;
+  --background-alpha: 1;
+  --foreground-rgb: 241, 242, 244;
+  --foreground-alpha: 1;
+  --card-rgb: 7, 8, 10;
+  --card-alpha: 0.94;
+  --card-foreground-rgb: 237, 242, 247;
+  --card-foreground-alpha: 1;
+  --primary-rgb: 243, 163, 31;
+  --primary-alpha: 1;
+  --primary-foreground-rgb: 23, 13, 0;
+  --primary-foreground-alpha: 1;
+  --secondary-rgb: 12, 13, 16;
+  --secondary-alpha: 1;
+  --secondary-foreground-rgb: 217, 227, 236;
+  --secondary-foreground-alpha: 1;
+  --muted-rgb: 11, 12, 15;
+  --muted-alpha: 1;
+  --muted-foreground-rgb: 143, 151, 163;
+  --muted-foreground-alpha: 1;
+  --accent-rgb: 57, 201, 123;
+  --accent-alpha: 1;
+  --accent-foreground-rgb: 6, 17, 11;
+  --accent-foreground-alpha: 1;
+  --destructive-rgb: 255, 107, 107;
+  --destructive-alpha: 1;
+  --border-rgb: 255, 196, 72;
+  --border-alpha: 0.12;
+  --input-rgb: 255, 196, 72;
+  --input-alpha: 0.18;
+  --ring-rgb: 243, 163, 31;
+  --ring-alpha: 0.3;
+  --shell-rgb: 8, 9, 11;
+  --shell-alpha: 0.98;
+  --panel-rgb: 11, 12, 15;
+  --panel-alpha: 0.94;
+  --panel-muted-rgb: 9, 10, 12;
+  --panel-muted-alpha: 1;
+  --panel-subtle-rgb: 15, 12, 8;
+  --panel-subtle-alpha: 1;
+  --panel-strong-rgb: 6, 7, 9;
+  --panel-strong-alpha: 1;
+  --overlay-rgb: 3, 5, 8;
+  --overlay-alpha: 0.88;
+  --highlight-rgb: 208, 169, 84;
+  --highlight-alpha: 1;
+  --highlight-muted-rgb: 217, 152, 38;
+  --highlight-muted-alpha: 1;
+  --status-success-surface-rgb: 15, 32, 24;
+  --status-success-surface-alpha: 1;
+  --status-success-border-rgb: 29, 90, 61;
+  --status-success-border-alpha: 1;
+  --status-success-foreground-rgb: 107, 231, 159;
+  --status-success-foreground-alpha: 1;
+  --status-warning-surface-rgb: 28, 22, 11;
+  --status-warning-surface-alpha: 1;
+  --status-warning-border-rgb: 106, 81, 31;
+  --status-warning-border-alpha: 1;
+  --status-warning-foreground-rgb: 240, 179, 122;
+  --status-warning-foreground-alpha: 1;
+  --status-info-surface-rgb: 19, 32, 48;
+  --status-info-surface-alpha: 1;
+  --status-info-border-rgb: 39, 65, 95;
+  --status-info-border-alpha: 1;
+  --status-info-foreground-rgb: 102, 201, 255;
+  --status-info-foreground-alpha: 1;
+  --status-error-surface-rgb: 38, 19, 22;
+  --status-error-surface-alpha: 1;
+  --status-error-border-rgb: 95, 52, 56;
+  --status-error-border-alpha: 1;
+  --status-error-foreground-rgb: 255, 178, 178;
+  --status-error-foreground-alpha: 1;
+  --chart-surface-rgb: 7, 9, 11;
+  --chart-surface-alpha: 0.92;
+  --chart-border-rgb: 255, 196, 72;
+  --chart-border-alpha: 0.12;
+  --chart-lane-rgb: 9, 12, 16;
+  --chart-lane-alpha: 0.82;
+  --chart-lane-alt-rgb: 8, 10, 14;
+  --chart-lane-alt-alpha: 0.88;
+  --chart-grid-rgb: 255, 188, 58;
+  --chart-grid-alpha: 0.09;
+  --chart-axis-rgb: 255, 188, 58;
+  --chart-axis-alpha: 0.18;
+  --chart-crosshair-rgb: 255, 255, 255;
+  --chart-crosshair-alpha: 0.22;
+  --chart-event-rgb: 255, 190, 87;
+  --chart-event-alpha: 0.22;
+
+  --canvas: rgba(var(--canvas-rgb), var(--canvas-alpha));
+  --chart: rgba(var(--chart-rgb), var(--chart-alpha));
+  --background: rgba(var(--background-rgb), var(--background-alpha));
+  --foreground: rgba(var(--foreground-rgb), var(--foreground-alpha));
+  --card: rgba(var(--card-rgb), var(--card-alpha));
+  --card-foreground: rgba(var(--card-foreground-rgb), var(--card-foreground-alpha));
+  --primary: rgba(var(--primary-rgb), var(--primary-alpha));
+  --primary-foreground: rgba(var(--primary-foreground-rgb), var(--primary-foreground-alpha));
+  --secondary: rgba(var(--secondary-rgb), var(--secondary-alpha));
+  --secondary-foreground: rgba(var(--secondary-foreground-rgb), var(--secondary-foreground-alpha));
+  --muted: rgba(var(--muted-rgb), var(--muted-alpha));
+  --muted-foreground: rgba(var(--muted-foreground-rgb), var(--muted-foreground-alpha));
+  --accent: rgba(var(--accent-rgb), var(--accent-alpha));
+  --accent-foreground: rgba(var(--accent-foreground-rgb), var(--accent-foreground-alpha));
+  --destructive: rgba(var(--destructive-rgb), var(--destructive-alpha));
+  --border: rgba(var(--border-rgb), var(--border-alpha));
+  --input: rgba(var(--input-rgb), var(--input-alpha));
+  --ring: rgba(var(--ring-rgb), var(--ring-alpha));
+  --shell: rgba(var(--shell-rgb), var(--shell-alpha));
+  --panel: rgba(var(--panel-rgb), var(--panel-alpha));
+  --panel-muted: rgba(var(--panel-muted-rgb), var(--panel-muted-alpha));
+  --panel-subtle: rgba(var(--panel-subtle-rgb), var(--panel-subtle-alpha));
+  --panel-strong: rgba(var(--panel-strong-rgb), var(--panel-strong-alpha));
+  --overlay: rgba(var(--overlay-rgb), var(--overlay-alpha));
+  --highlight: rgba(var(--highlight-rgb), var(--highlight-alpha));
+  --highlight-muted: rgba(var(--highlight-muted-rgb), var(--highlight-muted-alpha));
+  --status-success-surface: rgba(var(--status-success-surface-rgb), var(--status-success-surface-alpha));
+  --status-success-border: rgba(var(--status-success-border-rgb), var(--status-success-border-alpha));
+  --status-success-foreground: rgba(var(--status-success-foreground-rgb), var(--status-success-foreground-alpha));
+  --status-warning-surface: rgba(var(--status-warning-surface-rgb), var(--status-warning-surface-alpha));
+  --status-warning-border: rgba(var(--status-warning-border-rgb), var(--status-warning-border-alpha));
+  --status-warning-foreground: rgba(var(--status-warning-foreground-rgb), var(--status-warning-foreground-alpha));
+  --status-info-surface: rgba(var(--status-info-surface-rgb), var(--status-info-surface-alpha));
+  --status-info-border: rgba(var(--status-info-border-rgb), var(--status-info-border-alpha));
+  --status-info-foreground: rgba(var(--status-info-foreground-rgb), var(--status-info-foreground-alpha));
+  --status-error-surface: rgba(var(--status-error-surface-rgb), var(--status-error-surface-alpha));
+  --status-error-border: rgba(var(--status-error-border-rgb), var(--status-error-border-alpha));
+  --status-error-foreground: rgba(var(--status-error-foreground-rgb), var(--status-error-foreground-alpha));
+  --chart-surface: rgba(var(--chart-surface-rgb), var(--chart-surface-alpha));
+  --chart-border: rgba(var(--chart-border-rgb), var(--chart-border-alpha));
+  --chart-lane: rgba(var(--chart-lane-rgb), var(--chart-lane-alpha));
+  --chart-lane-alt: rgba(var(--chart-lane-alt-rgb), var(--chart-lane-alt-alpha));
+  --chart-grid: rgba(var(--chart-grid-rgb), var(--chart-grid-alpha));
+  --chart-axis: rgba(var(--chart-axis-rgb), var(--chart-axis-alpha));
+  --chart-crosshair: rgba(var(--chart-crosshair-rgb), var(--chart-crosshair-alpha));
+  --chart-event: rgba(var(--chart-event-rgb), var(--chart-event-alpha));
+
   --surface-top-strip: rgba(6, 7, 8, 0.96);
   --surface-nav: rgba(4, 5, 6, 0.98);
   --surface-chart: #07090b;
@@ -112,55 +154,78 @@
   --body-glow: rgba(243, 163, 31, 0.08);
   --body-start: rgba(7, 7, 8, 0.98);
   --body-end: rgba(2, 3, 4, 1);
+
+  --shadow-soft: 0 18px 40px rgba(2, 6, 23, 0.34);
+  --shadow-panel: 0 16px 36px rgba(2, 6, 23, 0.28);
+  --shadow-panel-strong: 0 24px 54px rgba(2, 6, 23, 0.42);
+  --font-display: "Canela", "Iowan Old Style", "Palatino Linotype", serif;
+  --font-sans: "Suisse Intl", "Avenir Next", "Segoe UI", sans-serif;
+  --font-mono: "Berkeley Mono", "JetBrains Mono", "SF Mono", "Menlo", monospace;
 }
 
 :root[data-theme="light"] {
-  --canvas: #efe8dc;
-  --chart: #fffdf9;
-  --background: #fbf7f1;
-  --foreground: #1a1c1f;
-  --card: rgba(255, 251, 245, 0.96);
-  --card-foreground: #1f2329;
-  --primary: #b16c12;
-  --primary-foreground: #fff8ef;
-  --secondary: #efe7d8;
-  --secondary-foreground: #2f3440;
-  --muted: #f3ecdf;
-  --muted-foreground: #666d76;
-  --accent: #238b57;
-  --accent-foreground: #f4fff9;
-  --destructive: #c05252;
-  --border: rgba(122, 86, 22, 0.18);
-  --input: rgba(122, 86, 22, 0.16);
-  --ring: rgba(177, 108, 18, 0.24);
-  --shell: rgba(249, 244, 236, 0.98);
-  --panel: rgba(255, 251, 244, 0.94);
-  --panel-muted: #f7f0e4;
-  --panel-subtle: #f2e6d0;
-  --panel-strong: #fffdf9;
-  --overlay: rgba(34, 28, 18, 0.22);
-  --highlight: #a56c16;
-  --highlight-muted: #a56c16;
-  --status-success-surface: #e2f3e8;
-  --status-success-border: #9bc7aa;
-  --status-success-foreground: #246a42;
-  --status-warning-surface: #f9eedc;
-  --status-warning-border: #d0b183;
-  --status-warning-foreground: #975d1c;
-  --status-info-surface: #e6eff8;
-  --status-info-border: #abc0d7;
-  --status-info-foreground: #356b9d;
-  --status-error-surface: #f9e5e5;
-  --status-error-border: #dbb0b0;
-  --status-error-foreground: #9f4040;
-  --chart-surface: rgba(255, 252, 247, 0.98);
-  --chart-border: rgba(92, 78, 49, 0.16);
-  --chart-lane: rgba(246, 239, 228, 0.78);
-  --chart-lane-alt: rgba(241, 233, 220, 0.88);
-  --chart-grid: rgba(177, 108, 18, 0.08);
-  --chart-axis: rgba(177, 108, 18, 0.18);
-  --chart-crosshair: rgba(31, 35, 41, 0.22);
-  --chart-event: rgba(177, 108, 18, 0.18);
+  --canvas-rgb: 239, 232, 220;
+  --chart-rgb: 255, 253, 249;
+  --background-rgb: 251, 247, 241;
+  --foreground-rgb: 26, 28, 31;
+  --card-rgb: 255, 251, 245;
+  --card-alpha: 0.96;
+  --card-foreground-rgb: 31, 35, 41;
+  --primary-rgb: 177, 108, 18;
+  --primary-foreground-rgb: 255, 248, 239;
+  --secondary-rgb: 239, 231, 216;
+  --secondary-foreground-rgb: 47, 52, 64;
+  --muted-rgb: 243, 236, 223;
+  --muted-foreground-rgb: 102, 109, 118;
+  --accent-rgb: 35, 139, 87;
+  --accent-foreground-rgb: 244, 255, 249;
+  --destructive-rgb: 192, 82, 82;
+  --border-rgb: 122, 86, 22;
+  --border-alpha: 0.18;
+  --input-rgb: 122, 86, 22;
+  --input-alpha: 0.16;
+  --ring-rgb: 177, 108, 18;
+  --ring-alpha: 0.24;
+  --shell-rgb: 249, 244, 236;
+  --shell-alpha: 0.98;
+  --panel-rgb: 255, 251, 244;
+  --panel-alpha: 0.94;
+  --panel-muted-rgb: 247, 240, 228;
+  --panel-subtle-rgb: 242, 230, 208;
+  --panel-strong-rgb: 255, 253, 249;
+  --overlay-rgb: 34, 28, 18;
+  --overlay-alpha: 0.22;
+  --highlight-rgb: 165, 108, 22;
+  --highlight-muted-rgb: 165, 108, 22;
+  --status-success-surface-rgb: 226, 243, 232;
+  --status-success-border-rgb: 155, 199, 170;
+  --status-success-foreground-rgb: 36, 106, 66;
+  --status-warning-surface-rgb: 249, 238, 220;
+  --status-warning-border-rgb: 208, 177, 131;
+  --status-warning-foreground-rgb: 151, 93, 28;
+  --status-info-surface-rgb: 230, 239, 248;
+  --status-info-border-rgb: 171, 192, 215;
+  --status-info-foreground-rgb: 53, 107, 157;
+  --status-error-surface-rgb: 249, 229, 229;
+  --status-error-border-rgb: 219, 176, 176;
+  --status-error-foreground-rgb: 159, 64, 64;
+  --chart-surface-rgb: 255, 252, 247;
+  --chart-surface-alpha: 0.98;
+  --chart-border-rgb: 92, 78, 49;
+  --chart-border-alpha: 0.16;
+  --chart-lane-rgb: 246, 239, 228;
+  --chart-lane-alpha: 0.78;
+  --chart-lane-alt-rgb: 241, 233, 220;
+  --chart-lane-alt-alpha: 0.88;
+  --chart-grid-rgb: 177, 108, 18;
+  --chart-grid-alpha: 0.08;
+  --chart-axis-rgb: 177, 108, 18;
+  --chart-axis-alpha: 0.18;
+  --chart-crosshair-rgb: 31, 35, 41;
+  --chart-crosshair-alpha: 0.22;
+  --chart-event-rgb: 177, 108, 18;
+  --chart-event-alpha: 0.18;
+
   --surface-top-strip: rgba(255, 251, 244, 0.92);
   --surface-nav: rgba(251, 246, 238, 0.96);
   --surface-chart: #f8f3ea;
@@ -169,6 +234,7 @@
   --body-glow: rgba(177, 108, 18, 0.1);
   --body-start: rgba(255, 251, 245, 0.98);
   --body-end: rgba(239, 232, 220, 1);
+
   --shadow-soft: 0 18px 32px rgba(88, 61, 24, 0.12);
   --shadow-panel: 0 16px 30px rgba(88, 61, 24, 0.1);
   --shadow-panel-strong: 0 22px 42px rgba(88, 61, 24, 0.14);
@@ -201,31 +267,38 @@
   }
 }
 
-@utility panel {
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-panel);
-  backdrop-filter: blur(6px);
+@layer components {
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-panel);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
 }
 
-@utility tablet-safe {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--app-footer-height));
-}
+@layer utilities {
+  .tablet-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--app-footer-height));
+  }
 
-@utility top-strip {
-  background: var(--surface-top-strip);
-  border: 1px solid var(--border);
-  box-shadow:
-    var(--shadow-panel),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-}
+  .top-strip {
+    background: var(--surface-top-strip);
+    border: 1px solid var(--border);
+    box-shadow:
+      var(--shadow-panel),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
 
-@utility nav-surface {
-  background: var(--surface-nav);
-  border: 1px solid var(--border);
-  box-shadow:
-    var(--shadow-panel-strong),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(10px);
+  .nav-surface {
+    background: var(--surface-nav);
+    border: 1px solid var(--border);
+    box-shadow:
+      var(--shadow-panel-strong),
+      inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
 }

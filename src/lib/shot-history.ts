@@ -70,8 +70,9 @@ export function getShotDurationSeconds(measurements: ShotMeasurement[]) {
   }
 
   const telemetry = adaptShotMeasurementsToTelemetry(measurements);
+  const latestTelemetry = telemetry[telemetry.length - 1];
 
-  return telemetry.at(-1)?.shotElapsedSeconds ?? telemetry.at(-1)?.elapsedSeconds ?? null;
+  return latestTelemetry?.shotElapsedSeconds ?? latestTelemetry?.elapsedSeconds ?? null;
 }
 
 export function getShotFinalWeight(measurements: ShotMeasurement[]) {

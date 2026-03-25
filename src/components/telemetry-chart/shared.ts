@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
-import { Scale } from "@visx/visx";
+import { scaleLinear } from "@visx/scale";
 
 import {
   formatTelemetryClock,
@@ -49,7 +49,7 @@ export type LaneConfig<TSeries = TelemetrySeriesDefinition, TFamily extends stri
   yOffset: number;
 };
 
-export type LinearScale = ReturnType<typeof Scale.scaleLinear<number>>;
+export type LinearScale = ReturnType<typeof scaleLinear<number>>;
 
 export type TelemetryChartDataModel = {
   activePreset: TelemetryChartPreset;

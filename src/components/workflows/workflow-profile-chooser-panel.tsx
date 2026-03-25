@@ -1,5 +1,7 @@
-import type { KeyboardEvent } from "react";
+import { useState, type ChangeEvent, type KeyboardEvent } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { joinValues, getProfileTitle } from "@/lib/workflow-utils";
 import type { ProfileRecord, WorkflowProfile } from "@/rest/types";
@@ -11,23 +13,49 @@ export function WorkflowProfileChooserPanel({
   activeProfile,
   availableProfiles,
   isApplying,
+  isExporting,
+  isImporting,
+  isRestoringDefault,
+  libraryStatus,
   onApplyProfile,
+  onExportProfiles,
+  onImportProfiles,
   onOpenFrames,
+  onRestoreDefaultProfile,
 }: {
   activeProfile: WorkflowProfile | undefined;
   availableProfiles: ProfileRecord[];
   isApplying: boolean;
+  isExporting: boolean;
+  isImporting: boolean;
+  isRestoringDefault: boolean;
+  libraryStatus: {
+    message: string | null;
+    tone: "error" | "success";
+  };
   onApplyProfile: (record: ProfileRecord) => void;
+  onExportProfiles: () => Promise<void>;
+  onImportProfiles: (file: File) => Promise<void>;
   onOpenFrames: (profile: WorkflowProfile | undefined) => void;
+  onRestoreDefaultProfile: (filename: string) => Promise<void>;
 }) {
   return (
     <WorkflowPanel
       className="md:flex md:h-full md:min-h-0 md:flex-col"
       contentClassName="md:flex md:min-h-0 md:flex-1"
-      description="Keep the current profile visible, then swap to another saved profile when you want a different recipe."
+      description="Keep the current profile visible, then swap to another saved profile when you want a different profile."
       title="Choose Profile"
     >
       <div className="grid gap-2.5 md:min-h-0 md:flex-1 md:grid-rows-[auto_minmax(0,1fr)]">
+        <ProfileLibraryActions
+          isExporting={isExporting}
+          isImporting={isImporting}
+          isRestoringDefault={isRestoringDefault}
+          libraryStatus={libraryStatus}
+          onExportProfiles={onExportProfiles}
+          onImportProfiles={onImportProfiles}
+          onRestoreDefaultProfile={onRestoreDefaultProfile}
+        />
         <CurrentProfileRow
           onOpenFrames={() => onOpenFrames(activeProfile)}
           profile={activeProfile}
@@ -58,6 +86,137 @@ export function WorkflowProfileChooserPanel({
         </div>
       </div>
     </WorkflowPanel>
+  );
+}
+
+function ProfileLibraryActions({
+  isExporting,
+  isImporting,
+  isRestoringDefault,
+  libraryStatus,
+  onExportProfiles,
+  onImportProfiles,
+  onRestoreDefaultProfile,
+}: {
+  isExporting: boolean;
+  isImporting: boolean;
+  isRestoringDefault: boolean;
+  libraryStatus: {
+    message: string | null;
+    tone: "error" | "success";
+  };
+  onExportProfiles: () => Promise<void>;
+  onImportProfiles: (file: File) => Promise<void>;
+  onRestoreDefaultProfile: (filename: string) => Promise<void>;
+}) {
+  const [restoreFilename, setRestoreFilename] = useState("");
+  const isRestoringDisabled = isRestoringDefault || !restoreFilename.trim();
+
+  async function handleImportChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    await onImportProfiles(file);
+  }
+
+  async function handleRestoreDefault() {
+    if (isRestoringDisabled) {
+      return;
+    }
+
+    await onRestoreDefaultProfile(restoreFilename.trim());
+  }
+
+  return (
+    <section className="rounded-[10px] border border-border bg-panel-subtle px-2.5 py-2.5 md:px-2 md:py-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-highlight">
+            Library Actions
+          </p>
+          <p className="mt-1 text-[0.72rem] leading-4 text-muted-foreground">
+            Import an exported library, save the current library to disk, or restore a bundled
+            default by filename.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <input
+            accept="application/json,.json"
+            className="sr-only"
+            disabled={isImporting}
+            id="profile-library-import"
+            onChange={(event) => {
+              void handleImportChange(event);
+            }}
+            type="file"
+          />
+          <Button asChild disabled={isImporting} size="sm" variant="secondary">
+            <label htmlFor="profile-library-import">
+              {isImporting ? "Importing" : "Import JSON"}
+            </label>
+          </Button>
+          <Button
+            disabled={isExporting}
+            onClick={() => {
+              void onExportProfiles();
+            }}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            {isExporting ? "Exporting" : "Export JSON"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <label className="grid gap-1" htmlFor="restore-default-profile">
+          <span className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Default profile filename
+          </span>
+          <Input
+            className="h-10 rounded-[10px] border-border bg-panel-strong font-mono text-[0.74rem]"
+            id="restore-default-profile"
+            onChange={(event) => setRestoreFilename(event.target.value)}
+            placeholder="best_practice.json"
+            value={restoreFilename}
+          />
+        </label>
+        <div className="flex items-end">
+          <Button
+            className="min-h-[40px] rounded-[10px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
+            disabled={isRestoringDisabled}
+            onClick={() => {
+              void handleRestoreDefault();
+            }}
+            size="sm"
+            type="button"
+          >
+            {isRestoringDefault ? "Restoring" : "Restore Default"}
+          </Button>
+        </div>
+      </div>
+
+      {libraryStatus.message ? (
+        <p
+          className={cn(
+            "mt-2 text-[0.72rem] leading-5",
+            libraryStatus.tone === "error" ? "text-destructive" : "text-highlight",
+          )}
+        >
+          {libraryStatus.message}
+        </p>
+      ) : (
+        <p className="mt-2 text-[0.72rem] leading-5 text-muted-foreground">
+          Restore needs the exact bundled filename exposed by the bridge, such as{" "}
+          <code>best_practice.json</code>.
+        </p>
+      )}
+    </section>
   );
 }
 

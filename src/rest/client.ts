@@ -6,6 +6,7 @@ import {
   heartbeatResponseSchema,
   machineSnapshotSchema,
   machineStateChangeSchema,
+  profileImportResultSchema,
   profileRecordListSchema,
   profileRecordSchema,
   shotDetailSchema,
@@ -90,11 +91,59 @@ export function createBridgeClient(baseUrl: string) {
     async getProfile(id: string) {
       return request(`/api/v1/profiles/${encodeURIComponent(id)}`, profileRecordSchema);
     },
+    async importProfiles(records: unknown[]) {
+      return request("/api/v1/profiles/import", profileImportResultSchema, {
+        method: "POST",
+        body: JSON.stringify(records),
+      });
+    },
+    async exportProfiles() {
+      return request("/api/v1/profiles/export", profileRecordListSchema);
+    },
+    async restoreDefaultProfile(filename: string) {
+      return request(
+        `/api/v1/profiles/restore/${encodeURIComponent(filename)}`,
+        profileRecordSchema,
+        {
+          method: "POST",
+        },
+      );
+    },
     async listDevices() {
       return request("/api/v1/devices", deviceSummaryListSchema);
     },
-    async scanDevices() {
-      return request("/api/v1/devices/scan?connect=true", deviceSummaryListSchema);
+    async scanDevices(options?: { connect?: boolean }) {
+      const searchParams = new URLSearchParams({
+        connect: options?.connect === false ? "false" : "true",
+      });
+
+      return request(`/api/v1/devices/scan?${searchParams.toString()}`, deviceSummaryListSchema);
+    },
+    async connectDevice(deviceId: string) {
+      const response = await fetch(`${origin}/api/v1/devices/connect`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ deviceId }),
+      });
+
+      if (!response.ok) {
+        throw new BridgeClientError("Unable to connect device", response.status);
+      }
+    },
+    async disconnectDevice(deviceId: string) {
+      const response = await fetch(`${origin}/api/v1/devices/disconnect`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ deviceId }),
+      });
+
+      if (!response.ok) {
+        throw new BridgeClientError("Unable to disconnect device", response.status);
+      }
     },
     async listShots() {
       return request("/api/v1/shots", shotListResponseSchema);

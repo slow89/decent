@@ -37,21 +37,21 @@ export type DashboardRecipeControls = {
 
 export function DashboardControlRail({
   controlRows,
-  disabled,
   recipeControls,
+  workflowDisabled,
 }: {
   controlRows: ReadonlyArray<DashboardControlRow>;
-  disabled: boolean;
   recipeControls: DashboardRecipeControls;
+  workflowDisabled: boolean;
 }) {
   return (
     <aside className="border-b border-border md:min-h-0 md:overflow-y-auto md:overscroll-contain md:border-b-0 md:border-r">
-      <DoseDrinkControlRow disabled={disabled} {...recipeControls} />
+      <DoseDrinkControlRow disabled={workflowDisabled} {...recipeControls} />
       {controlRows.map((row) => (
         <ControlRailRow
           activePresetValue={row.activePresetValue}
           detail={row.detail}
-          disabled={disabled}
+          disabled={workflowDisabled}
           key={row.label}
           label={row.label}
           onDecrease={row.onDecrease}

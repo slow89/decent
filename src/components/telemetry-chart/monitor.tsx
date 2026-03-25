@@ -1,6 +1,9 @@
 import type { PointerEvent } from "react";
 
-import { Grid, Group, Scale, Shape } from "@visx/visx";
+import { GridColumns, GridRows } from "@visx/grid";
+import { Group } from "@visx/group";
+import { scaleLinear } from "@visx/scale";
+import { LinePath } from "@visx/shape";
 
 import {
   CompactMonitorBar as SharedCompactMonitorBar,
@@ -183,8 +186,8 @@ function TelemetryMonitorCanvas({
   const timelineValues = timelineSamples.map((sample) =>
     getSampleXValue(sample, usesShotTimeline),
   );
-  const maxTimelineValue = Math.max(8, timelineValues.at(-1) ?? 0);
-  const xScale = Scale.scaleLinear<number>({
+  const maxTimelineValue = Math.max(8, timelineValues[timelineValues.length - 1] ?? 0);
+  const xScale: LinearScale = scaleLinear<number>({
     domain: [0, maxTimelineValue || 1],
     range: [0, chartMetrics.innerWidth],
   });
@@ -237,7 +240,7 @@ function TelemetryMonitorCanvas({
           y={0}
         />
 
-        <Group.Group left={chartMetrics.margin.left} top={chartMetrics.margin.top}>
+        <Group left={chartMetrics.margin.left} top={chartMetrics.margin.top}>
           {visibleLanes.length > 0 ? (
             visibleLanes.map((lane, laneIndex) => (
               <TelemetryLane
@@ -308,7 +311,7 @@ function TelemetryMonitorCanvas({
             xScale={xScale}
             y={chartMetrics.plotHeight}
           />
-        </Group.Group>
+        </Group>
       </svg>
     </div>
   );
@@ -338,14 +341,14 @@ function TelemetryLane({
   const backgroundFill = index % 2 === 0 ? chartTheme.laneSurface : chartTheme.laneSurfaceAlt;
   const isProgressLane = lane.family === "progress";
   const domain = getLaneDomain(lane.family, lane.series, samples);
-  const laneScale = Scale.scaleLinear<number>({
+  const laneScale: LinearScale = scaleLinear<number>({
     domain,
     range: [lane.height, 0],
   });
   const laneTickCount = density === "compact" ? 3 : 4;
 
   return (
-    <Group.Group top={lane.yOffset}>
+    <Group top={lane.yOffset}>
       <rect
         fill={backgroundFill}
         height={lane.height}
@@ -356,7 +359,7 @@ function TelemetryLane({
         y={0}
       />
 
-      <Grid.GridColumns
+      <GridColumns
         height={lane.height}
         numTicks={density === "compact" ? 4 : Math.max(Math.round(maxTimelineValue / 4), 5)}
         scale={xScale}
@@ -365,7 +368,7 @@ function TelemetryLane({
       />
 
       {isProgressLane ? null : (
-        <Grid.GridRows
+        <GridRows
           height={lane.height}
           numTicks={laneTickCount}
           scale={laneScale}
@@ -412,7 +415,7 @@ function TelemetryLane({
         />
       ) : (
         lane.series.map((series) => (
-          <Shape.LinePath
+          <LinePath
             data={samples}
             key={series.id}
             stroke={series.color}
@@ -439,7 +442,7 @@ function TelemetryLane({
           />
         ))
       )}
-    </Group.Group>
+    </Group>
   );
 }
 
@@ -463,7 +466,7 @@ function ProgressLane({
   const frameSeries = lane.series.find((series) => series.id === "profileFrame");
   const frameValues = samples.map((sample) => sample.profileFrame);
   const frameMax = Math.max(1, ...frameValues);
-  const frameScale = Scale.scaleLinear<number>({
+  const frameScale: LinearScale = scaleLinear<number>({
     domain: [0, frameMax],
     range: [lane.height - (density === "compact" ? 12 : 16), density === "compact" ? 16 : 20],
   });
@@ -478,9 +481,15 @@ function ProgressLane({
     <>
       {visibleEvents.map((event, index) => {
         const x = xScale(event.xValue);
+        const eventLabelY =
+          density === "compact"
+            ? 6 + (index % 2) * 12
+            : index % 2 === 0
+              ? 10
+              : 24;
 
         return (
-          <Group.Group key={`${event.label}-${event.xValue}`}>
+          <Group key={`${event.label}-${event.xValue}`}>
             <line
               stroke={chartTheme.event}
               strokeDasharray="4 4"
@@ -490,22 +499,23 @@ function ProgressLane({
               y2={lane.height}
             />
             <text
+              dominantBaseline="hanging"
               fill={chartTheme.muted}
               fontFamily={chartTheme.mono}
               fontSize={density === "compact" ? "8.5" : "10"}
               textAnchor="middle"
               x={Math.max(40, Math.min(width - 40, x))}
-              y={density === "compact" ? 12 + (index % 2) * 10 : index % 2 === 0 ? 18 : 32}
+              y={eventLabelY}
             >
               {density === "compact" ? compactStateLabel(event.label) : event.label}
             </text>
-          </Group.Group>
+          </Group>
         );
       })}
 
       {frameSeries ? (
         <>
-          <Shape.LinePath
+          <LinePath
             data={samples}
             key={frameSeries.id}
             stroke={frameSeries.color}
@@ -521,7 +531,7 @@ function ProgressLane({
                 index === 0 || sample.profileFrame !== samples[index - 1]?.profileFrame,
             )
             .map((sample) => (
-              <Group.Group
+              <Group
                 key={`${sample.timestamp}-${sample.profileFrame}`}
                 left={xScale(getSampleXValue(sample, usesShotTimeline))}
                 top={frameScale(sample.profileFrame)}
@@ -537,7 +547,7 @@ function ProgressLane({
                 >
                   {sample.profileFrame}
                 </text>
-              </Group.Group>
+              </Group>
             ))}
         </>
       ) : (
@@ -571,17 +581,19 @@ function ChartXAxis({
   y: number;
 }) {
   const ticks = getTimelineTicks(maxTimelineValue, density === "compact" ? 4 : 6);
+  const tickLabelInset = density === "compact" ? 24 : 32;
+  const axisLabelInset = density === "compact" ? 8 : 12;
 
   return (
-    <Group.Group top={y}>
+    <Group top={y}>
       <line stroke={chartTheme.axis} x1={0} x2={width} y1={0} y2={0} />
 
       {ticks.map((tick) => (
-        <Group.Group key={tick} left={xScale(tick)}>
+        <Group key={tick}>
           <line
             stroke={chartTheme.axis}
-            x1={0}
-            x2={0}
+            x1={xScale(tick)}
+            x2={xScale(tick)}
             y1={0}
             y2={density === "compact" ? 5 : 6}
           />
@@ -590,12 +602,12 @@ function ChartXAxis({
             fontFamily={chartTheme.mono}
             fontSize={density === "compact" ? "8.5" : "10"}
             textAnchor="middle"
-            x={0}
+            x={Math.max(tickLabelInset, Math.min(width - tickLabelInset, xScale(tick)))}
             y={density === "compact" ? 14 : 18}
           >
             {formatTelemetryClock(tick)}
           </text>
-        </Group.Group>
+        </Group>
       ))}
 
       <text
@@ -603,12 +615,12 @@ function ChartXAxis({
         fontFamily={chartTheme.mono}
         fontSize={density === "compact" ? "8.5" : "10"}
         textAnchor="end"
-        x={width}
+        x={width - axisLabelInset}
         y={density === "compact" ? 14 : 18}
       >
         {usesShotTimeline ? "Shot time" : "Stream time"}
       </text>
-    </Group.Group>
+    </Group>
   );
 }
 

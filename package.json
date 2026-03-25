@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "check": "pnpm test && pnpm build",
+    "deploy:tablet": "pnpm build && node scripts/deploy-tablet-skin.mjs",
     "preview": "vite preview",
     "test": "vitest run"
   },
@@ -13,6 +15,10 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@tanstack/react-query": "^5.91.3",
     "@tanstack/react-router": "^1.168.1",
+    "@visx/grid": "3.12.0",
+    "@visx/group": "3.12.0",
+    "@visx/scale": "3.12.0",
+    "@visx/shape": "3.12.0",
     "@visx/visx": "^3.12.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -24,7 +30,6 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25.5.0",
@@ -34,7 +39,7 @@
     "autoprefixer": "^10.4.27",
     "jsdom": "^29.0.1",
     "postcss": "^8.5.8",
-    "tailwindcss": "^4.2.2",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.9.3",
     "vite": "^8.0.1",
     "vitest": "^4.1.0"

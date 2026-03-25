@@ -95,7 +95,7 @@ declare module "@tanstack/react-router" {
 
 const navigation = [
   { to: "/", label: "Brew", icon: Coffee },
-  { to: "/workflows", label: "Recipe", icon: SlidersHorizontal },
+  { to: "/workflows", label: "Profiles", icon: SlidersHorizontal },
   { to: "/history", label: "Shots", icon: TimerReset },
   { to: "/settings", label: "Setup", icon: Settings2 },
 ] as const;

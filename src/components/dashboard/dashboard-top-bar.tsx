@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Droplets, Scale } from "lucide-react";
+import { Droplets, Power, Scale } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,10 +8,14 @@ import type { LiveConnectionState } from "@/stores/machine-store";
 export function DashboardTopBar({
   activeRecipe,
   isOffline,
+  isMachinePowerDisabled,
+  isMachinePowerPending,
+  isMachinePoweredOn,
   isScalePaired,
   isScaleTaring,
   isScaleWeightActionDisabled,
   liveConnection,
+  onToggleMachinePower,
   onSetDoseFromScale,
   onTareScale,
   reservoirLevel,
@@ -23,10 +27,14 @@ export function DashboardTopBar({
 }: {
   activeRecipe: string;
   isOffline: boolean;
+  isMachinePowerDisabled: boolean;
+  isMachinePowerPending: boolean;
+  isMachinePoweredOn: boolean;
   isScalePaired: boolean;
   isScaleTaring: boolean;
   isScaleWeightActionDisabled: boolean;
   liveConnection: LiveConnectionState;
+  onToggleMachinePower: () => void;
   onSetDoseFromScale: () => void;
   onTareScale: () => void;
   reservoirLevel: number | null;
@@ -85,14 +93,38 @@ export function DashboardTopBar({
                 {statusLabel}
               </p>
             </div>
-            <p
-              className={cn(
-                "shrink-0 font-mono text-[0.54rem] uppercase tracking-[0.1em]",
-                isOffline ? "text-status-warning-foreground" : "text-foreground",
-              )}
-            >
-              {formatConnectionLabel(liveConnection)}
-            </p>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button
+                aria-label={
+                  isMachinePowerPending
+                    ? isMachinePoweredOn
+                      ? "Turning off machine"
+                      : "Turning on machine"
+                    : isMachinePoweredOn
+                      ? "Sleep machine"
+                      : "Wake machine"
+                }
+                className={cn(
+                  "flex size-6 items-center justify-center rounded-[7px] border transition disabled:cursor-not-allowed disabled:opacity-50",
+                  isMachinePoweredOn
+                    ? "border-status-success-border bg-status-success-surface text-status-success-foreground hover:brightness-95"
+                    : "border-border bg-panel-strong text-muted-foreground hover:bg-panel-muted",
+                )}
+                disabled={isMachinePowerDisabled || isMachinePowerPending}
+                onClick={onToggleMachinePower}
+                type="button"
+              >
+                <Power className="size-3.5" />
+              </button>
+              <p
+                className={cn(
+                  "shrink-0 font-mono text-[0.54rem] uppercase tracking-[0.1em]",
+                  isOffline ? "text-status-warning-foreground" : "text-foreground",
+                )}
+              >
+                {formatConnectionLabel(liveConnection)}
+              </p>
+            </div>
           </div>
         </div>
       </div>

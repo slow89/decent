@@ -259,7 +259,7 @@ export function formatTelemetryTimestampLabel(timestamp: string) {
 }
 
 export function getTelemetryTimelineSample(samples: TelemetrySample[]) {
-  const latest = samples.at(-1);
+  const latest = samples[samples.length - 1];
 
   if (latest?.state !== "espresso") {
     return samples;
@@ -271,7 +271,7 @@ export function getTelemetryTimelineSample(samples: TelemetrySample[]) {
 }
 
 export function appendTelemetryHistory(telemetry: TelemetrySample[], snapshot: MachineSnapshot) {
-  const previousSample = telemetry.at(-1);
+  const previousSample = telemetry[telemetry.length - 1];
   const firstTimestampMs = getTimestampMs(telemetry[0]?.timestamp) ?? getTimestampMs(snapshot.timestamp);
   const currentTimestampMs = getTimestampMs(snapshot.timestamp);
   const elapsedSeconds =

@@ -1,7 +1,10 @@
 import type { PointerEvent } from "react";
 import { useState } from "react";
 
-import { Grid, Group, Scale, Shape } from "@visx/visx";
+import { GridColumns, GridRows } from "@visx/grid";
+import { Group } from "@visx/group";
+import { scaleLinear } from "@visx/scale";
+import { LinePath } from "@visx/shape";
 
 import {
   CompactMonitorBar,
@@ -241,7 +244,7 @@ function WorkflowFrameCanvas({
   const visibleLanes = buildVisibleLanes(selectedSeries, laneVisibility, density);
   const chartMetrics = getChartMetrics(density, visibleLanes, containerSize);
   const maxFrameValue = Math.max(samples.length, 1);
-  const xScale = Scale.scaleLinear<number>({
+  const xScale: LinearScale = scaleLinear<number>({
     domain: [1, Math.max(maxFrameValue, 2)],
     range: [0, chartMetrics.innerWidth],
   });
@@ -283,7 +286,7 @@ function WorkflowFrameCanvas({
           y={0}
         />
 
-        <Group.Group left={chartMetrics.margin.left} top={chartMetrics.margin.top}>
+        <Group left={chartMetrics.margin.left} top={chartMetrics.margin.top}>
           {visibleLanes.length > 0 ? (
             visibleLanes.map((lane, laneIndex) => (
               <WorkflowFrameLane
@@ -339,7 +342,7 @@ function WorkflowFrameCanvas({
             xScale={xScale}
             y={chartMetrics.plotHeight}
           />
-        </Group.Group>
+        </Group>
       </svg>
     </div>
   );
@@ -362,14 +365,14 @@ function WorkflowFrameLane({
 }) {
   const backgroundFill = index % 2 === 0 ? chartTheme.laneSurface : chartTheme.laneSurfaceAlt;
   const domain = getLaneDomain(lane.family, lane.series, samples);
-  const laneScale = Scale.scaleLinear<number>({
+  const laneScale: LinearScale = scaleLinear<number>({
     domain,
     range: [lane.height, 0],
   });
   const laneTickCount = density === "compact" ? 3 : 4;
 
   return (
-    <Group.Group top={lane.yOffset}>
+    <Group top={lane.yOffset}>
       <rect
         fill={backgroundFill}
         height={lane.height}
@@ -380,7 +383,7 @@ function WorkflowFrameLane({
         y={0}
       />
 
-      <Grid.GridColumns
+      <GridColumns
         height={lane.height}
         numTicks={density === "compact" ? Math.min(Math.max(samples.length - 1, 1), 4) : Math.min(Math.max(samples.length - 1, 1), 6)}
         scale={xScale}
@@ -388,7 +391,7 @@ function WorkflowFrameLane({
         width={width}
       />
 
-      <Grid.GridRows
+      <GridRows
         height={lane.height}
         numTicks={laneTickCount}
         scale={laneScale}
@@ -421,7 +424,7 @@ function WorkflowFrameLane({
       ))}
 
       {lane.series.map((series) => (
-        <Shape.LinePath
+        <LinePath
           data={samples}
           key={series.id}
           stroke={series.color}
@@ -432,7 +435,7 @@ function WorkflowFrameLane({
           y={(sample: WorkflowFrameSample) => laneScale(series.accessor(sample) ?? domain[0])}
         />
       ))}
-    </Group.Group>
+    </Group>
   );
 }
 
@@ -450,17 +453,19 @@ function WorkflowFrameXAxis({
   y: number;
 }) {
   const ticks = buildFrameTicks(maxFrameValue, density === "compact" ? 4 : 6);
+  const tickLabelInset = density === "compact" ? 20 : 28;
+  const axisLabelInset = density === "compact" ? 8 : 12;
 
   return (
-    <Group.Group top={y}>
+    <Group top={y}>
       <line stroke={chartTheme.axis} x1={0} x2={width} y1={0} y2={0} />
 
       {ticks.map((tick) => (
-        <Group.Group key={tick} left={xScale(tick)}>
+        <Group key={tick}>
           <line
             stroke={chartTheme.axis}
-            x1={0}
-            x2={0}
+            x1={xScale(tick)}
+            x2={xScale(tick)}
             y1={0}
             y2={density === "compact" ? 5 : 6}
           />
@@ -469,12 +474,12 @@ function WorkflowFrameXAxis({
             fontFamily={chartTheme.mono}
             fontSize={density === "compact" ? "8.5" : "10"}
             textAnchor="middle"
-            x={0}
+            x={Math.max(tickLabelInset, Math.min(width - tickLabelInset, xScale(tick)))}
             y={density === "compact" ? 14 : 18}
           >
             {tick}
           </text>
-        </Group.Group>
+        </Group>
       ))}
 
       <text
@@ -482,12 +487,12 @@ function WorkflowFrameXAxis({
         fontFamily={chartTheme.mono}
         fontSize={density === "compact" ? "8.5" : "10"}
         textAnchor="end"
-        x={width}
+        x={width - axisLabelInset}
         y={density === "compact" ? 14 : 18}
       >
         Frame index
       </text>
-    </Group.Group>
+    </Group>
   );
 }
 

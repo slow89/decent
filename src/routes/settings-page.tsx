@@ -14,7 +14,13 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toWebSocketUrl } from "@/rest/client";
 import { queryClient } from "@/rest/query-client";
-import { useDevicesQuery, bridgeQueryKeys } from "@/rest/queries";
+import {
+  bridgeQueryKeys,
+  useConnectDeviceMutation,
+  useDevicesQuery,
+  useDisconnectDeviceMutation,
+  useScanDevicesMutation,
+} from "@/rest/queries";
 import type {
   DeviceSummary,
   DisplayState,
@@ -33,7 +39,11 @@ export function SettingsPage() {
     data: devices = [],
     error: devicesError,
     isFetching: isFetchingDevices,
+    refetch: refetchDevices,
   } = useDevicesQuery();
+  const scanDevicesMutation = useScanDevicesMutation();
+  const connectDeviceMutation = useConnectDeviceMutation();
+  const disconnectDeviceMutation = useDisconnectDeviceMutation();
   const connection = useDisplayStore((state) => state.connection);
   const displayError = useDisplayStore((state) => state.error);
   const displayState = useDisplayStore((state) => state.displayState);
@@ -89,13 +99,13 @@ export function SettingsPage() {
 
   return (
     <div>
-      <div className="panel min-h-[calc(100svh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100svh-var(--app-footer-height))] md:flex-col">
+      <div className="panel min-h-[calc(100vh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100vh-var(--app-footer-height))] md:flex-col">
         <section className="px-2 py-2 md:flex-1 md:min-h-0 md:px-3 md:py-3">
           <div className="grid gap-2.5 md:h-full md:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] md:grid-rows-[auto_minmax(0,1fr)] md:items-stretch xl:grid-cols-[minmax(0,1.18fr)_360px]">
             <SettingsPanel
               className="md:flex md:min-h-0 md:flex-col"
               contentClassName="md:flex md:min-h-0 md:flex-1"
-              description="Point the skin at the correct Streamline Bridge host, then keep the bridge authoritative for connection and device state."
+              description="Point the skin at the correct Streamline Bridge host, then use this page to scan and pair devices through the bridge."
               title="Bridge Routing"
             >
               <div className="grid gap-2 md:min-h-0 md:flex-1 md:content-start">
@@ -115,8 +125,9 @@ export function SettingsPage() {
                     </div>
                   </div>
                   <p className="mt-1.5 text-[0.72rem] leading-4 text-muted-foreground">
-                    Scale and machine scan/connect policy stays in Streamline Bridge.
-                    This skin only changes which bridge instance it talks to.
+                    Machine and scale pairing still runs through Streamline Bridge.
+                    This skin calls those bridge APIs directly so you can pair from Setup
+                    without leaving the tablet view.
                   </p>
                 </section>
 
@@ -313,13 +324,55 @@ export function SettingsPage() {
               <SettingsPanel
                 className="md:flex md:min-h-0 md:flex-col"
                 contentClassName="md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-1"
-                description="Device discovery is visible here for context. Pairing and preferred-device policy still belong to Streamline Bridge."
-                title="Device Discovery"
+                description="Scan the bridge, then pair a discovered scale or connect a machine directly from this page."
+                title="Machine & Scale Pairing"
               >
+                <StateCallout tone="neutral">
+                  Run a scan, then use the dedicated scale section below to pair your scale.
+                  Streamline Bridge remains authoritative for device state and reconnect policy.
+                </StateCallout>
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <Button
+                    className="min-h-[36px] rounded-[10px] px-3 text-[0.62rem] uppercase tracking-[0.14em]"
+                    onClick={() => void refetchDevices()}
+                    size="sm"
+                    variant="secondary"
+                  >
+                    Refresh list
+                  </Button>
+                  <Button
+                    className="min-h-[36px] rounded-[10px] px-3 text-[0.62rem] uppercase tracking-[0.14em]"
+                    disabled={scanDevicesMutation.isPending}
+                    onClick={() => void scanDevicesMutation.mutateAsync({ connect: false })}
+                    size="sm"
+                    variant="outline"
+                  >
+                    {scanDevicesMutation.isPending ? "Scanning..." : "Scan only"}
+                  </Button>
+                  <Button
+                    className="min-h-[36px] rounded-[10px] px-3 text-[0.62rem] uppercase tracking-[0.14em]"
+                    disabled={scanDevicesMutation.isPending}
+                    onClick={() => void scanDevicesMutation.mutateAsync(undefined)}
+                    size="sm"
+                  >
+                    Scan and connect
+                  </Button>
+                </div>
                 <DeviceSummary
+                  connectPendingDeviceId={
+                    connectDeviceMutation.isPending ? connectDeviceMutation.variables : null
+                  }
+                  disconnectPendingDeviceId={
+                    disconnectDeviceMutation.isPending ? disconnectDeviceMutation.variables : null
+                  }
                   devices={devices}
                   errorMessage={devicesError?.message}
                   isFetching={isFetchingDevices}
+                  onConnectDevice={(deviceId) => void connectDeviceMutation.mutateAsync(deviceId)}
+                  onDisconnectDevice={(deviceId) =>
+                    void disconnectDeviceMutation.mutateAsync(deviceId)
+                  }
+                  scanErrorMessage={scanDevicesMutation.error?.message}
                 />
               </SettingsPanel>
             </div>
@@ -398,14 +451,31 @@ function PreviewRow({
 }
 
 function DeviceSummary({
+  connectPendingDeviceId,
+  disconnectPendingDeviceId,
   devices,
   errorMessage,
   isFetching,
+  onConnectDevice,
+  onDisconnectDevice,
+  scanErrorMessage,
 }: {
+  connectPendingDeviceId: string | null;
+  disconnectPendingDeviceId: string | null;
   devices: DeviceSummary[];
   errorMessage?: string;
   isFetching: boolean;
+  onConnectDevice: (deviceId: string) => void;
+  onDisconnectDevice: (deviceId: string) => void;
+  scanErrorMessage?: string;
 }) {
+  const connectedDevices = devices.filter((device) => device.state === "connected");
+  const disconnectedDevices = devices.filter((device) => device.state !== "connected");
+  const scaleDevices = devices.filter((device) => device.type === "scale");
+  const otherDevices = devices.filter((device) => device.type !== "scale");
+  const connectedScales = scaleDevices.filter((device) => device.state === "connected");
+  const disconnectedScales = scaleDevices.filter((device) => device.state !== "connected");
+
   if (errorMessage) {
     return (
       <StateCallout tone="error">
@@ -418,44 +488,205 @@ function DeviceSummary({
 
   if (!devices.length) {
     return (
-      <StateCallout tone="neutral">
-        {isFetching
-          ? "Checking the bridge for tracked devices."
-          : "No tracked devices are currently reported by the bridge."}
-      </StateCallout>
+      <div className="grid gap-2">
+        <StateCallout tone="neutral">
+          {isFetching
+            ? "Checking the bridge for tracked devices."
+            : "No tracked devices are currently reported by the bridge."}
+        </StateCallout>
+        {!isFetching ? (
+          <StateCallout tone="neutral">
+            Run a scan, then pair your scale here.
+          </StateCallout>
+        ) : null}
+        {scanErrorMessage ? <StateCallout tone="error">{scanErrorMessage}</StateCallout> : null}
+      </div>
     );
   }
 
   return (
     <div className="grid gap-2">
-      {devices.map((device) => (
-        <div
-          className="rounded-[10px] border border-border bg-panel-muted px-2 py-1.5"
-          key={device.id}
-        >
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="truncate font-mono text-[0.82rem] font-semibold tracking-[0.02em] text-foreground">
-                {device.name}
-              </p>
-              <p className="mt-0.5 font-mono text-[0.54rem] uppercase tracking-[0.18em] text-muted-foreground">
-                {device.type}
-              </p>
-            </div>
-            <Badge variant={device.state === "connected" ? "default" : "secondary"}>
-              {device.state}
-            </Badge>
-          </div>
-          <div className="mt-1.5 grid gap-1.5 xl:grid-cols-[74px_minmax(0,1fr)]">
-            <p className="font-mono text-[0.52rem] uppercase tracking-[0.16em] text-muted-foreground">
-              Device ID
-            </p>
-            <p className="break-all font-mono text-[0.68rem] font-semibold tracking-[0.03em] text-foreground">
-              {device.id}
-            </p>
-          </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <StatusTile label="Connected" value={`${connectedDevices.length}`} />
+        <StatusTile label="Disconnected" value={`${disconnectedDevices.length}`} />
+      </div>
+
+      <DeviceGroup
+        connectPendingDeviceId={connectPendingDeviceId}
+        description={
+          connectedScales.length
+            ? `Scale live on ${connectedScales[0]?.name}. Disconnect here if you need to switch devices.`
+            : disconnectedScales.length
+              ? "Discovered scales can be paired directly from this page."
+              : "No scales discovered yet. Run a scan, then pair your scale here."
+        }
+        devices={scaleDevices}
+        disconnectPendingDeviceId={disconnectPendingDeviceId}
+        emptyMessage="No scales discovered yet. Run a scan, then pair your scale here."
+        onConnectDevice={onConnectDevice}
+        onDisconnectDevice={onDisconnectDevice}
+        title="Scale Pairing"
+      />
+
+      {otherDevices.length ? (
+        <DeviceGroup
+          connectPendingDeviceId={connectPendingDeviceId}
+          description="Machine and other bridge-managed devices remain available below."
+          devices={otherDevices}
+          disconnectPendingDeviceId={disconnectPendingDeviceId}
+          onConnectDevice={onConnectDevice}
+          onDisconnectDevice={onDisconnectDevice}
+          title="Other Devices"
+        />
+      ) : null}
+
+      {scanErrorMessage ? <StateCallout tone="error">{scanErrorMessage}</StateCallout> : null}
+    </div>
+  );
+}
+
+function DeviceGroup({
+  connectPendingDeviceId,
+  description,
+  devices,
+  disconnectPendingDeviceId,
+  emptyMessage,
+  onConnectDevice,
+  onDisconnectDevice,
+  title,
+}: {
+  connectPendingDeviceId: string | null;
+  description: string;
+  devices: DeviceSummary[];
+  disconnectPendingDeviceId: string | null;
+  emptyMessage?: string;
+  onConnectDevice: (deviceId: string) => void;
+  onDisconnectDevice: (deviceId: string) => void;
+  title: string;
+}) {
+  const connectedDevices = devices.filter((device) => device.state === "connected");
+  const disconnectedDevices = devices.filter((device) => device.state !== "connected");
+
+  if (!devices.length) {
+    if (!emptyMessage) {
+      return null;
+    }
+
+    return (
+      <div className="grid gap-1.5">
+        <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          {title}
+        </p>
+        <StateCallout tone="neutral">{emptyMessage}</StateCallout>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-2">
+      <div className="grid gap-1.5">
+        <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          {title}
+        </p>
+        <p className="text-[0.72rem] leading-4 text-muted-foreground">{description}</p>
+      </div>
+
+      {connectedDevices.length ? (
+        <div className="grid gap-2">
+          <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Connected
+          </p>
+          {connectedDevices.map((device) => (
+            <DeviceCard
+              actionLabel={
+                disconnectPendingDeviceId === device.id
+                  ? getPendingDeviceActionLabel(device)
+                  : getDeviceActionLabel(device)
+              }
+              actionVariant="secondary"
+              badgeVariant="default"
+              device={device}
+              disabled={Boolean(connectPendingDeviceId || disconnectPendingDeviceId)}
+              key={device.id}
+              onAction={onDisconnectDevice}
+            />
+          ))}
         </div>
-      ))}
+      ) : null}
+
+      {disconnectedDevices.length ? (
+        <div className="grid gap-2">
+          <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Available
+          </p>
+          {disconnectedDevices.map((device) => (
+            <DeviceCard
+              actionLabel={
+                connectPendingDeviceId === device.id
+                  ? getPendingDeviceActionLabel(device)
+                  : getDeviceActionLabel(device)
+              }
+              actionVariant="default"
+              badgeVariant="secondary"
+              device={device}
+              disabled={Boolean(connectPendingDeviceId || disconnectPendingDeviceId)}
+              key={device.id}
+              onAction={onConnectDevice}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DeviceCard({
+  actionLabel,
+  actionVariant,
+  badgeVariant,
+  device,
+  disabled,
+  onAction,
+}: {
+  actionLabel: string;
+  actionVariant: "default" | "secondary";
+  badgeVariant: "default" | "secondary";
+  device: DeviceSummary;
+  disabled: boolean;
+  onAction: (deviceId: string) => void;
+}) {
+  return (
+    <div className="rounded-[10px] border border-border bg-panel-muted px-2 py-1.5">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-mono text-[0.82rem] font-semibold tracking-[0.02em] text-foreground">
+            {device.name}
+          </p>
+          <p className="mt-0.5 font-mono text-[0.54rem] uppercase tracking-[0.18em] text-muted-foreground">
+            {device.type}
+          </p>
+        </div>
+        <Badge variant={badgeVariant}>{device.state}</Badge>
+      </div>
+      <div className="mt-1.5 grid gap-1.5 xl:grid-cols-[74px_minmax(0,1fr)]">
+        <p className="font-mono text-[0.52rem] uppercase tracking-[0.16em] text-muted-foreground">
+          Device ID
+        </p>
+        <p className="break-all font-mono text-[0.68rem] font-semibold tracking-[0.03em] text-foreground">
+          {device.id}
+        </p>
+      </div>
+      <div className="mt-2 flex justify-end">
+        <Button
+          className="min-h-[34px] rounded-[10px] px-3 text-[0.62rem] uppercase tracking-[0.14em]"
+          disabled={disabled}
+          onClick={() => onAction(device.id)}
+          size="sm"
+          variant={actionVariant}
+        >
+          {actionLabel}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -479,6 +710,30 @@ function StateCallout({
       {children}
     </div>
   );
+}
+
+function getDeviceActionLabel(device: DeviceSummary) {
+  if (device.state === "connected") {
+    return `Disconnect ${device.type}`;
+  }
+
+  if (device.type === "scale") {
+    return "Pair scale";
+  }
+
+  return `Connect ${device.type}`;
+}
+
+function getPendingDeviceActionLabel(device: DeviceSummary) {
+  if (device.state === "connected") {
+    return `Disconnecting ${device.type}...`;
+  }
+
+  if (device.type === "scale") {
+    return "Pairing scale...";
+  }
+
+  return `Connecting ${device.type}...`;
 }
 
 function ThemeOptionButton({

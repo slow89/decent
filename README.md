@@ -2,6 +2,9 @@
 
 React skin scaffold for the Decent DE1 built on top of Streamline Bridge.
 
+Gateway source of truth for runtime, API, and deployment details:
+[tadelv/reaprime](https://github.com/tadelv/reaprime)
+
 ## Stack
 
 - Vite
@@ -21,6 +24,29 @@ pnpm dev
 
 By default the app targets `http://localhost:8080`, which matches the
 Streamline Bridge REST/WebSocket server.
+
+## Tablet Deploy
+
+```bash
+pnpm deploy:tablet
+```
+
+That command builds the skin, packages `dist/`, starts a temporary local zip
+server, installs the skin into the tablet gateway, and sets it as the default
+skin. It reads `.env` from the repo root before deploying.
+
+Required `.env` value:
+
+```bash
+TABLET_GATEWAY_ORIGIN=http://192.168.68.69:8080
+```
+
+Optional overrides:
+
+```bash
+SKIN_DEPLOY_HOST=192.168.68.51
+SKIN_DEPLOY_PORT=9000
+```
 
 ## MCP
 

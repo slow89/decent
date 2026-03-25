@@ -7,7 +7,10 @@ import { WorkflowShotSetupPanel } from "@/components/workflows/workflow-shot-set
 import { formatBrewRatio, roundValue } from "@/lib/recipe-utils";
 import { getProfileFingerprint, getProfileTitle, readString } from "@/lib/workflow-utils";
 import {
+  useExportProfilesMutation,
+  useImportProfilesMutation,
   useProfilesQuery,
+  useRestoreDefaultProfileMutation,
   useUpdateWorkflowMutation,
   useWorkflowQuery,
 } from "@/rest/queries";
@@ -16,12 +19,23 @@ import type {
   WorkflowContext,
   WorkflowProfile,
 } from "@/rest/types";
+import { profileRecordListSchema } from "@/rest/types";
 
 export function WorkflowsPage() {
   const workflowQuery = useWorkflowQuery();
   const profilesQuery = useProfilesQuery();
   const updateWorkflowMutation = useUpdateWorkflowMutation();
+  const importProfilesMutation = useImportProfilesMutation();
+  const exportProfilesMutation = useExportProfilesMutation();
+  const restoreDefaultProfileMutation = useRestoreDefaultProfileMutation();
   const [framePreviewProfile, setFramePreviewProfile] = useState<WorkflowProfile | null>(null);
+  const [profileLibraryStatus, setProfileLibraryStatus] = useState<{
+    message: string | null;
+    tone: "error" | "success";
+  }>({
+    message: null,
+    tone: "success",
+  });
 
   const workflow = workflowQuery.data;
   const activeProfile = workflow?.profile;
@@ -44,6 +58,9 @@ export function WorkflowsPage() {
   const targetYield = workflow?.context?.targetYield;
   const ratio = formatBrewRatio(targetDose, targetYield);
   const isUpdating = updateWorkflowMutation.isPending;
+  const isImportingProfiles = importProfilesMutation.isPending;
+  const isExportingProfiles = exportProfilesMutation.isPending;
+  const isRestoringDefaultProfile = restoreDefaultProfileMutation.isPending;
 
   const dosePresets = [
     { label: "16g", value: 16 },
@@ -60,6 +77,20 @@ export function WorkflowsPage() {
 
   function updateWorkflow(patch: Record<string, unknown>) {
     updateWorkflowMutation.mutate(patch);
+  }
+
+  function setProfileLibraryError(message: string) {
+    setProfileLibraryStatus({
+      message,
+      tone: "error",
+    });
+  }
+
+  function setProfileLibrarySuccess(message: string) {
+    setProfileLibraryStatus({
+      message,
+      tone: "success",
+    });
   }
 
   function applyProfile(record: ProfileRecord) {
@@ -121,17 +152,83 @@ export function WorkflowsPage() {
     });
   }
 
+  async function handleImportProfiles(file: File) {
+    try {
+      const parsedPayload = JSON.parse(await file.text()) as unknown;
+      const parsedProfiles = profileRecordListSchema.safeParse(parsedPayload);
+
+      if (!parsedProfiles.success) {
+        setProfileLibraryError("Import file must be a JSON array of bridge profile records.");
+        return;
+      }
+
+      const result = await importProfilesMutation.mutateAsync(parsedProfiles.data);
+      const errorSummary = result.errors.length ? ` ${result.errors.join(" ")}` : "";
+
+      setProfileLibrarySuccess(
+        `Imported ${result.imported}, skipped ${result.skipped}, failed ${result.failed}.${errorSummary}`,
+      );
+    } catch (error) {
+      setProfileLibraryError(
+        error instanceof Error ? error.message : "Unable to import the selected profile library.",
+      );
+    }
+  }
+
+  async function handleExportProfiles() {
+    try {
+      const profiles = await exportProfilesMutation.mutateAsync();
+      const blob = new Blob([JSON.stringify(profiles, null, 2)], {
+        type: "application/json",
+      });
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 10);
+
+      anchor.href = objectUrl;
+      anchor.download = `profiles_export_${stamp}.json`;
+      anchor.click();
+      URL.revokeObjectURL(objectUrl);
+
+      setProfileLibrarySuccess(`Exported ${profiles.length} profiles to a JSON download.`);
+    } catch (error) {
+      setProfileLibraryError(
+        error instanceof Error ? error.message : "Unable to export the current profile library.",
+      );
+    }
+  }
+
+  async function handleRestoreDefaultProfile(filename: string) {
+    try {
+      const restoredProfile = await restoreDefaultProfileMutation.mutateAsync(filename);
+      setProfileLibrarySuccess(
+        `Restored ${getProfileTitle(restoredProfile.profile)} from ${filename}.`,
+      );
+    } catch (error) {
+      setProfileLibraryError(
+        error instanceof Error ? error.message : "Unable to restore the requested default profile.",
+      );
+    }
+  }
+
   return (
     <div>
-      <div className="panel min-h-[calc(100svh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100svh-var(--app-footer-height))] md:flex-col">
+      <div className="panel min-h-[calc(100vh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100vh-var(--app-footer-height))] md:flex-col">
         <section className="px-3 py-3 md:flex-1 md:min-h-0 md:px-4">
           <div className="grid gap-3 md:h-full md:grid-cols-[minmax(290px,320px)_minmax(0,1fr)] md:items-stretch xl:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
             <WorkflowProfileChooserPanel
               activeProfile={activeProfile}
               availableProfiles={availableProfiles}
               isApplying={isUpdating}
+              isExporting={isExportingProfiles}
+              isImporting={isImportingProfiles}
+              isRestoringDefault={isRestoringDefaultProfile}
+              libraryStatus={profileLibraryStatus}
               onApplyProfile={applyProfile}
+              onExportProfiles={handleExportProfiles}
+              onImportProfiles={handleImportProfiles}
               onOpenFrames={openFramePreview}
+              onRestoreDefaultProfile={handleRestoreDefaultProfile}
             />
 
             <WorkflowShotSetupPanel
