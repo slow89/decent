@@ -1,6 +1,7 @@
 import {
   useEffect,
   useState,
+  useSyncExternalStore,
   type ChangeEvent,
   type KeyboardEvent,
   type ReactNode,
@@ -19,11 +20,14 @@ import {
   useConnectDeviceMutation,
   useDevicesQuery,
   useDisconnectDeviceMutation,
+  usePresenceSettingsQuery,
   useScanDevicesMutation,
+  useUpdatePresenceSettingsMutation,
 } from "@/rest/queries";
 import type {
   DeviceSummary,
   DisplayState,
+  PresenceSettings,
 } from "@/rest/types";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 import { useDisplayStore } from "@/stores/display-store";
@@ -31,6 +35,8 @@ import { usePresenceStore } from "@/stores/presence-store";
 import { useThemeStore } from "@/stores/theme-store";
 
 export function SettingsPage() {
+  const deviceRefreshMs = 3_000;
+  const sleepTimeoutOptions = [0, 15, 30, 45, 60] as const;
   const router = useRouter();
   const gatewayUrl = useBridgeConfigStore((state) => state.gatewayUrl);
   const setGatewayUrl = useBridgeConfigStore((state) => state.setGatewayUrl);
@@ -39,22 +45,29 @@ export function SettingsPage() {
     data: devices = [],
     error: devicesError,
     isFetching: isFetchingDevices,
-    refetch: refetchDevices,
-  } = useDevicesQuery();
+  } = useDevicesQuery({
+    refetchInterval: deviceRefreshMs,
+  });
   const scanDevicesMutation = useScanDevicesMutation();
   const connectDeviceMutation = useConnectDeviceMutation();
   const disconnectDeviceMutation = useDisconnectDeviceMutation();
-  const connection = useDisplayStore((state) => state.connection);
+  const {
+    data: presenceSettings,
+    error: presenceSettingsError,
+    isPending: isPresenceSettingsPending,
+  } = usePresenceSettingsQuery();
+  const updatePresenceSettingsMutation = useUpdatePresenceSettingsMutation();
   const displayError = useDisplayStore((state) => state.error);
   const displayState = useDisplayStore((state) => state.displayState);
   const requestWakeLock = useDisplayStore((state) => state.requestWakeLock);
   const releaseWakeLock = useDisplayStore((state) => state.releaseWakeLock);
   const setBrightness = useDisplayStore((state) => state.setBrightness);
   const heartbeatError = usePresenceStore((state) => state.error);
-  const timeoutSeconds = usePresenceStore((state) => state.timeoutSeconds);
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
+  const isFullscreen = useIsFullscreen();
   const [brightnessDraft, setBrightnessDraft] = useState(100);
+  const [fullscreenError, setFullscreenError] = useState<string | null>(null);
 
   useEffect(() => {
     setBrightnessDraft(displayState?.requestedBrightness ?? 100);
@@ -74,6 +87,11 @@ export function SettingsPage() {
     { label: "Devices API", value: `${gatewayUrl}/api/v1/devices` },
     { label: "Heartbeat API", value: `${gatewayUrl}/api/v1/machine/heartbeat` },
   ];
+  const connectedDevices = devices.filter((device) => device.state === "connected");
+  const disconnectedDevices = devices.filter((device) => device.state !== "connected");
+  const canToggleFullscreen = hasFullscreenApi();
+  const wakeLockLabel = getWakeLockLabel(displayState);
+  const sleepTimerLabel = formatConfiguredSleepTimeout(presenceSettings);
 
   async function handleSave() {
     setGatewayUrl(draftGatewayUrl);
@@ -97,196 +115,192 @@ export function SettingsPage() {
     }
   }
 
+  async function handleFullscreenToggle() {
+    if (!hasFullscreenApi()) {
+      setFullscreenError("Full screen is not available on this device.");
+      return;
+    }
+
+    setFullscreenError(null);
+
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+
+      await document.documentElement.requestFullscreen();
+    } catch (error) {
+      setFullscreenError(
+        error instanceof Error ? error.message : "Unable to change full screen mode.",
+      );
+    }
+  }
+
+  async function handleSleepTimeoutChange(minutes: number) {
+    await updatePresenceSettingsMutation.mutateAsync({
+      sleepTimeoutMinutes: minutes,
+      userPresenceEnabled: minutes > 0,
+    });
+  }
+
   return (
-    <div>
-      <div className="panel min-h-[calc(100vh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100vh-var(--app-footer-height))] md:flex-col">
-        <section className="px-2 py-2 md:flex-1 md:min-h-0 md:px-3 md:py-3">
-          <div className="grid gap-2.5 md:h-full md:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] md:grid-rows-[auto_minmax(0,1fr)] md:items-stretch xl:grid-cols-[minmax(0,1.18fr)_360px]">
-            <SettingsPanel
-              className="md:flex md:min-h-0 md:flex-col"
-              contentClassName="md:flex md:min-h-0 md:flex-1"
-              description="Point the skin at the correct Streamline Bridge host, then use this page to scan and pair devices through the bridge."
-              title="Bridge Routing"
-            >
-              <div className="grid gap-2 md:min-h-0 md:flex-1 md:content-start">
-                <section className="rounded-[10px] border border-border bg-panel-subtle px-2 py-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-highlight">
-                        Active target
-                      </p>
-                      <p className="mt-1 font-mono text-[0.88rem] font-semibold tracking-[0.04em] text-foreground">
-                        {gatewayUrl.replace(/^https?:\/\//, "")}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge>{isFetchingDevices ? "Refreshing gear" : "Bridge control"}</Badge>
-                      <Badge variant="secondary">{devices.length} devices tracked</Badge>
-                    </div>
-                  </div>
-                  <p className="mt-1.5 text-[0.72rem] leading-4 text-muted-foreground">
-                    Machine and scale pairing still runs through Streamline Bridge.
-                    This skin calls those bridge APIs directly so you can pair from Setup
-                    without leaving the tablet view.
-                  </p>
-                </section>
-
-                <section className="rounded-[10px] border border-border bg-panel-muted px-2 py-2">
-                  <div className="grid gap-1">
-                    <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                      Bridge URL
+    <div className="panel min-h-[calc(100vh-var(--app-footer-height))] overflow-y-auto rounded-none border-x-0 border-t-0 bg-shell">
+      <section className="mx-auto grid max-w-[1520px] gap-3 px-2 py-2 md:px-3 md:py-3">
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] xl:items-start">
+          <SettingsSection
+            description="This area stays up to date automatically. Technical bridge details are pushed below."
+            title="Device Pairing"
+          >
+            <div className="grid gap-3">
+              <div className="grid gap-2 rounded-[18px] border border-border bg-panel-subtle px-3 py-3 shadow-panel">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="max-w-[30rem]">
+                    <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-highlight">
+                      Recommended path
                     </p>
-                    <p className="text-[0.72rem] leading-4 text-muted-foreground">
-                      Use the REST origin exposed by the Streamline Bridge process.
-                      Save will reconnect queries and the live snapshot stream.
+                    <h2 className="mt-1 text-balance font-display text-[1.38rem] leading-none text-foreground md:text-[1.7rem]">
+                      Find devices, then pair what shows up.
+                    </h2>
+                    <p className="mt-2 max-w-[28rem] text-[0.78rem] leading-5 text-muted-foreground">
+                      Most people only need one action: look for nearby devices, then connect the
+                      scale or machine that appears below.
                     </p>
                   </div>
-
-                  <div className="mt-2 grid gap-2">
-                    <label className="grid gap-1.5" htmlFor="gatewayUrl">
-                      <span className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                        REST origin
-                      </span>
-                      <Input
-                        className="h-10 rounded-[10px] border-border bg-panel-strong font-mono text-[0.78rem]"
-                        id="gatewayUrl"
-                        onChange={(event) => setDraftGatewayUrl(event.target.value)}
-                        placeholder="http://localhost:8080"
-                        value={draftGatewayUrl}
-                      />
-                    </label>
-
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        className="min-h-[38px] rounded-[10px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
-                        onClick={() => void handleSave()}
-                        size="sm"
-                      >
-                        Save and reconnect
-                      </Button>
-                      <Button
-                        className="min-h-[38px] rounded-[10px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
-                        onClick={() => setDraftGatewayUrl(window.location.origin)}
-                        size="sm"
-                        variant="secondary"
-                      >
-                        Use current origin
-                      </Button>
-                    </div>
+                  <div className="grid w-full gap-2 sm:grid-cols-3 xl:w-auto xl:min-w-[320px]">
+                    <MetricTile label="Tracked" value={`${devices.length}`} />
+                    <MetricTile label="Connected" value={`${connectedDevices.length}`} />
+                    <MetricTile label="Needs pairing" value={`${disconnectedDevices.length}`} />
                   </div>
-                </section>
-
-                <section className="grid gap-2 sm:grid-cols-3">
-                  <StatusTile
-                    label="Socket target"
-                    value={toWebSocketUrl(gatewayUrl).replace(/^wss?:\/\//, "")}
-                  />
-                  <StatusTile label="Workflow path" value="/api/v1/workflow" />
-                  <StatusTile label="Devices path" value="/api/v1/devices" />
-                </section>
+                </div>
               </div>
-            </SettingsPanel>
 
-            <SettingsPanel
-              className="md:flex md:min-h-0 md:flex-col"
-              contentClassName="md:min-h-0 md:flex-1"
-              description="Bridge presence and display APIs keep the tablet awake and reset the machine sleep timer while this skin is being used."
-              title="Display & Sleep"
-            >
-                <div className="grid gap-2">
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <PreviewRow label="Display status" value={connection} />
-                  <PreviewRow
-                    label="Wake-lock"
-                    value={
-                      displayState == null
-                        ? "Unknown"
-                        : displayState.wakeLockOverride
-                          ? "Override active"
-                          : displayState.wakeLockEnabled
-                            ? "Auto-managed on"
-                            : "Auto-managed off"
-                    }
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  className="min-h-[42px] rounded-[12px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
+                  disabled={scanDevicesMutation.isPending}
+                  onClick={() => void scanDevicesMutation.mutateAsync(undefined)}
+                  size="sm"
+                >
+                  {scanDevicesMutation.isPending ? "Looking..." : "Find and pair"}
+                </Button>
+                <Button
+                  className="min-h-[42px] rounded-[12px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
+                  disabled={scanDevicesMutation.isPending}
+                  onClick={() => void scanDevicesMutation.mutateAsync({ connect: false })}
+                  size="sm"
+                  variant="outline"
+                >
+                  Find only
+                </Button>
+              </div>
+
+              <DeviceSummary
+                connectPendingDeviceId={
+                  connectDeviceMutation.isPending ? connectDeviceMutation.variables : null
+                }
+                disconnectPendingDeviceId={
+                  disconnectDeviceMutation.isPending ? disconnectDeviceMutation.variables : null
+                }
+                devices={devices}
+                errorMessage={devicesError?.message}
+                isFetching={isFetchingDevices}
+                onConnectDevice={(deviceId) => void connectDeviceMutation.mutateAsync(deviceId)}
+                onDisconnectDevice={(deviceId) =>
+                  void disconnectDeviceMutation.mutateAsync(deviceId)
+                }
+                scanErrorMessage={scanDevicesMutation.error?.message}
+              />
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
+            className="xl:sticky xl:top-3"
+            description="Keep the tablet readable, awake, and easy to recover during service."
+            title="Display & Sleep"
+          >
+            <div className="grid gap-3">
+              <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-2">
+                <MetricTile label="Wake-lock" value={wakeLockLabel} />
+                <MetricTile label="Sleep timer" value={sleepTimerLabel} />
+                <MetricTile label="Theme" value={theme} />
+              </div>
+
+              <ControlBlock
+                description={formatBrightnessSupport(displayState)}
+                label="Brightness"
+                value={formatBrightnessValue(brightnessDraft)}
+              >
+                <div className="mt-2.5 flex items-center gap-2">
+                  <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">
+                    Dim
+                  </span>
+                  <input
+                    className="h-2 w-full cursor-pointer accent-[#d0a954] disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={displayState?.platformSupported.brightness === false}
+                    max={100}
+                    min={0}
+                    onBlur={() => commitBrightness()}
+                    onChange={handleBrightnessChange}
+                    onKeyUp={handleBrightnessKeyUp}
+                    onPointerUp={() => commitBrightness()}
+                    step={1}
+                    type="range"
+                    value={brightnessDraft}
                   />
-                  <PreviewRow label="Sleep timer" value={formatSleepTimeout(timeoutSeconds)} />
+                  <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">
+                    Auto
+                  </span>
                 </div>
 
-                <div className="rounded-[10px] border border-border bg-panel-muted px-2 py-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-highlight">
-                        Brightness
-                      </p>
-                      <p className="mt-0.5 text-[0.72rem] leading-4 text-muted-foreground">
-                        {formatBrightnessSupport(displayState)}
-                      </p>
-                    </div>
-                    <p className="font-mono text-[0.9rem] font-semibold tracking-[0.03em] text-foreground">
-                      {formatBrightnessValue(brightnessDraft)}
-                    </p>
-                  </div>
+                <p className="mt-2 font-mono text-[0.62rem] tracking-[0.03em] text-muted-foreground">
+                  Applied: {formatBrightness(displayState)}
+                </p>
+              </ControlBlock>
 
-                  <div className="mt-2.5 flex items-center gap-2">
-                    <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">
-                      Dim
-                    </span>
-                    <input
-                      className="h-2 w-full cursor-pointer accent-[#d0a954] disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={displayState?.platformSupported.brightness === false}
-                      max={100}
-                      min={0}
-                      onBlur={() => commitBrightness()}
-                      onChange={handleBrightnessChange}
-                      onKeyUp={handleBrightnessKeyUp}
-                      onPointerUp={() => commitBrightness()}
-                      step={1}
-                      type="range"
-                      value={brightnessDraft}
+              <ControlBlock
+                description="Choose when the machine should auto-sleep after no activity."
+                label="Sleep timer"
+                value={sleepTimerLabel}
+              >
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  {sleepTimeoutOptions.map((minutes) => (
+                    <SleepTimeoutOptionButton
+                      disabled={isPresenceSettingsPending || updatePresenceSettingsMutation.isPending}
+                      isActive={getSleepTimeoutMinutes(presenceSettings) === minutes}
+                      key={minutes}
+                      label={formatSleepTimeoutOption(minutes)}
+                      onClick={() => void handleSleepTimeoutChange(minutes)}
                     />
-                    <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">
-                      Auto
-                    </span>
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {displayState ? (
-                      <p className="self-center font-mono text-[0.62rem] tracking-[0.03em] text-muted-foreground">
-                        Applied: {formatBrightnessValue(displayState.brightness)}
-                      </p>
-                    ) : null}
-                  </div>
+                  ))}
                 </div>
+              </ControlBlock>
 
-                <section className="rounded-[10px] border border-border bg-panel-muted px-2 py-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-highlight">
-                        Theme
-                      </p>
-                      <p className="mt-0.5 text-[0.72rem] leading-4 text-muted-foreground">
-                        Switch the skin between dark and light surfaces.
-                      </p>
-                    </div>
-                    <p className="font-mono text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-foreground">
-                      {theme}
-                    </p>
-                  </div>
+              <ControlBlock
+                description="Pick the surface that is easiest to read in the room you are in."
+                label="Theme"
+                value={theme}
+              >
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <ThemeOptionButton
+                    isActive={theme === "dark"}
+                    label="Dark"
+                    onClick={() => setTheme("dark")}
+                  />
+                  <ThemeOptionButton
+                    isActive={theme === "light"}
+                    label="Light"
+                    onClick={() => setTheme("light")}
+                  />
+                </div>
+              </ControlBlock>
 
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <ThemeOptionButton
-                      isActive={theme === "dark"}
-                      label="Dark"
-                      onClick={() => setTheme("dark")}
-                    />
-                    <ThemeOptionButton
-                      isActive={theme === "light"}
-                      label="Light"
-                      onClick={() => setTheme("light")}
-                    />
-                  </div>
-                </section>
-
-                <div className="flex flex-wrap gap-1.5">
+              <ControlBlock
+                description="Use these if the tablet should stay visible all shift or fill the whole screen."
+                label="Screen tools"
+                value={isFullscreen ? "Full screen on" : "Normal view"}
+              >
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <Button
                     disabled={displayState?.platformSupported.wakeLock === false}
                     onClick={() =>
@@ -294,125 +308,165 @@ export function SettingsPage() {
                     }
                     size="sm"
                   >
-                    {displayState?.wakeLockOverride ? "Release wake-lock" : "Keep screen on"}
+                    {displayState?.wakeLockOverride ? "Let screen sleep" : "Keep screen on"}
                   </Button>
-                </div>
-
-                {displayError ? (
-                  <p className="font-mono text-[0.7rem] text-destructive">{displayError}</p>
-                ) : null}
-                {heartbeatError ? (
-                  <p className="font-mono text-[0.7rem] text-destructive">{heartbeatError}</p>
-                ) : null}
-              </div>
-            </SettingsPanel>
-
-            <div className="grid gap-2.5 md:col-span-2 md:h-full md:min-h-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <SettingsPanel
-                className="md:flex md:min-h-0 md:flex-col"
-                contentClassName="md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-1"
-                description="The route map below mirrors the endpoints the skin currently uses for live machine state and workflow/device reads."
-                title="Connection Preview"
-              >
-                <div className="grid gap-1.5 sm:grid-cols-2">
-                  {endpointRows.map((row) => (
-                    <PreviewRow key={row.label} label={row.label} value={row.value} />
-                  ))}
-                </div>
-              </SettingsPanel>
-
-              <SettingsPanel
-                className="md:flex md:min-h-0 md:flex-col"
-                contentClassName="md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-1"
-                description="Scan the bridge, then pair a discovered scale or connect a machine directly from this page."
-                title="Machine & Scale Pairing"
-              >
-                <StateCallout tone="neutral">
-                  Run a scan, then use the dedicated scale section below to pair your scale.
-                  Streamline Bridge remains authoritative for device state and reconnect policy.
-                </StateCallout>
-                <div className="mb-2 flex flex-wrap items-center gap-2">
                   <Button
-                    className="min-h-[36px] rounded-[10px] px-3 text-[0.62rem] uppercase tracking-[0.14em]"
-                    onClick={() => void refetchDevices()}
+                    disabled={!canToggleFullscreen}
+                    onClick={() => void handleFullscreenToggle()}
                     size="sm"
                     variant="secondary"
                   >
-                    Refresh list
-                  </Button>
-                  <Button
-                    className="min-h-[36px] rounded-[10px] px-3 text-[0.62rem] uppercase tracking-[0.14em]"
-                    disabled={scanDevicesMutation.isPending}
-                    onClick={() => void scanDevicesMutation.mutateAsync({ connect: false })}
-                    size="sm"
-                    variant="outline"
-                  >
-                    {scanDevicesMutation.isPending ? "Scanning..." : "Scan only"}
-                  </Button>
-                  <Button
-                    className="min-h-[36px] rounded-[10px] px-3 text-[0.62rem] uppercase tracking-[0.14em]"
-                    disabled={scanDevicesMutation.isPending}
-                    onClick={() => void scanDevicesMutation.mutateAsync(undefined)}
-                    size="sm"
-                  >
-                    Scan and connect
+                    {isFullscreen ? "Exit full screen" : "Enter full screen"}
                   </Button>
                 </div>
-                <DeviceSummary
-                  connectPendingDeviceId={
-                    connectDeviceMutation.isPending ? connectDeviceMutation.variables : null
-                  }
-                  disconnectPendingDeviceId={
-                    disconnectDeviceMutation.isPending ? disconnectDeviceMutation.variables : null
-                  }
-                  devices={devices}
-                  errorMessage={devicesError?.message}
-                  isFetching={isFetchingDevices}
-                  onConnectDevice={(deviceId) => void connectDeviceMutation.mutateAsync(deviceId)}
-                  onDisconnectDevice={(deviceId) =>
-                    void disconnectDeviceMutation.mutateAsync(deviceId)
-                  }
-                  scanErrorMessage={scanDevicesMutation.error?.message}
+              </ControlBlock>
+
+              {displayError ? <StateCallout tone="error">{displayError}</StateCallout> : null}
+              {presenceSettingsError ? (
+                <StateCallout tone="error">{presenceSettingsError.message}</StateCallout>
+              ) : null}
+              {heartbeatError ? <StateCallout tone="error">{heartbeatError}</StateCallout> : null}
+              {fullscreenError ? <StateCallout tone="error">{fullscreenError}</StateCallout> : null}
+            </div>
+          </SettingsSection>
+        </div>
+
+        <details className="rounded-[18px] border border-border bg-panel px-3 py-3 shadow-panel">
+          <summary className="flex cursor-pointer list-none items-start justify-between gap-3">
+            <div>
+              <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-highlight">
+                Advanced Bridge Settings
+              </p>
+              <p className="mt-1 max-w-[40rem] text-[0.78rem] leading-5 text-muted-foreground">
+                Only touch these when the tablet is pointed at the wrong bridge or you are debugging a connection.
+              </p>
+            </div>
+            <span className="shrink-0 font-mono text-[0.62rem] uppercase tracking-[0.14em] text-muted-foreground">
+              Open
+            </span>
+          </summary>
+
+          <div className="mt-3 grid gap-3">
+            <div className="grid gap-3 rounded-[16px] border border-border bg-panel-muted px-3 py-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+              <label className="grid gap-1.5" htmlFor="gatewayUrl">
+                <span className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  REST origin
+                </span>
+                <Input
+                  className="h-11 rounded-[12px] border-border bg-panel-strong font-mono text-[0.8rem]"
+                  id="gatewayUrl"
+                  onChange={(event) => setDraftGatewayUrl(event.target.value)}
+                  placeholder="http://localhost:8080"
+                  value={draftGatewayUrl}
                 />
-              </SettingsPanel>
+              </label>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button
+                  className="min-h-[42px] rounded-[12px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
+                  onClick={() => void handleSave()}
+                  size="sm"
+                >
+                  Save and reconnect
+                </Button>
+                <Button
+                  className="min-h-[42px] rounded-[12px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
+                  onClick={() => setDraftGatewayUrl(window.location.origin)}
+                  size="sm"
+                  variant="secondary"
+                >
+                  Use current origin
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Active target
+                  </p>
+                  <p className="mt-1 font-mono text-[0.92rem] font-semibold tracking-[0.03em] text-foreground">
+                    {gatewayUrl.replace(/^https?:\/\//, "")}
+                  </p>
+                </div>
+                <Badge variant="secondary">{devices.length} devices tracked</Badge>
+              </div>
+
+              <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+                {endpointRows.map((row) => (
+                  <EndpointRow key={row.label} label={row.label} value={row.value} />
+                ))}
+              </div>
             </div>
           </div>
-        </section>
-      </div>
+        </details>
+      </section>
     </div>
   );
 }
 
-function SettingsPanel({
+function SettingsSection({
   children,
   className,
-  contentClassName,
   description,
   title,
 }: {
   children: ReactNode;
   className?: string;
-  contentClassName?: string;
   description: string;
   title: string;
 }) {
   return (
     <section
       className={cn(
-        "rounded-[10px] border border-border bg-panel px-2 py-2",
+        "rounded-[18px] border border-border bg-panel px-3 py-3 shadow-panel",
         className,
       )}
     >
-      <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-highlight">
         {title}
       </p>
-      <p className="mt-0.5 text-[0.72rem] leading-4 text-muted-foreground">{description}</p>
-      <div className={cn("mt-2", contentClassName)}>{children}</div>
+      <p className="mt-1 max-w-[40rem] text-[0.78rem] leading-5 text-muted-foreground">
+        {description}
+      </p>
+      <div className="mt-3">{children}</div>
     </section>
   );
 }
 
-function StatusTile({
+function ControlBlock({
+  children,
+  description,
+  label,
+  value,
+}: {
+  children: ReactNode;
+  description: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <section className="rounded-[16px] border border-border bg-panel-muted px-3 py-3 transition-colors hover:border-highlight/30">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.16em] text-highlight">
+            {label}
+          </p>
+          <p className="mt-1 max-w-[24rem] text-[0.74rem] leading-5 text-muted-foreground">
+            {description}
+          </p>
+        </div>
+        <p className="shrink-0 font-mono text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-foreground">
+          {value}
+        </p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function MetricTile({
   label,
   value,
 }: {
@@ -420,18 +474,18 @@ function StatusTile({
   value: string;
 }) {
   return (
-    <div className="rounded-[10px] border border-border bg-panel-muted px-2 py-1.5">
+    <div className="rounded-[14px] border border-border bg-panel-muted px-3 py-2.5 transition-colors hover:border-highlight/30">
       <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-1 break-all font-mono text-[0.7rem] font-semibold tracking-[0.03em] text-foreground">
+      <p className="mt-1 break-words font-mono text-[0.82rem] font-semibold tracking-[0.03em] text-foreground">
         {value}
       </p>
     </div>
   );
 }
 
-function PreviewRow({
+function EndpointRow({
   label,
   value,
 }: {
@@ -439,8 +493,8 @@ function PreviewRow({
   value: string;
 }) {
   return (
-    <div className="rounded-[10px] border border-border bg-panel-muted px-2 py-1.5">
-      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-highlight">
+    <div className="rounded-[14px] border border-border bg-panel-muted px-3 py-2">
+      <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
       <p className="mt-1 break-all font-mono text-[0.7rem] font-semibold tracking-[0.03em] text-foreground">
@@ -495,9 +549,7 @@ function DeviceSummary({
             : "No tracked devices are currently reported by the bridge."}
         </StateCallout>
         {!isFetching ? (
-          <StateCallout tone="neutral">
-            Run a scan, then pair your scale here.
-          </StateCallout>
+          <StateCallout tone="neutral">Use Find only, then pair your scale here.</StateCallout>
         ) : null}
         {scanErrorMessage ? <StateCallout tone="error">{scanErrorMessage}</StateCallout> : null}
       </div>
@@ -505,12 +557,7 @@ function DeviceSummary({
   }
 
   return (
-    <div className="grid gap-2">
-      <div className="grid gap-2 sm:grid-cols-2">
-        <StatusTile label="Connected" value={`${connectedDevices.length}`} />
-        <StatusTile label="Disconnected" value={`${disconnectedDevices.length}`} />
-      </div>
-
+    <div className="grid gap-3">
       <DeviceGroup
         connectPendingDeviceId={connectPendingDeviceId}
         description={
@@ -518,11 +565,11 @@ function DeviceSummary({
             ? `Scale live on ${connectedScales[0]?.name}. Disconnect here if you need to switch devices.`
             : disconnectedScales.length
               ? "Discovered scales can be paired directly from this page."
-              : "No scales discovered yet. Run a scan, then pair your scale here."
+              : "No scales discovered yet. Use Find only, then pair your scale here."
         }
         devices={scaleDevices}
         disconnectPendingDeviceId={disconnectPendingDeviceId}
-        emptyMessage="No scales discovered yet. Run a scan, then pair your scale here."
+        emptyMessage="No scales discovered yet. Use Find only, then pair your scale here."
         onConnectDevice={onConnectDevice}
         onDisconnectDevice={onDisconnectDevice}
         title="Scale Pairing"
@@ -531,7 +578,7 @@ function DeviceSummary({
       {otherDevices.length ? (
         <DeviceGroup
           connectPendingDeviceId={connectPendingDeviceId}
-          description="Machine and other bridge-managed devices remain available below."
+          description="Machines and other bridge-managed devices remain available below."
           devices={otherDevices}
           disconnectPendingDeviceId={disconnectPendingDeviceId}
           onConnectDevice={onConnectDevice}
@@ -584,109 +631,131 @@ function DeviceGroup({
 
   return (
     <div className="grid gap-2">
-      <div className="grid gap-1.5">
+      <div className="grid gap-1">
         <p className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           {title}
         </p>
-        <p className="text-[0.72rem] leading-4 text-muted-foreground">{description}</p>
+        <p className="text-[0.74rem] leading-5 text-muted-foreground">{description}</p>
       </div>
 
       {connectedDevices.length ? (
-        <div className="grid gap-2">
-          <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Connected
-          </p>
-          {connectedDevices.map((device) => (
-            <DeviceCard
-              actionLabel={
-                disconnectPendingDeviceId === device.id
-                  ? getPendingDeviceActionLabel(device)
-                  : getDeviceActionLabel(device)
-              }
-              actionVariant="secondary"
-              badgeVariant="default"
-              device={device}
-              disabled={Boolean(connectPendingDeviceId || disconnectPendingDeviceId)}
-              key={device.id}
-              onAction={onDisconnectDevice}
-            />
-          ))}
-        </div>
+        <DeviceList
+          actionVariant="secondary"
+          connectPendingDeviceId={connectPendingDeviceId}
+          devices={connectedDevices}
+          disconnectPendingDeviceId={disconnectPendingDeviceId}
+          onConnectDevice={onConnectDevice}
+          onDisconnectDevice={onDisconnectDevice}
+          title="Connected"
+        />
       ) : null}
 
       {disconnectedDevices.length ? (
-        <div className="grid gap-2">
-          <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Available
-          </p>
-          {disconnectedDevices.map((device) => (
-            <DeviceCard
-              actionLabel={
-                connectPendingDeviceId === device.id
-                  ? getPendingDeviceActionLabel(device)
-                  : getDeviceActionLabel(device)
-              }
-              actionVariant="default"
-              badgeVariant="secondary"
-              device={device}
-              disabled={Boolean(connectPendingDeviceId || disconnectPendingDeviceId)}
-              key={device.id}
-              onAction={onConnectDevice}
-            />
-          ))}
-        </div>
+        <DeviceList
+          actionVariant="default"
+          connectPendingDeviceId={connectPendingDeviceId}
+          devices={disconnectedDevices}
+          disconnectPendingDeviceId={disconnectPendingDeviceId}
+          onConnectDevice={onConnectDevice}
+          onDisconnectDevice={onDisconnectDevice}
+          title="Available"
+        />
       ) : null}
     </div>
   );
 }
 
-function DeviceCard({
+function DeviceList({
+  actionVariant,
+  connectPendingDeviceId,
+  devices,
+  disconnectPendingDeviceId,
+  onConnectDevice,
+  onDisconnectDevice,
+  title,
+}: {
+  actionVariant: "default" | "secondary";
+  connectPendingDeviceId: string | null;
+  devices: DeviceSummary[];
+  disconnectPendingDeviceId: string | null;
+  onConnectDevice: (deviceId: string) => void;
+  onDisconnectDevice: (deviceId: string) => void;
+  title: string;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[16px] border border-border bg-panel-muted">
+      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+        <p className="font-mono text-[0.52rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          {title}
+        </p>
+        <p className="font-mono text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          {devices.length}
+        </p>
+      </div>
+
+      <div className="divide-y divide-border">
+        {devices.map((device) => (
+          <DeviceRow
+            actionLabel={
+              connectPendingDeviceId === device.id || disconnectPendingDeviceId === device.id
+                ? getPendingDeviceActionLabel(device)
+                : getDeviceActionLabel(device)
+            }
+            actionVariant={actionVariant}
+            device={device}
+            disabled={Boolean(connectPendingDeviceId || disconnectPendingDeviceId)}
+            key={device.id}
+            onAction={device.state === "connected" ? onDisconnectDevice : onConnectDevice}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DeviceRow({
   actionLabel,
   actionVariant,
-  badgeVariant,
   device,
   disabled,
   onAction,
 }: {
   actionLabel: string;
   actionVariant: "default" | "secondary";
-  badgeVariant: "default" | "secondary";
   device: DeviceSummary;
   disabled: boolean;
   onAction: (deviceId: string) => void;
 }) {
   return (
-    <div className="rounded-[10px] border border-border bg-panel-muted px-2 py-1.5">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate font-mono text-[0.82rem] font-semibold tracking-[0.02em] text-foreground">
+    <div className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate font-mono text-[0.84rem] font-semibold tracking-[0.02em] text-foreground">
             {device.name}
           </p>
-          <p className="mt-0.5 font-mono text-[0.54rem] uppercase tracking-[0.18em] text-muted-foreground">
+          <Badge variant={device.state === "connected" ? "default" : "secondary"}>
+            {device.state}
+          </Badge>
+        </div>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <p className="font-mono text-[0.54rem] uppercase tracking-[0.18em] text-muted-foreground">
             {device.type}
           </p>
+          <p className="break-all font-mono text-[0.64rem] font-semibold tracking-[0.03em] text-muted-foreground">
+            {device.id}
+          </p>
         </div>
-        <Badge variant={badgeVariant}>{device.state}</Badge>
       </div>
-      <div className="mt-1.5 grid gap-1.5 xl:grid-cols-[74px_minmax(0,1fr)]">
-        <p className="font-mono text-[0.52rem] uppercase tracking-[0.16em] text-muted-foreground">
-          Device ID
-        </p>
-        <p className="break-all font-mono text-[0.68rem] font-semibold tracking-[0.03em] text-foreground">
-          {device.id}
-        </p>
-      </div>
-      <div className="mt-2 flex justify-end">
-        <Button
-          className="min-h-[34px] rounded-[10px] px-3 text-[0.62rem] uppercase tracking-[0.14em]"
-          disabled={disabled}
-          onClick={() => onAction(device.id)}
-          size="sm"
-          variant={actionVariant}
-        >
-          {actionLabel}
-        </Button>
-      </div>
+
+      <Button
+        className="min-h-[38px] rounded-[12px] px-3 text-[0.62rem] uppercase tracking-[0.14em] sm:shrink-0"
+        disabled={disabled}
+        onClick={() => onAction(device.id)}
+        size="sm"
+        variant={actionVariant}
+      >
+        {actionLabel}
+      </Button>
     </div>
   );
 }
@@ -701,7 +770,7 @@ function StateCallout({
   return (
     <div
       className={cn(
-        "rounded-[10px] border px-2 py-1.5 font-mono text-[0.68rem] leading-4 tracking-[0.04em]",
+        "rounded-[14px] border px-3 py-2 font-mono text-[0.68rem] leading-5 tracking-[0.03em]",
         tone === "error"
           ? "border-status-error-border bg-status-error-surface text-status-error-foreground"
           : "border-border bg-panel-muted text-muted-foreground",
@@ -709,6 +778,53 @@ function StateCallout({
     >
       {children}
     </div>
+  );
+}
+
+function ThemeOptionButton({
+  isActive,
+  label,
+  onClick,
+}: {
+  isActive: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      aria-pressed={isActive}
+      className="min-h-[40px] rounded-[12px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
+      onClick={onClick}
+      size="sm"
+      variant={isActive ? "default" : "secondary"}
+    >
+      {label}
+    </Button>
+  );
+}
+
+function SleepTimeoutOptionButton({
+  disabled,
+  isActive,
+  label,
+  onClick,
+}: {
+  disabled?: boolean;
+  isActive: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      aria-pressed={isActive}
+      className="min-h-[40px] rounded-[12px] px-3 text-[0.62rem] uppercase tracking-[0.16em]"
+      disabled={disabled}
+      onClick={onClick}
+      size="sm"
+      variant={isActive ? "default" : "secondary"}
+    >
+      {label}
+    </Button>
   );
 }
 
@@ -736,26 +852,16 @@ function getPendingDeviceActionLabel(device: DeviceSummary) {
   return `Connecting ${device.type}...`;
 }
 
-function ThemeOptionButton({
-  isActive,
-  label,
-  onClick,
-}: {
-  isActive: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <Button
-      aria-pressed={isActive}
-      className="min-h-[38px] rounded-[10px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
-      onClick={onClick}
-      size="sm"
-      variant={isActive ? "default" : "secondary"}
-    >
-      {label}
-    </Button>
-  );
+function getWakeLockLabel(displayState: DisplayState | null) {
+  if (displayState == null) {
+    return "Unknown";
+  }
+
+  if (displayState.wakeLockOverride) {
+    return "Override active";
+  }
+
+  return displayState.wakeLockEnabled ? "Auto-managed on" : "Auto-managed off";
 }
 
 function formatBrightness(displayState: DisplayState | null) {
@@ -806,14 +912,67 @@ function formatBrightnessSupport(displayState: DisplayState | null) {
   return "Drag the slider to set screen brightness. Auto uses the OS setting.";
 }
 
-function formatSleepTimeout(timeoutSeconds: number | null) {
-  if (timeoutSeconds == null) {
-    return "Unknown";
+function getSleepTimeoutMinutes(presenceSettings: PresenceSettings | undefined) {
+  if (!presenceSettings) {
+    return 30;
   }
 
-  if (timeoutSeconds < 0) {
+  if (!presenceSettings.userPresenceEnabled || presenceSettings.sleepTimeoutMinutes <= 0) {
+    return 0;
+  }
+
+  return presenceSettings.sleepTimeoutMinutes;
+}
+
+function formatConfiguredSleepTimeout(presenceSettings: PresenceSettings | undefined) {
+  if (!presenceSettings) {
+    return "Loading";
+  }
+
+  const minutes = getSleepTimeoutMinutes(presenceSettings);
+
+  if (minutes <= 0) {
     return "Disabled";
   }
 
-  return `${timeoutSeconds}s`;
+  return `${minutes} min`;
+}
+
+function formatSleepTimeoutOption(minutes: number) {
+  if (minutes <= 0) {
+    return "Off";
+  }
+
+  return `${minutes}m`;
+}
+
+function hasFullscreenApi() {
+  if (typeof document === "undefined") {
+    return false;
+  }
+
+  return typeof document.documentElement.requestFullscreen === "function";
+}
+
+function subscribeToFullscreen(callback: () => void) {
+  if (typeof document === "undefined") {
+    return () => undefined;
+  }
+
+  document.addEventListener("fullscreenchange", callback);
+  return () => {
+    document.removeEventListener("fullscreenchange", callback);
+  };
+}
+
+function getFullscreenSnapshot() {
+  if (typeof document === "undefined") {
+    return false;
+  }
+
+  return Boolean(document.fullscreenElement);
+}
+
+function useIsFullscreen() {
+  return useSyncExternalStore(subscribeToFullscreen, getFullscreenSnapshot, () => false);
 }

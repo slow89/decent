@@ -14,13 +14,17 @@ const {
   useConnectDeviceMutationMock,
   useDevicesQueryMock,
   useDisconnectDeviceMutationMock,
+  usePresenceSettingsQueryMock,
   useScanDevicesMutationMock,
+  useUpdatePresenceSettingsMutationMock,
 } = vi.hoisted(() => ({
   useConnectDeviceMutationMock: vi.fn(),
   useDisconnectDeviceMutationMock: vi.fn(),
+  usePresenceSettingsQueryMock: vi.fn(),
   routerInvalidate: vi.fn(async () => undefined),
   useDevicesQueryMock: vi.fn(),
   useScanDevicesMutationMock: vi.fn(),
+  useUpdatePresenceSettingsMutationMock: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -37,7 +41,9 @@ vi.mock("@/rest/queries", async () => {
     useConnectDeviceMutation: useConnectDeviceMutationMock,
     useDisconnectDeviceMutation: useDisconnectDeviceMutationMock,
     useDevicesQuery: useDevicesQueryMock,
+    usePresenceSettingsQuery: usePresenceSettingsQueryMock,
     useScanDevicesMutation: useScanDevicesMutationMock,
+    useUpdatePresenceSettingsMutation: useUpdatePresenceSettingsMutationMock,
   };
 });
 
@@ -45,10 +51,37 @@ describe("SettingsPage", () => {
   const connectMutateAsync = vi.fn(async () => undefined);
   const disconnectMutateAsync = vi.fn(async () => undefined);
   const scanMutateAsync = vi.fn(async () => []);
+  const updatePresenceSettingsMutateAsync = vi.fn(async (patch: unknown) => patch);
+  const requestFullscreenMock = vi.fn(async () => {
+    Object.defineProperty(document, "fullscreenElement", {
+      configurable: true,
+      value: document.documentElement,
+    });
+    document.dispatchEvent(new Event("fullscreenchange"));
+  });
+  const exitFullscreenMock = vi.fn(async () => {
+    Object.defineProperty(document, "fullscreenElement", {
+      configurable: true,
+      value: null,
+    });
+    document.dispatchEvent(new Event("fullscreenchange"));
+  });
 
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    Object.defineProperty(document, "fullscreenElement", {
+      configurable: true,
+      value: null,
+    });
+    Object.defineProperty(document.documentElement, "requestFullscreen", {
+      configurable: true,
+      value: requestFullscreenMock,
+    });
+    Object.defineProperty(document, "exitFullscreen", {
+      configurable: true,
+      value: exitFullscreenMock,
+    });
 
     useBridgeConfigStore.setState({
       gatewayUrl: "http://bridge.local:8080",
@@ -112,23 +145,40 @@ describe("SettingsPage", () => {
       isFetching: false,
       refetch: vi.fn(async () => undefined),
     });
+    usePresenceSettingsQueryMock.mockReturnValue({
+      data: {
+        schedules: [],
+        sleepTimeoutMinutes: 30,
+        userPresenceEnabled: true,
+      },
+      error: null,
+      isPending: false,
+    });
     useScanDevicesMutationMock.mockReturnValue({
       error: null,
       isPending: false,
       mutateAsync: scanMutateAsync,
+    });
+    useUpdatePresenceSettingsMutationMock.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: updatePresenceSettingsMutateAsync,
     });
   });
 
   it("shows the current bridge URL and endpoint preview", () => {
     render(<SettingsPage />);
 
+    expect(useDevicesQueryMock).toHaveBeenCalledWith({
+      refetchInterval: 3000,
+    });
     expect(screen.getByDisplayValue("http://bridge.local:8080")).toBeInTheDocument();
     expect(screen.getByText("http://bridge.local:8080/api/v1/workflow")).toBeInTheDocument();
     expect(
       screen.getByText("ws://bridge.local:8080/ws/v1/machine/snapshot"),
     ).toBeInTheDocument();
     expect(screen.getByText("ws://bridge.local:8080/ws/v1/display")).toBeInTheDocument();
-    expect(screen.getByText("1800s")).toBeInTheDocument();
+    expect(screen.getAllByText("30 min").length).toBeGreaterThan(0);
     expect(screen.getByText("Auto-managed on")).toBeInTheDocument();
     expect(screen.getByText("Acaia Lunar")).toBeInTheDocument();
     expect(screen.getByText("DE1XL")).toBeInTheDocument();
@@ -220,10 +270,23 @@ describe("SettingsPage", () => {
   it("can scan without automatically connecting devices", async () => {
     render(<SettingsPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Scan only" }));
+    fireEvent.click(screen.getByRole("button", { name: "Find only" }));
 
     await waitFor(() => {
       expect(scanMutateAsync).toHaveBeenCalledWith({ connect: false });
+    });
+  });
+
+  it("updates the configured sleep timer", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "45m" }));
+
+    await waitFor(() => {
+      expect(updatePresenceSettingsMutateAsync).toHaveBeenCalledWith({
+        sleepTimeoutMinutes: 45,
+        userPresenceEnabled: true,
+      });
     });
   });
 
@@ -256,7 +319,7 @@ describe("SettingsPage", () => {
       screen.getByText("No tracked devices are currently reported by the bridge."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Run a scan, then pair your scale here."),
+      screen.getByText("Use Find only, then pair your scale here."),
     ).toBeInTheDocument();
   });
 
@@ -283,6 +346,22 @@ describe("SettingsPage", () => {
 
     expect(useThemeStore.getState().theme).toBe("light");
     expect(document.documentElement.dataset.theme).toBe("light");
-    expect(screen.getByText("light")).toBeInTheDocument();
+    expect(screen.getAllByText("light").length).toBeGreaterThan(0);
+  });
+
+  it("toggles full screen from settings", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Enter full screen" }));
+
+    await waitFor(() => {
+      expect(requestFullscreenMock).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Exit full screen" }));
+
+    await waitFor(() => {
+      expect(exitFullscreenMock).toHaveBeenCalled();
+    });
   });
 });

@@ -162,6 +162,136 @@ describe("DashboardPage", () => {
       expect(connectScaleSpy).toHaveBeenCalledTimes(1);
     });
   });
+
+  it("polls device state while the dashboard is open", () => {
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle"),
+      error: null,
+    });
+
+    render(<DashboardPage />);
+
+    expect(queryMocks.useDevicesQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ refetchInterval: 2_000 }),
+    );
+  });
+
+  it("clears stale scale UI when the bridge no longer reports a connected scale", async () => {
+    const disconnectScaleSpy = vi.spyOn(useMachineStore.getState(), "disconnectScale");
+    let devices = [
+      {
+        id: "scale-1",
+        name: "Acaia Lunar",
+        state: "connected",
+        type: "scale",
+      },
+    ];
+
+    useMachineStore.setState({
+      scaleConnection: "live",
+      scaleSnapshot: {
+        timestamp: "2026-03-25T10:00:00.000Z",
+        weight: 18.2,
+        weightFlow: 0,
+        timerValue: null,
+        batteryLevel: 82,
+      },
+    });
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle"),
+      error: null,
+    });
+    queryMocks.useDevicesQuery.mockImplementation(() => ({
+      data: devices,
+      error: null,
+    }));
+
+    const { rerender } = render(<DashboardPage />);
+
+    expect(screen.getByText("Paired")).toBeInTheDocument();
+    expect(screen.getByText("18.2 g")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Tare" })).toBeEnabled();
+
+    devices = [];
+    rerender(<DashboardPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Unpaired")).toBeInTheDocument();
+    });
+    expect(screen.getByText("--.- g")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Tare" })).toBeDisabled();
+    expect(disconnectScaleSpy).toHaveBeenCalled();
+  });
+
+  it("keeps the control workspace active on tablet when the machine is idle", () => {
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle"),
+      error: null,
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByTestId("dashboard-tablet-prep-board")).toBeInTheDocument();
+    expect(screen.queryByTestId("dashboard-tablet-shot-workspace")).not.toBeInTheDocument();
+  });
+
+  it("switches tablet focus to telemetry when a shot is active", () => {
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("espresso", "pouring"),
+      error: null,
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.queryByTestId("dashboard-tablet-prep-board")).not.toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-tablet-shot-workspace")).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-shot-summary")).toBeInTheDocument();
+  });
+
+  it("keeps the desktop workspace mounted separately", () => {
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle"),
+      error: null,
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByTestId("dashboard-desktop-workspace")).toBeInTheDocument();
+  });
+
+  it("shows a simulator toggle when dev mode is enabled in the URL", () => {
+    window.history.pushState({}, "", "/?dev=true");
+
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle"),
+      error: null,
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByRole("button", { name: "Play shot simulator" })).toBeInTheDocument();
+
+    window.history.pushState({}, "", "/");
+  });
+
+  it("toggles tablet focus to telemetry from the simulator button", () => {
+    window.history.pushState({}, "", "/?dev=true");
+
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle"),
+      error: null,
+    });
+
+    render(<DashboardPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Play shot simulator" }));
+
+    expect(screen.getByRole("button", { name: "Pause shot simulator" })).toBeInTheDocument();
+    expect(screen.queryByTestId("dashboard-tablet-prep-board")).not.toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-tablet-shot-workspace")).toBeInTheDocument();
+
+    window.history.pushState({}, "", "/");
+  });
 });
 
 function buildSnapshot(state: string, substate = state) {

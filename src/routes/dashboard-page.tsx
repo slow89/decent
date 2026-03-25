@@ -1,12 +1,18 @@
 import {
+  useState,
   useEffect,
   useEffectEvent,
 } from "react";
 
-import { DashboardControlRail } from "@/components/dashboard/dashboard-control-rail";
+import { DashboardWorkspace } from "@/components/dashboard/dashboard-workspace";
 import { DashboardTopBar } from "@/components/dashboard/dashboard-top-bar";
-import { TelemetryChart } from "@/components/telemetry-chart";
-import { formatSecondaryNumber, getStatusLabel } from "@/lib/dashboard-utils";
+import type { DashboardShotSummaryItem } from "@/components/dashboard/dashboard-tablet-shot-summary";
+import {
+  formatSecondaryNumber,
+  getDashboardDevEnabled,
+  getDashboardPresentationMode,
+  getStatusLabel,
+} from "@/lib/dashboard-utils";
 import { formatBrewRatio, formatPrimaryNumber, roundValue } from "@/lib/recipe-utils";
 import {
   useDevicesQuery,
@@ -20,6 +26,7 @@ import { useMachineStore } from "@/stores/machine-store";
 
 export function DashboardPage() {
   const connectScale = useMachineStore((state) => state.connectScale);
+  const disconnectScale = useMachineStore((state) => state.disconnectScale);
   const liveConnection = useMachineStore((state) => state.liveConnection);
   const machineError = useMachineStore((state) => state.error);
   const scaleConnection = useMachineStore((state) => state.scaleConnection);
@@ -27,16 +34,18 @@ export function DashboardPage() {
   const telemetry = useMachineStore((state) => state.telemetry);
   const waterLevels = useMachineStore((state) => state.waterLevels);
   const { data: snapshot, error: machineQueryError } = useMachineStateQuery();
-  const { data: devices } = useDevicesQuery();
+  const { data: devices } = useDevicesQuery({ refetchInterval: 2_000 });
   const { data: workflow, error: workflowQueryError } = useWorkflowQuery();
   const requestMachineStateMutation = useRequestMachineStateMutation();
   const tareScaleMutation = useTareScaleMutation();
   const updateWorkflowMutation = useUpdateWorkflowMutation();
+  const [isSimulatedShotActive, setIsSimulatedShotActive] = useState(false);
 
   const hasQueryError = Boolean(machineError || machineQueryError || workflowQueryError);
   const isOffline = liveConnection !== "live" || hasQueryError;
   const isMachinePoweredOn = snapshot?.state.state !== "sleeping";
   const isMachinePowerDisabled = snapshot == null || hasQueryError;
+  const showDevShotToggle = getDashboardDevEnabled();
   const activeRecipe = workflow?.profile?.title ?? workflow?.name ?? "PSPH";
   const statusLabel = getStatusLabel({
     isOffline,
@@ -49,6 +58,11 @@ export function DashboardPage() {
   const targetYield = workflow?.context?.targetYield;
   const ratio = formatBrewRatio(targetDose, targetYield);
   const isUpdatingWorkflow = updateWorkflowMutation.isPending;
+  const dashboardMode = getDashboardPresentationMode({
+    simulatedShotActive: showDevShotToggle && isSimulatedShotActive,
+    snapshot,
+    telemetry,
+  });
   const connectedScale = devices?.find(
     (device) => device.type === "scale" && device.state === "connected",
   );
@@ -61,8 +75,8 @@ export function DashboardPage() {
 
     void connectScale();
   });
-  const isScalePaired = Boolean(connectedScale || scaleConnection === "live");
-  const scaleWeight = scaleSnapshot?.weight ?? null;
+  const isScalePaired = Boolean(connectedScale);
+  const scaleWeight = connectedScale ? scaleSnapshot?.weight ?? null : null;
   const canUseScaleWeightForDose =
     isScalePaired &&
     scaleWeight != null &&
@@ -71,11 +85,12 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (!connectedScale?.id) {
+      disconnectScale();
       return;
     }
 
     reconnectScaleFeed();
-  }, [connectedScale?.id, reconnectScaleFeed]);
+  }, [connectedScale?.id, disconnectScale, reconnectScaleFeed]);
 
   function updateWorkflow(patch: Record<string, unknown>) {
     updateWorkflowMutation.mutate(patch);
@@ -254,6 +269,16 @@ export function DashboardPage() {
       onPresetClick: (value: number) => updateHotWaterVolume(value),
     },
   ] as const;
+  const shotSummaryItems = [
+    { label: "Recipe", value: activeRecipe },
+    { label: "Dose", value: recipeControls.doseValue },
+    { label: "Yield", value: recipeControls.drinkValue },
+    { label: "Ratio", value: ratio },
+    {
+      label: "Brew",
+      value: formatPrimaryNumber(snapshot?.mixTemperature, "°C", "87°C", 0),
+    },
+  ] satisfies ReadonlyArray<DashboardShotSummaryItem>;
 
   return (
     <div>
@@ -265,9 +290,11 @@ export function DashboardPage() {
           isMachinePowerPending={requestMachineStateMutation.isPending}
           isMachinePoweredOn={isMachinePoweredOn}
           isScalePaired={isScalePaired}
+          isSimulatedShotActive={showDevShotToggle && isSimulatedShotActive}
           isScaleTaring={tareScaleMutation.isPending}
           isScaleWeightActionDisabled={!canUseScaleWeightForDose || isUpdatingWorkflow}
           liveConnection={liveConnection}
+          onToggleSimulatedShot={() => setIsSimulatedShotActive((current) => !current)}
           onToggleMachinePower={() => {
             if (snapshot == null) {
               return;
@@ -290,28 +317,21 @@ export function DashboardPage() {
           onTareScale={() => tareScaleMutation.mutate()}
           reservoirLevel={waterLevels?.currentLevel ?? null}
           reservoirRefillLevel={waterLevels?.refillLevel ?? null}
-          scaleBatteryLevel={scaleSnapshot?.batteryLevel ?? null}
+          scaleBatteryLevel={connectedScale ? scaleSnapshot?.batteryLevel ?? null : null}
           scaleConnection={scaleConnection}
           scaleWeight={scaleWeight}
+          showDevShotToggle={showDevShotToggle}
           statusLabel={statusLabel}
         />
 
-        <section className="grid md:h-full md:min-h-0 md:flex-1 md:grid-cols-[252px_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)] md:overflow-hidden xl:grid-cols-[296px_minmax(0,1fr)]">
-          <DashboardControlRail
-            controlRows={controlRows}
-            recipeControls={recipeControls}
-            workflowDisabled={isUpdatingWorkflow}
-          />
-
-          <div className="min-w-0 md:flex md:h-full md:min-h-0 md:flex-col md:overflow-hidden">
-            <div className="px-2 py-2 md:flex-1 md:min-h-0 md:overflow-hidden md:px-2.5 md:py-2.5 md:max-xl:px-3 md:max-xl:py-3 xl:px-4 xl:py-4">
-              <TelemetryChart
-                className="h-full rounded-[18px] border-0 bg-transparent p-0 shadow-none"
-                data={telemetry}
-              />
-            </div>
-          </div>
-        </section>
+        <DashboardWorkspace
+          controlRows={controlRows}
+          isShotActive={dashboardMode === "shot"}
+          recipeControls={recipeControls}
+          shotSummaryItems={shotSummaryItems}
+          telemetry={telemetry}
+          workflowDisabled={isUpdatingWorkflow}
+        />
       </div>
     </div>
   );

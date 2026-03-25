@@ -40,6 +40,12 @@ export const heartbeatResponseSchema = z.object({
   timeout: z.number(),
 }).passthrough();
 
+export const presenceSettingsSchema = z.object({
+  userPresenceEnabled: z.boolean(),
+  sleepTimeoutMinutes: z.number(),
+  schedules: z.array(z.unknown()).default([]),
+}).passthrough();
+
 export const displayPlatformSupportSchema = z.object({
   brightness: z.boolean(),
   wakeLock: z.boolean(),
@@ -200,6 +206,7 @@ export type MachineSnapshot = z.infer<typeof machineSnapshotSchema>;
 export type ScaleSnapshot = z.infer<typeof scaleSnapshotSchema>;
 export type MachineWaterLevels = z.infer<typeof machineWaterLevelsSchema>;
 export type HeartbeatResponse = z.infer<typeof heartbeatResponseSchema>;
+export type PresenceSettings = z.infer<typeof presenceSettingsSchema>;
 export type DisplayPlatformSupport = z.infer<typeof displayPlatformSupportSchema>;
 export type DisplayState = z.infer<typeof displayStateSchema>;
 export type DeviceSummary = z.infer<typeof deviceSummarySchema>;

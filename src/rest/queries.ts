@@ -21,6 +21,7 @@ export const bridgeQueryKeys = {
   profiles: () => [...bridgeQueryKeys.all, "profiles"] as const,
   profile: (id: string) => [...bridgeQueryKeys.all, "profiles", id] as const,
   devices: () => [...bridgeQueryKeys.all, "devices"] as const,
+  presenceSettings: () => [...bridgeQueryKeys.all, "presence-settings"] as const,
   shots: () => [...bridgeQueryKeys.all, "shots"] as const,
   shot: (id: string) => [...bridgeQueryKeys.all, "shots", id] as const,
 };
@@ -49,6 +50,12 @@ export const profilesQueryOptions = () =>
     queryFn: () => getClient().listProfiles(),
   });
 
+export const presenceSettingsQueryOptions = () =>
+  queryOptions({
+    queryKey: bridgeQueryKeys.presenceSettings(),
+    queryFn: () => getClient().getPresenceSettings(),
+  });
+
 export const shotsQueryOptions = () =>
   queryOptions({
     queryKey: bridgeQueryKeys.shots(),
@@ -70,12 +77,23 @@ export function useWorkflowQuery() {
   return useQuery(workflowQueryOptions());
 }
 
-export function useDevicesQuery() {
-  return useQuery(devicesQueryOptions());
+export function useDevicesQuery(
+  options?: {
+    refetchInterval?: number | false;
+  },
+) {
+  return useQuery({
+    ...devicesQueryOptions(),
+    ...options,
+  });
 }
 
 export function useProfilesQuery() {
   return useQuery(profilesQueryOptions());
+}
+
+export function usePresenceSettingsQuery() {
+  return useQuery(presenceSettingsQueryOptions());
 }
 
 export function useShotsQuery() {
@@ -134,6 +152,20 @@ export function useUpdateWorkflowMutation() {
       getClient().updateWorkflow(patch),
     onSuccess: (workflow) => {
       client.setQueryData(bridgeQueryKeys.workflow(), workflow);
+    },
+  });
+}
+
+export function useUpdatePresenceSettingsMutation() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (patch: {
+      sleepTimeoutMinutes?: number;
+      userPresenceEnabled?: boolean;
+    }) => getClient().updatePresenceSettings(patch),
+    onSuccess: (settings) => {
+      client.setQueryData(bridgeQueryKeys.presenceSettings(), settings);
     },
   });
 }

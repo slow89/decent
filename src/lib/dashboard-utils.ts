@@ -1,3 +1,8 @@
+import type { MachineSnapshot } from "@/rest/types";
+import type { TelemetrySample } from "@/lib/telemetry";
+
+export type DashboardPresentationMode = "controls" | "shot";
+
 function startCase(value: string) {
   return value
     .replace(/([a-z])([A-Z])/g, "$1 $2")
@@ -73,4 +78,34 @@ export function getStatusLabel({
   }
 
   return "Idle";
+}
+
+export function getDashboardDevEnabled() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return new URLSearchParams(window.location.search).get("dev") === "true";
+}
+
+export function getDashboardPresentationMode({
+  simulatedShotActive,
+  snapshot,
+  telemetry,
+}: {
+  simulatedShotActive?: boolean;
+  snapshot?: MachineSnapshot | null;
+  telemetry: TelemetrySample[];
+}) {
+  if (simulatedShotActive) {
+    return "shot";
+  }
+
+  if (snapshot?.state.state === "espresso") {
+    return "shot";
+  }
+
+  const latestTelemetry = telemetry[telemetry.length - 1];
+
+  return latestTelemetry?.state === "espresso" ? "shot" : "controls";
 }

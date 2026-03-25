@@ -45,7 +45,7 @@ export function DashboardControlRail({
   workflowDisabled: boolean;
 }) {
   return (
-    <aside className="border-b border-border md:min-h-0 md:overflow-y-auto md:overscroll-contain md:border-b-0 md:border-r">
+    <aside className="border-b border-border md:h-full md:min-h-0 md:overflow-y-auto md:overscroll-contain md:border-b-0 md:border-r">
       <DoseDrinkControlRow disabled={workflowDisabled} {...recipeControls} />
       {controlRows.map((row) => (
         <ControlRailRow

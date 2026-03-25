@@ -6,6 +6,7 @@ import {
   heartbeatResponseSchema,
   machineSnapshotSchema,
   machineStateChangeSchema,
+  presenceSettingsSchema,
   profileImportResultSchema,
   profileRecordListSchema,
   profileRecordSchema,
@@ -176,6 +177,18 @@ export function createBridgeClient(baseUrl: string) {
     async signalHeartbeat() {
       return request("/api/v1/machine/heartbeat", heartbeatResponseSchema, {
         method: "POST",
+      });
+    },
+    async getPresenceSettings() {
+      return request("/api/v1/presence/settings", presenceSettingsSchema);
+    },
+    async updatePresenceSettings(patch: {
+      sleepTimeoutMinutes?: number;
+      userPresenceEnabled?: boolean;
+    }) {
+      return request("/api/v1/presence/settings", presenceSettingsSchema, {
+        method: "POST",
+        body: JSON.stringify(patch),
       });
     },
     async getDisplayState() {

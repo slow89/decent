@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Droplets, Power, Scale } from "lucide-react";
+import { Droplets, Pause, Play, Power, Scale } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,9 +12,11 @@ export function DashboardTopBar({
   isMachinePowerPending,
   isMachinePoweredOn,
   isScalePaired,
+  isSimulatedShotActive,
   isScaleTaring,
   isScaleWeightActionDisabled,
   liveConnection,
+  onToggleSimulatedShot,
   onToggleMachinePower,
   onSetDoseFromScale,
   onTareScale,
@@ -23,6 +25,7 @@ export function DashboardTopBar({
   scaleBatteryLevel,
   scaleConnection,
   scaleWeight,
+  showDevShotToggle,
   statusLabel,
 }: {
   activeRecipe: string;
@@ -31,9 +34,11 @@ export function DashboardTopBar({
   isMachinePowerPending: boolean;
   isMachinePoweredOn: boolean;
   isScalePaired: boolean;
+  isSimulatedShotActive: boolean;
   isScaleTaring: boolean;
   isScaleWeightActionDisabled: boolean;
   liveConnection: LiveConnectionState;
+  onToggleSimulatedShot: () => void;
   onToggleMachinePower: () => void;
   onSetDoseFromScale: () => void;
   onTareScale: () => void;
@@ -42,6 +47,7 @@ export function DashboardTopBar({
   scaleBatteryLevel: number | null;
   scaleConnection: LiveConnectionState;
   scaleWeight: number | null;
+  showDevShotToggle: boolean;
   statusLabel: string;
 }) {
   return (
@@ -76,6 +82,13 @@ export function DashboardTopBar({
           scaleConnection={scaleConnection}
           weight={scaleWeight}
         />
+
+        {showDevShotToggle ? (
+          <DevShotToggleButton
+            isSimulatedShotActive={isSimulatedShotActive}
+            onToggleSimulatedShot={onToggleSimulatedShot}
+          />
+        ) : null}
 
         <div className="flex min-w-[184px] flex-1 items-stretch justify-end gap-1 md:ml-auto md:flex-none md:max-xl:min-w-[216px] md:max-xl:gap-1.5">
           <div className="flex min-h-8 min-w-[184px] shrink-0 items-center justify-between gap-2 rounded-[10px] border border-border bg-panel px-2.5 md:max-xl:min-h-10 md:max-xl:min-w-[216px] md:max-xl:rounded-[11px] md:max-xl:px-3">
@@ -129,6 +142,35 @@ export function DashboardTopBar({
         </div>
       </div>
     </section>
+  );
+}
+
+function DevShotToggleButton({
+  isSimulatedShotActive,
+  onToggleSimulatedShot,
+}: {
+  isSimulatedShotActive: boolean;
+  onToggleSimulatedShot: () => void;
+}) {
+  return (
+    <button
+      aria-label={isSimulatedShotActive ? "Pause shot simulator" : "Play shot simulator"}
+      className={cn(
+        "flex min-h-8 min-w-[42px] shrink-0 items-center justify-center rounded-[10px] border bg-panel px-2.5 text-muted-foreground transition hover:border-highlight/50 hover:text-foreground md:max-xl:min-h-10 md:max-xl:min-w-[46px] md:max-xl:rounded-[11px]",
+        isSimulatedShotActive
+          ? "border-status-success-border bg-status-success-surface text-status-success-foreground"
+          : "border-border",
+      )}
+      onClick={onToggleSimulatedShot}
+      title={isSimulatedShotActive ? "Pause shot simulator" : "Play shot simulator"}
+      type="button"
+    >
+      {isSimulatedShotActive ? (
+        <Pause className="size-3.5 md:max-xl:size-4" />
+      ) : (
+        <Play className="size-3.5 md:max-xl:size-4" />
+      )}
+    </button>
   );
 }
 
@@ -255,7 +297,7 @@ function ScaleStatusCard({
         <div className="col-start-2 row-span-2 row-start-1 flex shrink-0 items-center gap-1 justify-self-end md:col-start-3 md:row-span-1 md:max-xl:gap-1">
           <Button
             className="h-[26px] rounded-[8px] border-status-info-border bg-status-info-surface px-2 text-[0.54rem] text-status-info-foreground hover:brightness-95 md:max-xl:h-8 md:max-xl:rounded-[9px] md:max-xl:px-2.5 md:max-xl:text-[0.56rem]"
-            disabled={!isPaired || isTaring}
+            disabled={scaleConnection !== "live" || isTaring}
             onClick={onTareScale}
             size="sm"
             variant="outline"
