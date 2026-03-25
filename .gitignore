@@ -4,3 +4,4 @@ dist
 artifacts
 *.zip
 .env
+output

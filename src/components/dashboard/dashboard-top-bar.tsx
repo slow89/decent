@@ -45,17 +45,17 @@ export function DashboardTopBar({
   statusLabel: string;
 }) {
   return (
-    <section className="shrink-0 border-b border-border px-2.5 pb-2 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] md:px-4 md:pb-2.5 md:pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] xl:px-3 xl:pb-1.5 xl:pt-[calc(env(safe-area-inset-top,0px)+0.375rem)]">
-      <div className="flex flex-wrap items-stretch gap-1 md:max-xl:gap-2">
+    <section className="shrink-0 border-b border-border px-2.5 pb-2 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] md:px-3 md:pb-2 md:pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] xl:px-3 xl:pb-1.5 xl:pt-[calc(env(safe-area-inset-top,0px)+0.375rem)]">
+      <div className="flex flex-wrap items-stretch gap-1 md:max-xl:gap-1.5">
         <Button
           asChild
-          className="h-auto min-h-8 min-w-[190px] flex-1 justify-between rounded-[10px] border-border bg-panel px-2.5 py-1 font-mono text-[0.72rem] font-medium text-foreground hover:bg-panel-muted md:flex-none md:max-w-[320px] md:max-xl:min-h-11 md:max-xl:min-w-[240px] md:max-xl:rounded-[12px] md:max-xl:px-3.5 md:max-xl:py-2 md:max-xl:text-[0.8rem]"
+          className="h-auto min-h-8 min-w-[190px] flex-1 justify-between rounded-[10px] border-border bg-panel px-2.5 py-1 font-mono text-[0.72rem] font-medium text-foreground hover:bg-panel-muted md:flex-none md:max-w-[300px] md:max-xl:min-h-10 md:max-xl:min-w-[220px] md:max-xl:rounded-[11px] md:max-xl:px-3 md:max-xl:py-1.5 md:max-xl:text-[0.76rem]"
           size="sm"
           variant="outline"
         >
           <Link to="/workflows">
             <span className="min-w-0 truncate">{activeRecipe}</span>
-            <span className="text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.64rem]">
+            <span className="text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.62rem]">
               Profiles
             </span>
           </Link>
@@ -77,15 +77,15 @@ export function DashboardTopBar({
           weight={scaleWeight}
         />
 
-        <div className="flex min-w-[184px] flex-1 items-stretch justify-end gap-1 md:ml-auto md:flex-none md:max-xl:min-w-[232px] md:max-xl:gap-2">
-          <div className="flex min-h-8 min-w-[184px] shrink-0 items-center justify-between gap-2 rounded-[10px] border border-border bg-panel px-2.5 md:max-xl:min-h-11 md:max-xl:min-w-[232px] md:max-xl:rounded-[12px] md:max-xl:px-3.5">
+        <div className="flex min-w-[184px] flex-1 items-stretch justify-end gap-1 md:ml-auto md:flex-none md:max-xl:min-w-[216px] md:max-xl:gap-1.5">
+          <div className="flex min-h-8 min-w-[184px] shrink-0 items-center justify-between gap-2 rounded-[10px] border border-border bg-panel px-2.5 md:max-xl:min-h-10 md:max-xl:min-w-[216px] md:max-xl:rounded-[11px] md:max-xl:px-3">
             <div className="flex min-w-0 items-center gap-2">
-              <p className="shrink-0 font-mono text-[0.5rem] font-medium uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.58rem]">
+              <p className="shrink-0 font-mono text-[0.5rem] font-medium uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.56rem]">
                 Machine
               </p>
               <p
                 className={cn(
-                  "min-w-0 truncate font-mono text-[0.68rem] font-semibold uppercase tracking-[0.14em] md:max-xl:text-[0.78rem]",
+                  "min-w-0 truncate font-mono text-[0.68rem] font-semibold uppercase tracking-[0.14em] md:max-xl:text-[0.74rem]",
                   isOffline ? "text-status-warning-foreground" : "text-status-success-foreground",
                 )}
                 title={statusLabel}
@@ -105,7 +105,7 @@ export function DashboardTopBar({
                       : "Wake machine"
                 }
                 className={cn(
-                  "flex size-6 items-center justify-center rounded-[7px] border transition disabled:cursor-not-allowed disabled:opacity-50 md:max-xl:size-9 md:max-xl:rounded-[10px]",
+                  "flex size-6 items-center justify-center rounded-[7px] border transition disabled:cursor-not-allowed disabled:opacity-50 md:max-xl:size-8 md:max-xl:rounded-[9px]",
                   isMachinePoweredOn
                     ? "border-status-success-border bg-status-success-surface text-status-success-foreground hover:brightness-95"
                     : "border-border bg-panel-strong text-muted-foreground hover:bg-panel-muted",
@@ -114,11 +114,11 @@ export function DashboardTopBar({
                 onClick={onToggleMachinePower}
                 type="button"
               >
-                <Power className="size-3.5 md:max-xl:size-[18px]" />
+                <Power className="size-3.5 md:max-xl:size-4" />
               </button>
               <p
                 className={cn(
-                  "shrink-0 font-mono text-[0.54rem] uppercase tracking-[0.1em] md:max-xl:text-[0.62rem]",
+                  "shrink-0 font-mono text-[0.54rem] uppercase tracking-[0.1em] md:max-xl:text-[0.58rem]",
                   isOffline ? "text-status-warning-foreground" : "text-foreground",
                 )}
               >
@@ -144,15 +144,15 @@ function ReservoirStatusCard({
   const isLow = level != null && refillLevel != null && level <= refillLevel;
 
   return (
-    <div className="min-w-[138px] flex-1 rounded-[10px] border border-border bg-panel px-2.5 py-1 md:flex-none md:max-w-[168px] md:max-xl:min-w-[168px] md:max-xl:rounded-[12px] md:max-xl:px-3 md:max-xl:py-2">
+    <div className="min-w-[138px] flex-1 rounded-[10px] border border-border bg-panel px-2.5 py-1 md:flex-none md:max-w-[156px] md:max-xl:min-w-[156px] md:max-xl:rounded-[11px] md:max-xl:px-2.5 md:max-xl:py-1.5">
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 font-mono text-[0.5rem] font-medium uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.58rem]">
-          <Droplets className="size-2.5 text-highlight-muted md:max-xl:size-3" />
+        <p className="flex items-center gap-1.5 font-mono text-[0.5rem] font-medium uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.56rem]">
+          <Droplets className="size-2.5 text-highlight-muted md:max-xl:size-[11px]" />
           Reservoir
         </p>
         <p
           className={cn(
-            "font-mono text-[0.74rem] font-semibold md:max-xl:text-[0.86rem]",
+            "font-mono text-[0.74rem] font-semibold md:max-xl:text-[0.8rem]",
             isLow ? "text-status-warning-foreground" : "text-foreground",
           )}
         >
@@ -162,7 +162,7 @@ function ReservoirStatusCard({
 
       <div className="mt-0.5 flex items-center gap-2">
         <div className="flex min-w-0 flex-1 items-center">
-          <div className="relative h-2 flex-1 rounded-full border border-status-warning-border bg-panel-strong p-[1px] md:max-xl:h-2.5">
+          <div className="relative h-2 flex-1 rounded-full border border-status-warning-border bg-panel-strong p-[1px] md:max-xl:h-[9px]">
             {refillLevel != null ? (
               <div
                 className="absolute inset-y-[1px] w-px bg-status-warning-foreground"
@@ -185,12 +185,12 @@ function ReservoirStatusCard({
           </div>
           <div
             className={cn(
-              "ml-1 h-2 w-1 rounded-r-full border border-l-0 border-status-warning-border md:max-xl:h-2.5 md:max-xl:w-1.5",
+              "ml-1 h-2 w-1 rounded-r-full border border-l-0 border-status-warning-border md:max-xl:h-[9px] md:max-xl:w-[5px]",
               isLow ? "bg-status-warning-foreground" : "bg-panel-strong",
             )}
           />
         </div>
-        <p className="shrink-0 font-mono text-[0.48rem] uppercase tracking-[0.12em] text-muted-foreground md:max-xl:text-[0.56rem]">
+        <p className="shrink-0 font-mono text-[0.48rem] uppercase tracking-[0.12em] text-muted-foreground md:max-xl:text-[0.54rem]">
           {level == null
             ? "No feed"
             : isLow
@@ -224,23 +224,23 @@ function ScaleStatusCard({
   weight: number | null;
 }) {
   return (
-    <div className="min-w-[228px] flex-[1.1] rounded-[10px] border border-border bg-panel px-2.5 py-1 md:flex-none md:max-w-[348px] md:max-xl:min-w-[304px] md:max-xl:rounded-[12px] md:max-xl:px-3.5 md:max-xl:py-2">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:flex-nowrap md:max-xl:gap-x-4 md:max-xl:gap-y-2">
-        <div className="min-w-[112px] flex-1">
+    <div className="min-w-[228px] flex-[1.1] rounded-[10px] border border-border bg-panel px-2.5 py-1 md:flex-none md:max-w-[324px] md:max-xl:min-w-[284px] md:max-xl:rounded-[11px] md:max-xl:px-3 md:max-xl:py-1.5">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 md:grid-cols-[minmax(0,1fr)_8ch_auto] md:items-center md:max-xl:gap-x-2.5">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <p className="flex items-center gap-1.5 font-mono text-[0.5rem] font-medium uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.58rem]">
-              <Scale className="size-2.5 text-status-info-foreground md:max-xl:size-3" />
+            <p className="flex items-center gap-1.5 font-mono text-[0.5rem] font-medium uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.56rem]">
+              <Scale className="size-2.5 text-status-info-foreground md:max-xl:size-[11px]" />
               Scale
             </p>
             {batteryLevel != null ? (
-              <p className="shrink-0 font-mono text-[0.5rem] uppercase tracking-[0.12em] text-muted-foreground md:max-xl:text-[0.58rem]">
+              <p className="shrink-0 font-mono text-[0.5rem] uppercase tracking-[0.12em] text-muted-foreground md:max-xl:text-[0.56rem]">
                 {batteryLevel.toFixed(0)}%
               </p>
             ) : null}
           </div>
           <p
             className={cn(
-              "mt-0.5 font-mono text-[0.54rem] uppercase tracking-[0.12em] md:max-xl:text-[0.62rem]",
+              "mt-0.5 truncate font-mono text-[0.54rem] uppercase tracking-[0.12em] md:max-xl:text-[0.58rem]",
               isPaired ? "text-status-info-foreground" : "text-status-warning-foreground",
             )}
           >
@@ -248,13 +248,13 @@ function ScaleStatusCard({
           </p>
         </div>
 
-        <p className="shrink-0 font-mono text-[0.88rem] font-semibold text-foreground md:text-[0.94rem] md:max-xl:text-[1.02rem]">
+        <p className="col-start-1 row-start-2 whitespace-nowrap font-mono text-[0.88rem] font-semibold tabular-nums text-foreground md:col-start-2 md:row-start-1 md:justify-self-end md:text-[0.94rem] md:max-xl:text-[0.98rem]">
           {formatScaleWeight(weight)}
         </p>
 
-        <div className="flex shrink-0 items-center gap-1 md:max-xl:gap-1.5">
+        <div className="col-start-2 row-span-2 row-start-1 flex shrink-0 items-center gap-1 justify-self-end md:col-start-3 md:row-span-1 md:max-xl:gap-1">
           <Button
-            className="h-[26px] rounded-[8px] border-status-info-border bg-status-info-surface px-2 text-[0.54rem] text-status-info-foreground hover:brightness-95 md:max-xl:h-9 md:max-xl:rounded-[10px] md:max-xl:px-3 md:max-xl:text-[0.6rem]"
+            className="h-[26px] rounded-[8px] border-status-info-border bg-status-info-surface px-2 text-[0.54rem] text-status-info-foreground hover:brightness-95 md:max-xl:h-8 md:max-xl:rounded-[9px] md:max-xl:px-2.5 md:max-xl:text-[0.56rem]"
             disabled={!isPaired || isTaring}
             onClick={onTareScale}
             size="sm"
@@ -263,7 +263,7 @@ function ScaleStatusCard({
             {isTaring ? "Taring" : "Tare"}
           </Button>
           <Button
-            className="h-[26px] rounded-[8px] border-status-success-border bg-status-success-surface px-2 text-[0.54rem] text-status-success-foreground hover:brightness-95 md:max-xl:h-9 md:max-xl:rounded-[10px] md:max-xl:px-3 md:max-xl:text-[0.6rem]"
+            className="h-[26px] rounded-[8px] border-status-success-border bg-status-success-surface px-2 text-[0.54rem] text-status-success-foreground hover:brightness-95 md:max-xl:h-8 md:max-xl:rounded-[9px] md:max-xl:px-2.5 md:max-xl:text-[0.56rem]"
             disabled={isWeightActionDisabled}
             onClick={onSetDoseFromScale}
             size="sm"
@@ -326,7 +326,7 @@ function getScaleStatusLabel(
 
 function formatConnectionLabel(liveConnection: LiveConnectionState) {
   if (liveConnection === "live") {
-    return "Stream live";
+    return "Connected";
   }
 
   if (liveConnection === "connecting") {
@@ -334,8 +334,8 @@ function formatConnectionLabel(liveConnection: LiveConnectionState) {
   }
 
   if (liveConnection === "error") {
-    return "Stream error";
+    return "Connection error";
   }
 
-  return "Standby";
+  return "Disconnected";
 }

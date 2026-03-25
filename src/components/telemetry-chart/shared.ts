@@ -102,7 +102,7 @@ export function buildVisibleLanes(
   density: ChartDensity,
 ) {
   let yOffset = 0;
-  const laneGap = density === "compact" ? 8 : 12;
+  const laneGap = density === "compact" ? 6 : 12;
 
   return telemetryFamilyOrder.flatMap((family) => {
     if (!laneVisibility[family]) {
@@ -122,8 +122,8 @@ export function buildVisibleLanes(
       height:
         density === "compact"
           ? family === "progress"
-            ? 48
-            : 86
+            ? 42
+            : 74
           : family === "progress"
             ? 78
             : 134,
@@ -143,9 +143,9 @@ export function getChartMetrics<TSeries = TelemetrySeriesDefinition, TFamily ext
 ) {
   const margin =
     density === "compact"
-      ? { top: 12, right: 14, bottom: 26, left: 46 }
+      ? { top: 10, right: 12, bottom: 22, left: 42 }
       : { top: 18, right: 22, bottom: 34, left: 64 };
-  const laneGap = density === "compact" ? 8 : 12;
+  const laneGap = density === "compact" ? 6 : 12;
   const plotHeight = visibleLanes.reduce(
     (total, lane, laneIndex) =>
       total + lane.height + (laneIndex === visibleLanes.length - 1 ? 0 : laneGap),

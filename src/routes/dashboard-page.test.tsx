@@ -105,6 +105,9 @@ describe("DashboardPage", () => {
 
     render(<DashboardPage />);
 
+    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(screen.getByText("Connected")).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("button", { name: "Sleep machine" }));
 
     await waitFor(() => {
@@ -115,11 +118,14 @@ describe("DashboardPage", () => {
 
   it("wakes the machine from the power control when it is sleeping", async () => {
     queryMocks.useMachineStateQuery.mockReturnValue({
-      data: buildSnapshot("sleeping"),
+      data: buildSnapshot("sleeping", "idle"),
       error: null,
     });
 
     render(<DashboardPage />);
+
+    expect(screen.getByText("Sleeping")).toBeInTheDocument();
+    expect(screen.getByText("Connected")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Wake machine" }));
 
@@ -128,14 +134,42 @@ describe("DashboardPage", () => {
     });
     expect(screen.getByRole("button", { name: "Wake machine" })).toBeInTheDocument();
   });
+
+  it("reconnects the scale feed when a connected scale appears after the stream is idle", async () => {
+    const connectScaleSpy = vi
+      .spyOn(useMachineStore.getState(), "connectScale")
+      .mockResolvedValue(undefined);
+
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle"),
+      error: null,
+    });
+    queryMocks.useDevicesQuery.mockReturnValue({
+      data: [
+        {
+          id: "scale-1",
+          name: "Acaia Lunar",
+          state: "connected",
+          type: "scale",
+        },
+      ],
+      error: null,
+    });
+
+    render(<DashboardPage />);
+
+    await waitFor(() => {
+      expect(connectScaleSpy).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
-function buildSnapshot(state: string) {
+function buildSnapshot(state: string, substate = state) {
   return {
     timestamp: "2026-03-25T10:00:00.000Z",
     state: {
       state,
-      substate: state,
+      substate,
     },
     flow: 0,
     pressure: 0,

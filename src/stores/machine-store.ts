@@ -26,6 +26,8 @@ interface MachineState {
   error: string | null;
   liveConnection: LiveConnectionState;
   machineSocket: WebSocket | null;
+  connectScale: () => Promise<void>;
+  disconnectScale: () => void;
   scaleConnection: LiveConnectionState;
   scaleSnapshot: ScaleSnapshot | null;
   scaleSocket: WebSocket | null;
@@ -58,6 +60,62 @@ export const useMachineStore = create<MachineState>((set, get) => ({
   error: null,
   liveConnection: "idle",
   machineSocket: null,
+  async connectScale() {
+    get().disconnectScale();
+
+    try {
+      const scaleSocket = getClient().createScaleSnapshotSocket();
+
+      scaleSocket.onopen = () => {
+        set({ scaleConnection: "live" });
+      };
+
+      scaleSocket.onmessage = (event) => {
+        const parsed = scaleSnapshotSchema.safeParse(JSON.parse(event.data));
+
+        if (!parsed.success) {
+          set({
+            scaleConnection: "error",
+            scaleSnapshot: null,
+          });
+          return;
+        }
+
+        set({
+          scaleConnection: "live",
+          scaleSnapshot: parsed.data,
+        });
+      };
+
+      scaleSocket.onerror = () => {
+        set({
+          scaleConnection: "error",
+          scaleSnapshot: null,
+        });
+      };
+
+      scaleSocket.onclose = () => {
+        set((state) => ({
+          scaleConnection: "idle",
+          scaleSnapshot:
+            state.scaleSocket === scaleSocket ? null : state.scaleSnapshot,
+          scaleSocket: state.scaleSocket === scaleSocket ? null : state.scaleSocket,
+        }));
+      };
+
+      set({
+        scaleConnection: "connecting",
+        scaleSnapshot: null,
+        scaleSocket,
+      });
+    } catch (error) {
+      set({
+        scaleConnection: "error",
+        scaleSnapshot: null,
+        error: getErrorMessage(error),
+      });
+    }
+  },
   scaleConnection: "idle",
   scaleSnapshot: null,
   scaleSocket: null,
@@ -71,7 +129,6 @@ export const useMachineStore = create<MachineState>((set, get) => ({
     try {
       const client = getClient();
       const machineSocket = client.createMachineSnapshotSocket();
-      const scaleSocket = client.createScaleSnapshotSocket();
       const waterSocket = client.createMachineWaterLevelsSocket();
 
       machineSocket.onopen = () => {
@@ -109,43 +166,6 @@ export const useMachineStore = create<MachineState>((set, get) => ({
           machineSocket:
             state.machineSocket === machineSocket ? null : state.machineSocket,
           liveConnection: "idle",
-        }));
-      };
-
-      scaleSocket.onopen = () => {
-        set({ scaleConnection: "live" });
-      };
-
-      scaleSocket.onmessage = (event) => {
-        const parsed = scaleSnapshotSchema.safeParse(JSON.parse(event.data));
-
-        if (!parsed.success) {
-          set({
-            scaleConnection: "error",
-            scaleSnapshot: null,
-          });
-          return;
-        }
-
-        set({
-          scaleConnection: "live",
-          scaleSnapshot: parsed.data,
-        });
-      };
-
-      scaleSocket.onerror = () => {
-        set({
-          scaleConnection: "error",
-          scaleSnapshot: null,
-        });
-      };
-
-      scaleSocket.onclose = () => {
-        set((state) => ({
-          scaleConnection: "idle",
-          scaleSnapshot:
-            state.scaleSocket === scaleSocket ? null : state.scaleSnapshot,
-          scaleSocket: state.scaleSocket === scaleSocket ? null : state.scaleSocket,
         }));
       };
 
@@ -189,11 +209,11 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       set({
         liveConnection: "connecting",
         machineSocket,
-        scaleConnection: "connecting",
-        scaleSocket,
         waterConnection: "connecting",
         waterSocket,
       });
+
+      await get().connectScale();
     } catch (error) {
       set({
         error: getErrorMessage(error),
@@ -205,7 +225,6 @@ export const useMachineStore = create<MachineState>((set, get) => ({
   },
   disconnectLive() {
     const currentMachineSocket = get().machineSocket;
-    const currentScaleSocket = get().scaleSocket;
     const currentWaterSocket = get().waterSocket;
 
     if (currentMachineSocket) {
@@ -213,26 +232,34 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       currentMachineSocket.close();
     }
 
-    if (currentScaleSocket) {
-      currentScaleSocket.onclose = null;
-      currentScaleSocket.close();
-    }
-
     if (currentWaterSocket) {
       currentWaterSocket.onclose = null;
       currentWaterSocket.close();
     }
 
+    get().disconnectScale();
+
     set({
       liveConnection: "idle",
       machineSocket: null,
-      scaleConnection: "idle",
-      scaleSnapshot: null,
-      scaleSocket: null,
       telemetry: [],
       waterConnection: "idle",
       waterLevels: null,
       waterSocket: null,
+    });
+  },
+  disconnectScale() {
+    const currentScaleSocket = get().scaleSocket;
+
+    if (currentScaleSocket) {
+      currentScaleSocket.onclose = null;
+      currentScaleSocket.close();
+    }
+
+    set({
+      scaleConnection: "idle",
+      scaleSnapshot: null,
+      scaleSocket: null,
     });
   },
   async requestState(nextState) {

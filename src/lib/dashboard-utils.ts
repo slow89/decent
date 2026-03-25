@@ -49,9 +49,28 @@ export function getStatusLabel({
     return "Offline";
   }
 
-  if (machineSubstate === "ready") {
+  const normalizedState = machineState?.toLowerCase();
+  const normalizedSubstate = machineSubstate?.toLowerCase();
+
+  if (normalizedState === "sleeping") {
+    return "Sleeping";
+  }
+
+  if (normalizedSubstate === "ready") {
     return "Ready";
   }
 
-  return startCase(machineSubstate ?? machineState ?? "Idle");
+  if (normalizedState === "idle") {
+    return "Ready";
+  }
+
+  if (normalizedSubstate && machineSubstate && normalizedSubstate !== "idle") {
+    return startCase(machineSubstate);
+  }
+
+  if (machineState) {
+    return startCase(machineState);
+  }
+
+  return "Idle";
 }
