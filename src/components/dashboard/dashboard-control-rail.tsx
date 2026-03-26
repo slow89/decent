@@ -3,37 +3,12 @@ import {
   RecipePresetRow,
   RecipeValueControl,
 } from "@/components/recipe/recipe-controls";
+import type {
+  DashboardControlRow,
+  DashboardRecipeControls,
+} from "@/components/dashboard/dashboard-view-model";
 import { Minus, Plus } from "lucide-react";
-import type { RecipePreset } from "@/lib/recipe-utils";
 import { cn } from "@/lib/utils";
-
-export type DashboardControlRow = {
-  activePresetValue: number;
-  detail?: string;
-  label: string;
-  onDecrease: () => void;
-  onIncrease: () => void;
-  onPresetClick: (value: number) => void;
-  presets: ReadonlyArray<RecipePreset>;
-  tint: string;
-  value: string;
-};
-
-export type DashboardRecipeControls = {
-  doseActivePresetValue: number;
-  dosePresets: ReadonlyArray<RecipePreset>;
-  doseValue: string;
-  drinkActivePresetValue: number;
-  drinkDetail: string;
-  drinkPresets: ReadonlyArray<RecipePreset>;
-  drinkValue: string;
-  onDecreaseDose: () => void;
-  onDecreaseDrink: () => void;
-  onIncreaseDose: () => void;
-  onIncreaseDrink: () => void;
-  onSelectDosePreset: (value: number) => void;
-  onSelectDrinkPreset: (value: number) => void;
-};
 
 export function DashboardControlRail({
   controlRows,

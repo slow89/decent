@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useMachineStore } from "@/stores/machine-store";
@@ -40,6 +40,8 @@ vi.mock("@/components/telemetry-chart", () => ({
 
 describe("DashboardPage", () => {
   const requestMachineStateMutate = vi.fn();
+  const tareScaleMutate = vi.fn();
+  const updateWorkflowMutate = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,11 +61,11 @@ describe("DashboardPage", () => {
     });
     queryMocks.useTareScaleMutation.mockReturnValue({
       isPending: false,
-      mutate: vi.fn(),
+      mutate: tareScaleMutate,
     });
     queryMocks.useUpdateWorkflowMutation.mockReturnValue({
       isPending: false,
-      mutate: vi.fn(),
+      mutate: updateWorkflowMutate,
     });
     queryMocks.useWorkflowQuery.mockReturnValue({
       data: {
@@ -116,7 +118,7 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("button", { name: "Sleep machine" })).toBeInTheDocument();
   });
 
-  it("wakes the machine from the power control when it is sleeping", async () => {
+  it("shows a sleep screen and wakes the machine when the screen is tapped", async () => {
     queryMocks.useMachineStateQuery.mockReturnValue({
       data: buildSnapshot("sleeping", "idle"),
       error: null,
@@ -124,15 +126,15 @@ describe("DashboardPage", () => {
 
     render(<DashboardPage />);
 
-    expect(screen.getByText("Sleeping")).toBeInTheDocument();
-    expect(screen.getByText("Connected")).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-sleep-screen")).toBeInTheDocument();
+    expect(screen.getByText("Your corgi barista is napping.")).toBeInTheDocument();
+    expect(screen.getByText("Tap anywhere to turn on machine")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Wake machine" }));
+    fireEvent.click(screen.getByRole("button", { name: "Turn on machine" }));
 
     await waitFor(() => {
       expect(requestMachineStateMutate).toHaveBeenCalledWith("idle");
     });
-    expect(screen.getByRole("button", { name: "Wake machine" })).toBeInTheDocument();
   });
 
   it("reconnects the scale feed when a connected scale appears after the stream is idle", async () => {
@@ -216,10 +218,11 @@ describe("DashboardPage", () => {
     rerender(<DashboardPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Unpaired")).toBeInTheDocument();
+      expect(screen.getByText("No scale paired")).toBeInTheDocument();
     });
     expect(screen.getByText("--.- g")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Tare" })).toBeDisabled();
+    expect(screen.getByRole("link", { name: "Pair in Setup" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Tare" })).not.toBeInTheDocument();
     expect(disconnectScaleSpy).toHaveBeenCalled();
   });
 
@@ -233,6 +236,105 @@ describe("DashboardPage", () => {
 
     expect(screen.getByTestId("dashboard-tablet-prep-board")).toBeInTheDocument();
     expect(screen.queryByTestId("dashboard-tablet-shot-workspace")).not.toBeInTheDocument();
+  });
+
+  it("switches tablet focus to telemetry when telemetry reports an espresso shot", async () => {
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle"),
+      error: null,
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByTestId("dashboard-tablet-prep-board")).toBeInTheDocument();
+
+    act(() => {
+      useMachineStore.setState({
+        telemetry: [
+          {
+            elapsedSeconds: 12,
+            flow: 0,
+            groupTemperature: 92,
+            mixTemperature: 93,
+            pressure: 0,
+            profileFrame: 0,
+            shotElapsedSeconds: 4,
+            state: "espresso",
+            steamTemperature: 135,
+            substate: "pouring",
+            targetFlow: 0,
+            targetGroupTemperature: 93,
+            targetMixTemperature: 93,
+            targetPressure: 0,
+            timestamp: "2026-03-25T10:00:04.000Z",
+          },
+        ],
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("dashboard-tablet-shot-workspace")).toBeInTheDocument();
+    });
+  });
+
+  it("shows brew heating status above tablet controls while temperatures are below target", () => {
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle", "ready", {
+        groupTemperature: 89,
+        mixTemperature: 90,
+        targetGroupTemperature: 93,
+        targetMixTemperature: 93,
+      }),
+      error: null,
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByTestId("dashboard-tablet-prep-status")).toHaveTextContent(
+      "Heating up",
+    );
+    expect(screen.getByText("90°C / 93°C")).toBeInTheDocument();
+    expect(screen.getByText("89°C / 93°C")).toBeInTheDocument();
+  });
+
+  it("sets the workflow dose from the live scale weight", async () => {
+    useMachineStore.setState({
+      scaleConnection: "live",
+      scaleSnapshot: {
+        timestamp: "2026-03-25T10:00:00.000Z",
+        weight: 18.2,
+        weightFlow: 0,
+        timerValue: null,
+        batteryLevel: 82,
+      },
+    });
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle"),
+      error: null,
+    });
+    queryMocks.useDevicesQuery.mockReturnValue({
+      data: [
+        {
+          id: "scale-1",
+          name: "Acaia Lunar",
+          state: "connected",
+          type: "scale",
+        },
+      ],
+      error: null,
+    });
+
+    render(<DashboardPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Use dose" }));
+
+    await waitFor(() => {
+      expect(updateWorkflowMutate).toHaveBeenCalledWith({
+        context: {
+          targetDoseWeight: 18.2,
+        },
+      });
+    });
   });
 
   it("switches tablet focus to telemetry when a shot is active", () => {
@@ -294,7 +396,11 @@ describe("DashboardPage", () => {
   });
 });
 
-function buildSnapshot(state: string, substate = state) {
+function buildSnapshot(
+  state: string,
+  substate = state,
+  overrides: Record<string, unknown> = {},
+) {
   return {
     timestamp: "2026-03-25T10:00:00.000Z",
     state: {
@@ -311,5 +417,6 @@ function buildSnapshot(state: string, substate = state) {
     targetGroupTemperature: 93,
     profileFrame: 0,
     steamTemperature: 135,
+    ...overrides,
   };
 }

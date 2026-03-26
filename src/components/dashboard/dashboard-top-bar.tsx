@@ -2,86 +2,35 @@ import { Link } from "@tanstack/react-router";
 import { Droplets, Pause, Play, Power, Scale } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { getDashboardDevEnabled, getStatusLabel } from "@/lib/dashboard-utils";
+import { roundValue } from "@/lib/recipe-utils";
 import { cn } from "@/lib/utils";
-import type { LiveConnectionState } from "@/stores/machine-store";
+import {
+  useDevicesQuery,
+  useMachineStateQuery,
+  useRequestMachineStateMutation,
+  useTareScaleMutation,
+  useUpdateWorkflowMutation,
+  useWorkflowQuery,
+} from "@/rest/queries";
+import { type LiveConnectionState, useMachineStore } from "@/stores/machine-store";
+import { getDashboardActiveRecipe } from "./dashboard-view-model";
 
 export function DashboardTopBar({
-  activeRecipe,
-  isOffline,
-  isMachinePowerDisabled,
-  isMachinePowerPending,
-  isMachinePoweredOn,
-  isScalePaired,
   isSimulatedShotActive,
-  isScaleTaring,
-  isScaleWeightActionDisabled,
-  liveConnection,
   onToggleSimulatedShot,
-  onToggleMachinePower,
-  onSetDoseFromScale,
-  onTareScale,
-  reservoirLevel,
-  reservoirRefillLevel,
-  scaleBatteryLevel,
-  scaleConnection,
-  scaleWeight,
-  showDevShotToggle,
-  statusLabel,
 }: {
-  activeRecipe: string;
-  isOffline: boolean;
-  isMachinePowerDisabled: boolean;
-  isMachinePowerPending: boolean;
-  isMachinePoweredOn: boolean;
-  isScalePaired: boolean;
   isSimulatedShotActive: boolean;
-  isScaleTaring: boolean;
-  isScaleWeightActionDisabled: boolean;
-  liveConnection: LiveConnectionState;
   onToggleSimulatedShot: () => void;
-  onToggleMachinePower: () => void;
-  onSetDoseFromScale: () => void;
-  onTareScale: () => void;
-  reservoirLevel: number | null;
-  reservoirRefillLevel: number | null;
-  scaleBatteryLevel: number | null;
-  scaleConnection: LiveConnectionState;
-  scaleWeight: number | null;
-  showDevShotToggle: boolean;
-  statusLabel: string;
 }) {
+  const showDevShotToggle = getDashboardDevEnabled();
+
   return (
     <section className="shrink-0 border-b border-border px-2.5 pb-2 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] md:px-3 md:pb-2 md:pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] xl:px-3 xl:pb-1.5 xl:pt-[calc(env(safe-area-inset-top,0px)+0.375rem)]">
       <div className="flex flex-wrap items-stretch gap-1 md:max-xl:gap-1.5">
-        <Button
-          asChild
-          className="h-auto min-h-8 min-w-[190px] flex-1 justify-between rounded-[10px] border-border bg-panel px-2.5 py-1 font-mono text-[0.72rem] font-medium text-foreground hover:bg-panel-muted md:flex-none md:max-w-[300px] md:max-xl:min-h-10 md:max-xl:min-w-[220px] md:max-xl:rounded-[11px] md:max-xl:px-3 md:max-xl:py-1.5 md:max-xl:text-[0.76rem]"
-          size="sm"
-          variant="outline"
-        >
-          <Link to="/workflows">
-            <span className="min-w-0 truncate">{activeRecipe}</span>
-            <span className="text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.62rem]">
-              Profiles
-            </span>
-          </Link>
-        </Button>
-
-        <ReservoirStatusCard
-          reservoirLevel={reservoirLevel}
-          reservoirRefillLevel={reservoirRefillLevel}
-        />
-
-        <ScaleStatusCard
-          batteryLevel={scaleBatteryLevel}
-          isPaired={isScalePaired}
-          isTaring={isScaleTaring}
-          isWeightActionDisabled={isScaleWeightActionDisabled}
-          onSetDoseFromScale={onSetDoseFromScale}
-          onTareScale={onTareScale}
-          scaleConnection={scaleConnection}
-          weight={scaleWeight}
-        />
+        <DashboardRecipeButton />
+        <ReservoirStatusCard />
+        <ScaleStatusCard />
 
         {showDevShotToggle ? (
           <DevShotToggleButton
@@ -91,57 +40,30 @@ export function DashboardTopBar({
         ) : null}
 
         <div className="flex min-w-[184px] flex-1 items-stretch justify-end gap-1 md:ml-auto md:flex-none md:max-xl:min-w-[216px] md:max-xl:gap-1.5">
-          <div className="flex min-h-8 min-w-[184px] shrink-0 items-center justify-between gap-2 rounded-[10px] border border-border bg-panel px-2.5 md:max-xl:min-h-10 md:max-xl:min-w-[216px] md:max-xl:rounded-[11px] md:max-xl:px-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <p className="shrink-0 font-mono text-[0.5rem] font-medium uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.56rem]">
-                Machine
-              </p>
-              <p
-                className={cn(
-                  "min-w-0 truncate font-mono text-[0.68rem] font-semibold uppercase tracking-[0.14em] md:max-xl:text-[0.74rem]",
-                  isOffline ? "text-status-warning-foreground" : "text-status-success-foreground",
-                )}
-                title={statusLabel}
-              >
-                {statusLabel}
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-1.5">
-              <button
-                aria-label={
-                  isMachinePowerPending
-                    ? isMachinePoweredOn
-                      ? "Turning off machine"
-                      : "Turning on machine"
-                    : isMachinePoweredOn
-                      ? "Sleep machine"
-                      : "Wake machine"
-                }
-                className={cn(
-                  "flex size-6 items-center justify-center rounded-[7px] border transition disabled:cursor-not-allowed disabled:opacity-50 md:max-xl:size-8 md:max-xl:rounded-[9px]",
-                  isMachinePoweredOn
-                    ? "border-status-success-border bg-status-success-surface text-status-success-foreground hover:brightness-95"
-                    : "border-border bg-panel-strong text-muted-foreground hover:bg-panel-muted",
-                )}
-                disabled={isMachinePowerDisabled || isMachinePowerPending}
-                onClick={onToggleMachinePower}
-                type="button"
-              >
-                <Power className="size-3.5 md:max-xl:size-4" />
-              </button>
-              <p
-                className={cn(
-                  "shrink-0 font-mono text-[0.54rem] uppercase tracking-[0.1em] md:max-xl:text-[0.58rem]",
-                  isOffline ? "text-status-warning-foreground" : "text-foreground",
-                )}
-              >
-                {formatConnectionLabel(liveConnection)}
-              </p>
-            </div>
-          </div>
+          <MachineStatusCard />
         </div>
       </div>
     </section>
+  );
+}
+
+function DashboardRecipeButton() {
+  const { data: workflow } = useWorkflowQuery();
+
+  return (
+    <Button
+      asChild
+      className="h-auto min-h-8 min-w-[190px] flex-1 justify-between rounded-[10px] border-border bg-panel px-2.5 py-1 font-mono text-[0.72rem] font-medium text-foreground hover:bg-panel-muted md:flex-none md:max-w-[300px] md:max-xl:min-h-10 md:max-xl:min-w-[220px] md:max-xl:rounded-[11px] md:max-xl:px-3 md:max-xl:py-1.5 md:max-xl:text-[0.76rem]"
+      size="sm"
+      variant="outline"
+    >
+      <Link to="/workflows">
+        <span className="min-w-0 truncate">{getDashboardActiveRecipe(workflow)}</span>
+        <span className="text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.62rem]">
+          Profiles
+        </span>
+      </Link>
+    </Button>
   );
 }
 
@@ -174,13 +96,9 @@ function DevShotToggleButton({
   );
 }
 
-function ReservoirStatusCard({
-  reservoirLevel,
-  reservoirRefillLevel,
-}: {
-  reservoirLevel: number | null;
-  reservoirRefillLevel: number | null;
-}) {
+function ReservoirStatusCard() {
+  const reservoirLevel = useMachineStore((state) => state.waterLevels?.currentLevel ?? null);
+  const reservoirRefillLevel = useMachineStore((state) => state.waterLevels?.refillLevel ?? null);
   const level = clampPercentage(reservoirLevel);
   const refillLevel = clampPercentage(reservoirRefillLevel);
   const isLow = level != null && refillLevel != null && level <= refillLevel;
@@ -246,25 +164,75 @@ function ReservoirStatusCard({
   );
 }
 
-function ScaleStatusCard({
-  batteryLevel,
-  isPaired,
-  isTaring,
-  isWeightActionDisabled,
-  onSetDoseFromScale,
-  onTareScale,
-  scaleConnection,
-  weight,
-}: {
-  batteryLevel: number | null;
-  isPaired: boolean;
-  isTaring: boolean;
-  isWeightActionDisabled: boolean;
-  onSetDoseFromScale: () => void;
-  onTareScale: () => void;
-  scaleConnection: LiveConnectionState;
-  weight: number | null;
-}) {
+function ScaleStatusCard() {
+  const scaleConnection = useMachineStore((state) => state.scaleConnection);
+  const scaleSnapshot = useMachineStore((state) => state.scaleSnapshot);
+  const { data: devices } = useDevicesQuery();
+  const tareScaleMutation = useTareScaleMutation();
+  const updateWorkflowMutation = useUpdateWorkflowMutation();
+  const connectedScale = devices?.find(
+    (device) => device.type === "scale" && device.state === "connected",
+  );
+  const isPaired = Boolean(connectedScale);
+  const weight = connectedScale ? scaleSnapshot?.weight ?? null : null;
+  const batteryLevel = connectedScale ? scaleSnapshot?.batteryLevel ?? null : null;
+  const canUseScaleWeightForDose =
+    isPaired &&
+    weight != null &&
+    Number.isFinite(weight) &&
+    weight > 0;
+
+  function handleSetDoseFromScale() {
+    if (!canUseScaleWeightForDose || weight == null) {
+      return;
+    }
+
+    updateWorkflowMutation.mutate({
+      context: {
+        targetDoseWeight: roundValue(weight, 0.1),
+      },
+    });
+  }
+
+  if (!isPaired) {
+    return (
+      <div className="min-w-[228px] flex-[1.1] rounded-[10px] border border-status-warning-border bg-status-warning-surface px-2.5 py-1.5 md:flex-none md:max-w-[324px] md:max-xl:min-w-[284px] md:max-xl:rounded-[11px] md:max-xl:px-3 md:max-xl:py-2">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="flex items-center gap-1.5 font-mono text-[0.5rem] font-medium uppercase tracking-[0.16em] text-status-warning-foreground md:max-xl:text-[0.56rem]">
+                <Scale className="size-2.5 md:max-xl:size-[11px]" />
+                Scale
+              </p>
+              <p className="shrink-0 rounded-full border border-status-warning-border px-1.5 py-0.5 font-mono text-[0.48rem] font-semibold uppercase tracking-[0.14em] text-status-warning-foreground md:max-xl:text-[0.52rem]">
+                {getScaleStatusLabel(isPaired, scaleConnection)}
+              </p>
+            </div>
+            <p className="mt-1 font-mono text-[0.84rem] font-semibold text-foreground md:max-xl:text-[0.92rem]">
+              No scale paired
+            </p>
+            <p className="mt-0.5 text-[0.68rem] text-muted-foreground md:max-xl:text-[0.72rem]">
+              Pair one in Setup before dosing from the scale.
+            </p>
+          </div>
+
+          <p className="shrink-0 whitespace-nowrap font-mono text-[0.82rem] font-semibold tabular-nums text-muted-foreground md:max-xl:text-[0.9rem]">
+            {formatScaleWeight(weight)}
+          </p>
+        </div>
+
+        <Button
+          asChild
+          className="mt-2.5 h-8 w-full rounded-[9px] border-status-warning-border bg-panel text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-foreground hover:bg-panel-muted md:max-xl:h-9 md:max-xl:text-[0.64rem]"
+          size="sm"
+          variant="outline"
+        >
+          <Link to="/settings">Pair in Setup</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-w-[228px] flex-[1.1] rounded-[10px] border border-border bg-panel px-2.5 py-1 md:flex-none md:max-w-[324px] md:max-xl:min-w-[284px] md:max-xl:rounded-[11px] md:max-xl:px-3 md:max-xl:py-1.5">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 md:grid-cols-[minmax(0,1fr)_8ch_auto] md:items-center md:max-xl:gap-x-2.5">
@@ -297,23 +265,102 @@ function ScaleStatusCard({
         <div className="col-start-2 row-span-2 row-start-1 flex shrink-0 items-center gap-1 justify-self-end md:col-start-3 md:row-span-1 md:max-xl:gap-1">
           <Button
             className="h-[26px] rounded-[8px] border-status-info-border bg-status-info-surface px-2 text-[0.54rem] text-status-info-foreground hover:brightness-95 md:max-xl:h-8 md:max-xl:rounded-[9px] md:max-xl:px-2.5 md:max-xl:text-[0.56rem]"
-            disabled={scaleConnection !== "live" || isTaring}
-            onClick={onTareScale}
+            disabled={scaleConnection !== "live" || tareScaleMutation.isPending}
+            onClick={() => tareScaleMutation.mutate()}
             size="sm"
             variant="outline"
           >
-            {isTaring ? "Taring" : "Tare"}
+            {tareScaleMutation.isPending ? "Taring" : "Tare"}
           </Button>
           <Button
             className="h-[26px] rounded-[8px] border-status-success-border bg-status-success-surface px-2 text-[0.54rem] text-status-success-foreground hover:brightness-95 md:max-xl:h-8 md:max-xl:rounded-[9px] md:max-xl:px-2.5 md:max-xl:text-[0.56rem]"
-            disabled={isWeightActionDisabled}
-            onClick={onSetDoseFromScale}
+            disabled={!canUseScaleWeightForDose || updateWorkflowMutation.isPending}
+            onClick={handleSetDoseFromScale}
             size="sm"
             variant="outline"
           >
             Use dose
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function MachineStatusCard() {
+  const liveConnection = useMachineStore((state) => state.liveConnection);
+  const machineError = useMachineStore((state) => state.error);
+  const { data: snapshot, error: machineQueryError } = useMachineStateQuery();
+  const { error: workflowQueryError } = useWorkflowQuery();
+  const requestMachineStateMutation = useRequestMachineStateMutation();
+  const hasQueryError = Boolean(machineError || machineQueryError || workflowQueryError);
+  const isOffline = liveConnection !== "live" || hasQueryError;
+  const isMachinePoweredOn = snapshot?.state.state !== "sleeping";
+  const isMachinePowerDisabled = snapshot == null || hasQueryError;
+  const statusLabel = getStatusLabel({
+    isOffline,
+    liveConnection,
+    machineSubstate: snapshot?.state.substate,
+    machineState: snapshot?.state.state,
+  });
+
+  function handleToggleMachinePower() {
+    if (snapshot == null) {
+      return;
+    }
+
+    requestMachineStateMutation.mutate(
+      snapshot.state.state === "sleeping" ? "idle" : "sleeping",
+    );
+  }
+
+  return (
+    <div className="flex min-h-8 min-w-[184px] shrink-0 items-center justify-between gap-2 rounded-[10px] border border-border bg-panel px-2.5 md:max-xl:min-h-10 md:max-xl:min-w-[216px] md:max-xl:rounded-[11px] md:max-xl:px-3">
+      <div className="flex min-w-0 items-center gap-2">
+        <p className="shrink-0 font-mono text-[0.5rem] font-medium uppercase tracking-[0.16em] text-muted-foreground md:max-xl:text-[0.56rem]">
+          Machine
+        </p>
+        <p
+          className={cn(
+            "min-w-0 truncate font-mono text-[0.68rem] font-semibold uppercase tracking-[0.14em] md:max-xl:text-[0.74rem]",
+            isOffline ? "text-status-warning-foreground" : "text-status-success-foreground",
+          )}
+          title={statusLabel}
+        >
+          {statusLabel}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <button
+          aria-label={
+            requestMachineStateMutation.isPending
+              ? isMachinePoweredOn
+                ? "Turning off machine"
+                : "Turning on machine"
+              : isMachinePoweredOn
+                ? "Sleep machine"
+                : "Wake machine"
+          }
+          className={cn(
+            "flex size-6 items-center justify-center rounded-[7px] border transition disabled:cursor-not-allowed disabled:opacity-50 md:max-xl:size-8 md:max-xl:rounded-[9px]",
+            isMachinePoweredOn
+              ? "border-status-success-border bg-status-success-surface text-status-success-foreground hover:brightness-95"
+              : "border-border bg-panel-strong text-muted-foreground hover:bg-panel-muted",
+          )}
+          disabled={isMachinePowerDisabled || requestMachineStateMutation.isPending}
+          onClick={handleToggleMachinePower}
+          type="button"
+        >
+          <Power className="size-3.5 md:max-xl:size-4" />
+        </button>
+        <p
+          className={cn(
+            "shrink-0 font-mono text-[0.54rem] uppercase tracking-[0.1em] md:max-xl:text-[0.58rem]",
+            isOffline ? "text-status-warning-foreground" : "text-foreground",
+          )}
+        >
+          {formatConnectionLabel(liveConnection)}
+        </p>
       </div>
     </div>
   );

@@ -1,16 +1,20 @@
 import { RecipePresetRow, RecipeValueControl } from "@/components/recipe/recipe-controls";
+import { DashboardTabletPrepStatus } from "@/components/dashboard/dashboard-tablet-prep-status";
 import type {
   DashboardControlRow,
   DashboardRecipeControls,
-} from "@/components/dashboard/dashboard-control-rail";
+} from "@/components/dashboard/dashboard-view-model";
+import type { DashboardPrepStatus } from "@/lib/dashboard-utils";
 import { cn } from "@/lib/utils";
 
 export function DashboardTabletPrepBoard({
   controlRows,
+  prepStatus,
   recipeControls,
   workflowDisabled,
 }: {
   controlRows: ReadonlyArray<DashboardControlRow>;
+  prepStatus: DashboardPrepStatus;
   recipeControls: DashboardRecipeControls;
   workflowDisabled: boolean;
 }) {
@@ -19,26 +23,30 @@ export function DashboardTabletPrepBoard({
       className="min-h-0 flex-1 overflow-y-auto px-2 py-2 md:px-3 md:py-3"
       data-testid="dashboard-tablet-prep-board"
     >
-      <div className="grid gap-3 md:grid-cols-2">
-        <DashboardTabletRecipeCard
-          disabled={workflowDisabled}
-          {...recipeControls}
-        />
-        {controlRows.map((row) => (
-          <DashboardTabletControlCard
-            activePresetValue={row.activePresetValue}
-            detail={row.detail}
+      <div className="space-y-3">
+        <DashboardTabletPrepStatus status={prepStatus} />
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <DashboardTabletRecipeCard
             disabled={workflowDisabled}
-            key={row.label}
-            label={row.label}
-            onDecrease={row.onDecrease}
-            onIncrease={row.onIncrease}
-            onPresetClick={row.onPresetClick}
-            presets={row.presets}
-            tint={row.tint}
-            value={row.value}
+            {...recipeControls}
           />
-        ))}
+          {controlRows.map((row) => (
+            <DashboardTabletControlCard
+              activePresetValue={row.activePresetValue}
+              detail={row.detail}
+              disabled={workflowDisabled}
+              key={row.label}
+              label={row.label}
+              onDecrease={row.onDecrease}
+              onIncrease={row.onIncrease}
+              onPresetClick={row.onPresetClick}
+              presets={row.presets}
+              tint={row.tint}
+              value={row.value}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

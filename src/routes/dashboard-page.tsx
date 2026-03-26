@@ -1,68 +1,26 @@
 import {
-  useState,
   useEffect,
   useEffectEvent,
+  useState,
 } from "react";
 
-import { DashboardWorkspace } from "@/components/dashboard/dashboard-workspace";
+import { DashboardSleepScreen } from "@/components/dashboard/dashboard-sleep-screen";
 import { DashboardTopBar } from "@/components/dashboard/dashboard-top-bar";
-import type { DashboardShotSummaryItem } from "@/components/dashboard/dashboard-tablet-shot-summary";
-import {
-  formatSecondaryNumber,
-  getDashboardDevEnabled,
-  getDashboardPresentationMode,
-  getStatusLabel,
-} from "@/lib/dashboard-utils";
-import { formatBrewRatio, formatPrimaryNumber, roundValue } from "@/lib/recipe-utils";
+import { DashboardWorkspaceContainer } from "@/components/dashboard/dashboard-workspace-container";
 import {
   useDevicesQuery,
   useMachineStateQuery,
   useRequestMachineStateMutation,
-  useTareScaleMutation,
-  useUpdateWorkflowMutation,
-  useWorkflowQuery,
 } from "@/rest/queries";
 import { useMachineStore } from "@/stores/machine-store";
 
 export function DashboardPage() {
   const connectScale = useMachineStore((state) => state.connectScale);
   const disconnectScale = useMachineStore((state) => state.disconnectScale);
-  const liveConnection = useMachineStore((state) => state.liveConnection);
-  const machineError = useMachineStore((state) => state.error);
-  const scaleConnection = useMachineStore((state) => state.scaleConnection);
-  const scaleSnapshot = useMachineStore((state) => state.scaleSnapshot);
-  const telemetry = useMachineStore((state) => state.telemetry);
-  const waterLevels = useMachineStore((state) => state.waterLevels);
   const { data: snapshot, error: machineQueryError } = useMachineStateQuery();
   const { data: devices } = useDevicesQuery({ refetchInterval: 2_000 });
-  const { data: workflow, error: workflowQueryError } = useWorkflowQuery();
   const requestMachineStateMutation = useRequestMachineStateMutation();
-  const tareScaleMutation = useTareScaleMutation();
-  const updateWorkflowMutation = useUpdateWorkflowMutation();
   const [isSimulatedShotActive, setIsSimulatedShotActive] = useState(false);
-
-  const hasQueryError = Boolean(machineError || machineQueryError || workflowQueryError);
-  const isOffline = liveConnection !== "live" || hasQueryError;
-  const isMachinePoweredOn = snapshot?.state.state !== "sleeping";
-  const isMachinePowerDisabled = snapshot == null || hasQueryError;
-  const showDevShotToggle = getDashboardDevEnabled();
-  const activeRecipe = workflow?.profile?.title ?? workflow?.name ?? "PSPH";
-  const statusLabel = getStatusLabel({
-    isOffline,
-    liveConnection,
-    machineSubstate: snapshot?.state.substate,
-    machineState: snapshot?.state.state,
-  });
-
-  const targetDose = workflow?.context?.targetDoseWeight;
-  const targetYield = workflow?.context?.targetYield;
-  const ratio = formatBrewRatio(targetDose, targetYield);
-  const isUpdatingWorkflow = updateWorkflowMutation.isPending;
-  const dashboardMode = getDashboardPresentationMode({
-    simulatedShotActive: showDevShotToggle && isSimulatedShotActive,
-    snapshot,
-    telemetry,
-  });
   const connectedScale = devices?.find(
     (device) => device.type === "scale" && device.state === "connected",
   );
@@ -75,13 +33,6 @@ export function DashboardPage() {
 
     void connectScale();
   });
-  const isScalePaired = Boolean(connectedScale);
-  const scaleWeight = connectedScale ? scaleSnapshot?.weight ?? null : null;
-  const canUseScaleWeightForDose =
-    isScalePaired &&
-    scaleWeight != null &&
-    Number.isFinite(scaleWeight) &&
-    scaleWeight > 0;
 
   useEffect(() => {
     if (!connectedScale?.id) {
@@ -92,246 +43,40 @@ export function DashboardPage() {
     reconnectScaleFeed();
   }, [connectedScale?.id, disconnectScale, reconnectScaleFeed]);
 
-  function updateWorkflow(patch: Record<string, unknown>) {
-    updateWorkflowMutation.mutate(patch);
-  }
-
-  function updateDose(nextDose: number) {
-    updateWorkflow({
-      context: {
-        targetDoseWeight: roundValue(nextDose, 0.1),
-      },
-    });
-  }
-
-  function updateYield(nextYield: number) {
-    updateWorkflow({
-      context: {
-        targetYield: roundValue(nextYield, 0.1),
-      },
-    });
-  }
-
-  function updateBrewTemperature(nextTemperature: number) {
-    const nextSteps = workflow?.profile?.steps?.map((step) => {
-      if (
-        typeof step === "object" &&
-        step !== null &&
-        "temperature" in step &&
-        typeof step.temperature === "number"
-      ) {
-        return {
-          ...step,
-          temperature: nextTemperature,
-        };
-      }
-
-      return step;
-    });
-
-    if (!nextSteps?.length) {
+  function handleToggleMachinePower() {
+    if (snapshot == null) {
       return;
     }
 
-    updateWorkflow({
-      profile: {
-        steps: nextSteps,
-      },
-    });
+    requestMachineStateMutation.mutate(
+      snapshot.state.state === "sleeping" ? "idle" : "sleeping",
+    );
   }
 
-  function updateSteamDuration(nextDuration: number) {
-    updateWorkflow({
-      steamSettings: {
-        duration: roundValue(nextDuration, 1),
-      },
-    });
+  if (snapshot?.state.state === "sleeping") {
+    return (
+      <div className="panel min-h-[calc(100svh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100svh-var(--app-footer-height))] md:flex-col">
+        <DashboardSleepScreen
+          disabled={
+            snapshot == null ||
+            Boolean(machineQueryError) ||
+            requestMachineStateMutation.isPending
+          }
+          isPending={requestMachineStateMutation.isPending}
+          onWake={handleToggleMachinePower}
+        />
+      </div>
+    );
   }
-
-  function updateFlushDuration(nextDuration: number) {
-    updateWorkflow({
-      rinseData: {
-        duration: roundValue(nextDuration, 1),
-      },
-    });
-  }
-
-  function updateHotWaterVolume(nextVolume: number) {
-    updateWorkflow({
-      hotWaterData: {
-        volume: roundValue(nextVolume, 1),
-      },
-    });
-  }
-
-  const dosePresets = [
-    { label: "16g", value: 16 },
-    { label: "18g", value: 18 },
-    { label: "20g", value: 20 },
-    { label: "22g", value: 22 },
-  ] as const;
-  const drinkPresets = [
-    { label: "1:1.5", value: 1.5 },
-    { label: "1:2.0", value: 2.0 },
-    { label: "1:2.5", value: 2.5 },
-    { label: "1:3.0", value: 3.0 },
-  ] as const;
-
-  const recipeControls = {
-    doseActivePresetValue: targetDose ?? 18,
-    dosePresets,
-    doseValue: formatPrimaryNumber(targetDose, "g", "18g", 0),
-    drinkActivePresetValue: targetDose && targetYield ? targetYield / targetDose : 2.0,
-    drinkDetail: `(${ratio})`,
-    drinkPresets,
-    drinkValue: formatPrimaryNumber(targetYield, "g", "36g", 0),
-    onDecreaseDose: () => updateDose(Math.max(8, Math.round((targetDose ?? 18) - 1))),
-    onDecreaseDrink: () => updateYield(Math.max(1, Math.round((targetYield ?? 36) - 1))),
-    onIncreaseDose: () => updateDose(Math.round((targetDose ?? 18) + 1)),
-    onIncreaseDrink: () => updateYield(Math.round((targetYield ?? 36) + 1)),
-    onSelectDosePreset: (value: number) => updateDose(value),
-    onSelectDrinkPreset: (value: number) => updateYield((targetDose ?? 18) * value),
-  };
-
-  const controlRows = [
-    {
-      label: "Brew",
-      value: formatPrimaryNumber(snapshot?.mixTemperature, "°C", "87°C", 0),
-      detail: undefined,
-      activePresetValue: snapshot?.mixTemperature ?? 87,
-      presets: [
-        { label: "75°C", value: 75 },
-        { label: "80°C", value: 80 },
-        { label: "85°C", value: 85 },
-        { label: "92°C", value: 92 },
-      ],
-      tint: "text-highlight-muted",
-      onDecrease: () =>
-        updateBrewTemperature(Math.max(70, Math.round((snapshot?.mixTemperature ?? 87) - 1))),
-      onIncrease: () =>
-        updateBrewTemperature(Math.round((snapshot?.mixTemperature ?? 87) + 1)),
-      onPresetClick: (value: number) => updateBrewTemperature(value),
-    },
-    {
-      label: "Steam",
-      value: formatPrimaryNumber(workflow?.steamSettings?.duration, "s", "50s", 0),
-      detail: formatSecondaryNumber(workflow?.steamSettings?.flow, "", "1.5"),
-      activePresetValue: workflow?.steamSettings?.duration ?? 50,
-      presets: [
-        { label: "15s", value: 15 },
-        { label: "30s", value: 30 },
-        { label: "45s", value: 45 },
-        { label: "60s", value: 60 },
-      ],
-      tint: "text-highlight-muted",
-      onDecrease: () =>
-        updateSteamDuration(Math.max(5, (workflow?.steamSettings?.duration ?? 50) - 5)),
-      onIncrease: () => updateSteamDuration((workflow?.steamSettings?.duration ?? 50) + 5),
-      onPresetClick: (value: number) => updateSteamDuration(value),
-    },
-    {
-      label: "Flush",
-      value: formatPrimaryNumber(workflow?.rinseData?.duration, "s", "10s", 0),
-      detail: undefined,
-      activePresetValue: workflow?.rinseData?.duration ?? 10,
-      presets: [
-        { label: "5s", value: 5 },
-        { label: "10s", value: 10 },
-        { label: "15s", value: 15 },
-        { label: "20s", value: 20 },
-      ],
-      tint: "text-highlight-muted",
-      onDecrease: () =>
-        updateFlushDuration(Math.max(1, (workflow?.rinseData?.duration ?? 10) - 1)),
-      onIncrease: () => updateFlushDuration((workflow?.rinseData?.duration ?? 10) + 1),
-      onPresetClick: (value: number) => updateFlushDuration(value),
-    },
-    {
-      label: "Hot Water",
-      value: formatPrimaryNumber(workflow?.hotWaterData?.volume, "ml", "50ml", 0),
-      detail: formatPrimaryNumber(
-        workflow?.hotWaterData?.targetTemperature,
-        "°C",
-        "75°C",
-        0,
-      ),
-      activePresetValue: workflow?.hotWaterData?.volume ?? 50,
-      presets: [
-        { label: "50ml", value: 50 },
-        { label: "100ml", value: 100 },
-        { label: "150ml", value: 150 },
-        { label: "200ml", value: 200 },
-      ],
-      tint: "text-highlight-muted",
-      onDecrease: () =>
-        updateHotWaterVolume(Math.max(10, (workflow?.hotWaterData?.volume ?? 50) - 10)),
-      onIncrease: () => updateHotWaterVolume((workflow?.hotWaterData?.volume ?? 50) + 10),
-      onPresetClick: (value: number) => updateHotWaterVolume(value),
-    },
-  ] as const;
-  const shotSummaryItems = [
-    { label: "Recipe", value: activeRecipe },
-    { label: "Dose", value: recipeControls.doseValue },
-    { label: "Yield", value: recipeControls.drinkValue },
-    { label: "Ratio", value: ratio },
-    {
-      label: "Brew",
-      value: formatPrimaryNumber(snapshot?.mixTemperature, "°C", "87°C", 0),
-    },
-  ] satisfies ReadonlyArray<DashboardShotSummaryItem>;
 
   return (
     <div>
       <div className="panel min-h-[calc(100svh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100svh-var(--app-footer-height))] md:flex-col">
         <DashboardTopBar
-          activeRecipe={activeRecipe}
-          isOffline={isOffline}
-          isMachinePowerDisabled={isMachinePowerDisabled}
-          isMachinePowerPending={requestMachineStateMutation.isPending}
-          isMachinePoweredOn={isMachinePoweredOn}
-          isScalePaired={isScalePaired}
-          isSimulatedShotActive={showDevShotToggle && isSimulatedShotActive}
-          isScaleTaring={tareScaleMutation.isPending}
-          isScaleWeightActionDisabled={!canUseScaleWeightForDose || isUpdatingWorkflow}
-          liveConnection={liveConnection}
+          isSimulatedShotActive={isSimulatedShotActive}
           onToggleSimulatedShot={() => setIsSimulatedShotActive((current) => !current)}
-          onToggleMachinePower={() => {
-            if (snapshot == null) {
-              return;
-            }
-
-            requestMachineStateMutation.mutate(
-              snapshot.state.state === "sleeping" ? "idle" : "sleeping",
-            );
-          }}
-          onSetDoseFromScale={() => {
-            if (
-              isScalePaired &&
-              scaleWeight != null &&
-              Number.isFinite(scaleWeight) &&
-              scaleWeight > 0
-            ) {
-              updateDose(scaleWeight);
-            }
-          }}
-          onTareScale={() => tareScaleMutation.mutate()}
-          reservoirLevel={waterLevels?.currentLevel ?? null}
-          reservoirRefillLevel={waterLevels?.refillLevel ?? null}
-          scaleBatteryLevel={connectedScale ? scaleSnapshot?.batteryLevel ?? null : null}
-          scaleConnection={scaleConnection}
-          scaleWeight={scaleWeight}
-          showDevShotToggle={showDevShotToggle}
-          statusLabel={statusLabel}
         />
-
-        <DashboardWorkspace
-          controlRows={controlRows}
-          isShotActive={dashboardMode === "shot"}
-          recipeControls={recipeControls}
-          shotSummaryItems={shotSummaryItems}
-          telemetry={telemetry}
-          workflowDisabled={isUpdatingWorkflow}
-        />
+        <DashboardWorkspaceContainer isSimulatedShotActive={isSimulatedShotActive} />
       </div>
     </div>
   );

@@ -2,6 +2,15 @@ import type { MachineSnapshot } from "@/rest/types";
 import type { TelemetrySample } from "@/lib/telemetry";
 
 export type DashboardPresentationMode = "controls" | "shot";
+export type DashboardPrepStatusTone = "warming" | "ready" | "offline" | "sleeping";
+export type DashboardPrepStatus = {
+  items: ReadonlyArray<{
+    label: string;
+    value: string;
+  }>;
+  title: string;
+  tone: DashboardPrepStatusTone;
+};
 
 function startCase(value: string) {
   return value
@@ -108,4 +117,71 @@ export function getDashboardPresentationMode({
   const latestTelemetry = telemetry[telemetry.length - 1];
 
   return latestTelemetry?.state === "espresso" ? "shot" : "controls";
+}
+
+export function getDashboardPrepStatus({
+  isOffline,
+  snapshot,
+}: {
+  isOffline: boolean;
+  snapshot?: MachineSnapshot | null;
+}): DashboardPrepStatus {
+  const mixValue = formatTemperature(snapshot?.mixTemperature);
+  const targetMixValue = formatTemperature(snapshot?.targetMixTemperature);
+  const groupValue = formatTemperature(snapshot?.groupTemperature);
+  const targetGroupValue = formatTemperature(snapshot?.targetGroupTemperature);
+  const steamValue = formatTemperature(snapshot?.steamTemperature);
+
+  const items = [
+    { label: "Water", value: `${mixValue} / ${targetMixValue}` },
+    { label: "Brew head", value: `${groupValue} / ${targetGroupValue}` },
+    { label: "Steam", value: steamValue },
+  ] as const;
+
+  if (isOffline || snapshot == null) {
+    return {
+      items,
+      title: "Waiting for machine",
+      tone: "offline",
+    };
+  }
+
+  if (snapshot.state.state === "sleeping") {
+    return {
+      items,
+      title: "Machine asleep",
+      tone: "sleeping",
+    };
+  }
+
+  const mixGap = Math.max(
+    (snapshot.targetMixTemperature ?? snapshot.mixTemperature) - snapshot.mixTemperature,
+    0,
+  );
+  const groupGap = Math.max(
+    (snapshot.targetGroupTemperature ?? snapshot.groupTemperature) - snapshot.groupTemperature,
+    0,
+  );
+
+  if (Math.max(mixGap, groupGap) >= 0.75) {
+    return {
+      items,
+      title: "Heating up",
+      tone: "warming",
+    };
+  }
+
+  return {
+    items,
+    title: "Ready to brew",
+    tone: "ready",
+  };
+}
+
+function formatTemperature(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) {
+    return "--°C";
+  }
+
+  return `${value.toFixed(0)}°C`;
 }
