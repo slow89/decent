@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,31 +13,25 @@ export function WorkflowProfileChooserPanel({
   activeProfile,
   availableProfiles,
   isApplying,
-  isExporting,
   isImporting,
-  isRestoringDefault,
+  isVisualizerReady,
   libraryStatus,
   onApplyProfile,
-  onExportProfiles,
-  onImportProfiles,
+  onImportVisualizerProfile,
   onOpenFrames,
-  onRestoreDefaultProfile,
 }: {
   activeProfile: WorkflowProfile | undefined;
   availableProfiles: ProfileRecord[];
   isApplying: boolean;
-  isExporting: boolean;
   isImporting: boolean;
-  isRestoringDefault: boolean;
+  isVisualizerReady: boolean;
   libraryStatus: {
     message: string | null;
     tone: "error" | "success";
   };
   onApplyProfile: (record: ProfileRecord) => void;
-  onExportProfiles: () => Promise<void>;
-  onImportProfiles: (file: File) => Promise<void>;
+  onImportVisualizerProfile: (shareCode: string) => Promise<void>;
   onOpenFrames: (profile: WorkflowProfile | undefined) => void;
-  onRestoreDefaultProfile: (filename: string) => Promise<void>;
 }) {
   return (
     <WorkflowPanel
@@ -47,13 +41,10 @@ export function WorkflowProfileChooserPanel({
     >
       <div className="grid gap-2 md:min-h-0 md:flex-1 md:grid-rows-[auto_auto_minmax(0,1fr)]">
         <ProfileLibraryActions
-          isExporting={isExporting}
           isImporting={isImporting}
-          isRestoringDefault={isRestoringDefault}
+          isVisualizerReady={isVisualizerReady}
           libraryStatus={libraryStatus}
-          onExportProfiles={onExportProfiles}
-          onImportProfiles={onImportProfiles}
-          onRestoreDefaultProfile={onRestoreDefaultProfile}
+          onImportVisualizerProfile={onImportVisualizerProfile}
         />
         <CurrentProfileRow
           onOpenFrames={() => onOpenFrames(activeProfile)}
@@ -89,113 +80,70 @@ export function WorkflowProfileChooserPanel({
 }
 
 function ProfileLibraryActions({
-  isExporting,
   isImporting,
-  isRestoringDefault,
+  isVisualizerReady,
   libraryStatus,
-  onExportProfiles,
-  onImportProfiles,
-  onRestoreDefaultProfile,
+  onImportVisualizerProfile,
 }: {
-  isExporting: boolean;
   isImporting: boolean;
-  isRestoringDefault: boolean;
+  isVisualizerReady: boolean;
   libraryStatus: {
     message: string | null;
     tone: "error" | "success";
   };
-  onExportProfiles: () => Promise<void>;
-  onImportProfiles: (file: File) => Promise<void>;
-  onRestoreDefaultProfile: (filename: string) => Promise<void>;
+  onImportVisualizerProfile: (shareCode: string) => Promise<void>;
 }) {
-  const [restoreFilename, setRestoreFilename] = useState("");
-  const isRestoringDisabled = isRestoringDefault || !restoreFilename.trim();
+  const [shareCode, setShareCode] = useState("");
+  const isImportDisabled = isImporting || !shareCode.trim() || !isVisualizerReady;
 
-  async function handleImportChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-
-    if (!file) {
+  async function handleVisualizerImport() {
+    if (isImportDisabled) {
       return;
     }
 
-    await onImportProfiles(file);
-  }
-
-  async function handleRestoreDefault() {
-    if (isRestoringDisabled) {
-      return;
-    }
-
-    await onRestoreDefaultProfile(restoreFilename.trim());
+    await onImportVisualizerProfile(shareCode.trim());
+    setShareCode("");
   }
 
   return (
     <section className="rounded-[10px] border border-border bg-panel-subtle px-2.5 py-2.5 md:px-2 md:py-2">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="space-y-1">
+      <div className="grid gap-2">
+        <div>
           <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-highlight">
-            Library Actions
+            Visualizer Import
           </p>
-          <p className="text-[0.7rem] leading-4 text-muted-foreground">
-            Import, export, or restore a bundled default.
+          <p className="mt-1 text-[0.7rem] leading-4 text-muted-foreground">
+            Use a 4-digit share code.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <input
-            accept="application/json,.json"
-            className="sr-only"
-            disabled={isImporting}
-            id="profile-library-import"
-            onChange={(event) => {
-              void handleImportChange(event);
-            }}
-            type="file"
-          />
-          <Button asChild disabled={isImporting} size="sm" variant="secondary">
-            <label htmlFor="profile-library-import">
-              {isImporting ? "Importing" : "Import JSON"}
-            </label>
-          </Button>
-          <Button
-            disabled={isExporting}
-            onClick={() => {
-              void onExportProfiles();
-            }}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            {isExporting ? "Exporting" : "Export JSON"}
-          </Button>
-        </div>
-      </div>
 
-      <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <label className="grid gap-1" htmlFor="restore-default-profile">
-          <span className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Bundled filename
-          </span>
-          <Input
-            className="h-10 rounded-[10px] border-border bg-panel-strong font-mono text-[0.74rem]"
-            id="restore-default-profile"
-            onChange={(event) => setRestoreFilename(event.target.value)}
-            placeholder="best_practice.json"
-            value={restoreFilename}
-          />
-        </label>
-        <div className="flex items-end">
-          <Button
-            className="min-h-[40px] rounded-[10px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
-            disabled={isRestoringDisabled}
-            onClick={() => {
-              void handleRestoreDefault();
-            }}
-            size="sm"
-            type="button"
-          >
-            {isRestoringDefault ? "Restoring" : "Restore Default"}
-          </Button>
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <label className="grid gap-1" htmlFor="visualizer-share-code">
+            <span className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Share code
+            </span>
+            <Input
+              autoCapitalize="characters"
+              className="h-10 rounded-[10px] border-border bg-panel-strong font-mono text-[0.74rem] uppercase"
+              id="visualizer-share-code"
+              onChange={(event) => setShareCode(event.target.value)}
+              placeholder="AB12"
+              value={shareCode}
+            />
+          </label>
+          <div className="flex items-end">
+            <Button
+              className="min-h-[40px] rounded-[10px] px-4 text-[0.66rem] uppercase tracking-[0.16em]"
+              disabled={isImportDisabled}
+              onClick={() => {
+                void handleVisualizerImport();
+              }}
+              size="sm"
+              type="button"
+            >
+              {isImporting ? "Importing" : "Import"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -208,9 +156,13 @@ function ProfileLibraryActions({
         >
           {libraryStatus.message}
         </p>
+      ) : !isVisualizerReady ? (
+        <p className="mt-2 text-[0.72rem] leading-5 text-muted-foreground">
+          Enable Visualizer in Setup.
+        </p>
       ) : (
         <p className="mt-2 text-[0.72rem] leading-5 text-muted-foreground">
-          Use the exact bridge filename, like <code>best_practice.json</code>.
+          Enter the share code and import.
         </p>
       )}
     </section>

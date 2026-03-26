@@ -7,11 +7,13 @@ import {
   machineSnapshotSchema,
   machineStateChangeSchema,
   presenceSettingsSchema,
-  profileImportResultSchema,
   profileRecordListSchema,
   profileRecordSchema,
   shotDetailSchema,
   shotListResponseSchema,
+  visualizerCredentialCheckSchema,
+  visualizerImportResultSchema,
+  visualizerPluginSettingsSchema,
   workflowRecordSchema,
 } from "@/rest/types";
 
@@ -38,8 +40,33 @@ async function parseResponse<TSchema extends z.ZodTypeAny>(
   schema: TSchema,
 ): Promise<z.infer<TSchema>> {
   if (!response.ok) {
+    let message = `Request failed with status ${response.status}`;
+
+    if (typeof response.text === "function") {
+      const errorBody = await response.text();
+
+      if (errorBody) {
+        try {
+          const parsedError = JSON.parse(errorBody) as {
+            error?: unknown;
+            message?: unknown;
+          };
+          const errorMessage =
+            typeof parsedError.error === "string"
+              ? parsedError.error
+              : typeof parsedError.message === "string"
+                ? parsedError.message
+                : null;
+
+          message = errorMessage ?? errorBody;
+        } catch {
+          message = errorBody;
+        }
+      }
+    }
+
     throw new BridgeClientError(
-      `Request failed with status ${response.status}`,
+      message,
       response.status,
     );
   }
@@ -91,24 +118,6 @@ export function createBridgeClient(baseUrl: string) {
     },
     async getProfile(id: string) {
       return request(`/api/v1/profiles/${encodeURIComponent(id)}`, profileRecordSchema);
-    },
-    async importProfiles(records: unknown[]) {
-      return request("/api/v1/profiles/import", profileImportResultSchema, {
-        method: "POST",
-        body: JSON.stringify(records),
-      });
-    },
-    async exportProfiles() {
-      return request("/api/v1/profiles/export", profileRecordListSchema);
-    },
-    async restoreDefaultProfile(filename: string) {
-      return request(
-        `/api/v1/profiles/restore/${encodeURIComponent(filename)}`,
-        profileRecordSchema,
-        {
-          method: "POST",
-        },
-      );
     },
     async listDevices() {
       return request("/api/v1/devices", deviceSummaryListSchema);
@@ -209,6 +218,50 @@ export function createBridgeClient(baseUrl: string) {
       return request("/api/v1/display/wakelock", displayStateSchema, {
         method: "DELETE",
       });
+    },
+    async getVisualizerSettings() {
+      return request(
+        "/api/v1/plugins/visualizer.reaplugin/settings",
+        visualizerPluginSettingsSchema,
+      );
+    },
+    async updateVisualizerSettings(settings: {
+      Username?: string | null;
+      Password?: string | null;
+      AutoUpload?: boolean;
+      LengthThreshold?: number | null;
+    }) {
+      return request(
+        "/api/v1/plugins/visualizer.reaplugin/settings",
+        visualizerPluginSettingsSchema,
+        {
+          method: "POST",
+          body: JSON.stringify(settings),
+        },
+      );
+    },
+    async verifyVisualizerCredentials(credentials: {
+      username: string;
+      password: string;
+    }) {
+      return request(
+        "/api/v1/plugins/visualizer.reaplugin/verifyCredentials",
+        visualizerCredentialCheckSchema,
+        {
+          method: "POST",
+          body: JSON.stringify(credentials),
+        },
+      );
+    },
+    async importVisualizerProfile(shareCode: string) {
+      return request(
+        "/api/v1/plugins/visualizer.reaplugin/import",
+        visualizerImportResultSchema,
+        {
+          method: "POST",
+          body: JSON.stringify({ shareCode }),
+        },
+      );
     },
     createMachineSnapshotSocket() {
       return new WebSocket(`${toWebSocketUrl(origin)}/ws/v1/machine/snapshot`);

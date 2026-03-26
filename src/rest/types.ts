@@ -8,7 +8,7 @@ export const machinePhaseSchema = z.object({
   substate: z.string(),
 });
 
-export const machineSnapshotSchema = z.object({
+export const machineSnapshotSchema = z.looseObject({
   timestamp: z.string(),
   state: machinePhaseSchema,
   flow: z.number(),
@@ -21,44 +21,44 @@ export const machineSnapshotSchema = z.object({
   targetGroupTemperature: z.number(),
   profileFrame: z.number(),
   steamTemperature: z.number(),
-}).passthrough();
+});
 
-export const scaleSnapshotSchema = z.object({
+export const scaleSnapshotSchema = z.looseObject({
   timestamp: z.string(),
   weight: optionalNumber,
   weightFlow: optionalNumber,
   timerValue: optionalNumber,
   batteryLevel: optionalNumber,
-}).passthrough();
+});
 
-export const machineWaterLevelsSchema = z.object({
+export const machineWaterLevelsSchema = z.looseObject({
   currentLevel: optionalNumber,
   refillLevel: optionalNumber,
-}).passthrough();
+});
 
-export const heartbeatResponseSchema = z.object({
+export const heartbeatResponseSchema = z.looseObject({
   timeout: z.number(),
-}).passthrough();
+});
 
-export const presenceSettingsSchema = z.object({
+export const presenceSettingsSchema = z.looseObject({
   userPresenceEnabled: z.boolean(),
   sleepTimeoutMinutes: z.number(),
   schedules: z.array(z.unknown()).default([]),
-}).passthrough();
+});
 
-export const displayPlatformSupportSchema = z.object({
+export const displayPlatformSupportSchema = z.looseObject({
   brightness: z.boolean(),
   wakeLock: z.boolean(),
-}).passthrough();
+});
 
-export const displayStateSchema = z.object({
+export const displayStateSchema = z.looseObject({
   wakeLockEnabled: z.boolean(),
   wakeLockOverride: z.boolean(),
   brightness: z.number(),
   requestedBrightness: z.number(),
   lowBatteryBrightnessActive: z.boolean(),
   platformSupported: displayPlatformSupportSchema,
-}).passthrough();
+});
 
 export const deviceSummarySchema = z.object({
   name: z.string(),
@@ -67,7 +67,7 @@ export const deviceSummarySchema = z.object({
   type: z.string(),
 });
 
-export const workflowProfileSchema = z.object({
+export const workflowProfileSchema = z.looseObject({
   version: optionalString,
   title: optionalString,
   notes: optionalString,
@@ -78,7 +78,7 @@ export const workflowProfileSchema = z.object({
   target_volume_count_start: optionalNumber,
   tank_temperature: optionalNumber,
   steps: z.array(z.record(z.string(), z.unknown())).optional(),
-}).passthrough();
+});
 
 export const workflowContextSchema = z.object({
   targetDoseWeight: optionalNumber,
@@ -121,11 +121,24 @@ export const profileRecordSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).nullish(),
 });
 
-export const profileImportResultSchema = z.object({
-  imported: z.number(),
-  skipped: z.number(),
-  failed: z.number(),
-  errors: z.array(z.string()).default([]),
+export const visualizerPluginSettingsSchema = z.looseObject({
+  Username: optionalString,
+  Password: optionalString,
+  AutoUpload: z.boolean().optional(),
+  LengthThreshold: optionalNumber,
+});
+
+export const visualizerCredentialCheckSchema = z.looseObject({
+  valid: z.boolean(),
+});
+
+export const visualizerImportResultSchema = z.looseObject({
+  success: z.boolean().optional(),
+  profileTitle: optionalString,
+  profileId: optionalString,
+  shotId: optionalString,
+  workflowResult: z.unknown().optional(),
+  error: optionalString,
 });
 
 export const shotSummarySchema = z
@@ -136,13 +149,13 @@ export const shotSummarySchema = z
   })
   .catchall(z.unknown());
 
-export const shotScaleMeasurementSchema = z.object({
+export const shotScaleMeasurementSchema = z.looseObject({
   timestamp: z.string(),
   weight: optionalNumber,
   weightFlow: optionalNumber,
   timerValue: optionalNumber,
   batteryLevel: optionalNumber,
-}).passthrough();
+});
 
 export const shotMeasurementSchema = z.object({
   machine: machineSnapshotSchema,
@@ -215,7 +228,9 @@ export type WorkflowContext = z.infer<typeof workflowContextSchema>;
 export type WorkflowSettings = z.infer<typeof workflowSettingsSchema>;
 export type WorkflowRecord = z.infer<typeof workflowRecordSchema>;
 export type ProfileRecord = z.infer<typeof profileRecordSchema>;
-export type ProfileImportResult = z.infer<typeof profileImportResultSchema>;
+export type VisualizerPluginSettings = z.infer<typeof visualizerPluginSettingsSchema>;
+export type VisualizerCredentialCheck = z.infer<typeof visualizerCredentialCheckSchema>;
+export type VisualizerImportResult = z.infer<typeof visualizerImportResultSchema>;
 export type ShotRecord = z.infer<typeof shotSummarySchema>;
 export type ShotMeasurement = z.infer<typeof shotMeasurementSchema>;
 export type ShotDetailRecord = z.infer<typeof shotDetailSchema>;

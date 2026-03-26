@@ -4,14 +4,14 @@ import { useState } from "react";
 import { FramePreviewOverlay } from "@/components/workflows/frame-preview-overlay";
 import { WorkflowProfileChooserPanel } from "@/components/workflows/workflow-profile-chooser-panel";
 import { WorkflowShotSetupPanel } from "@/components/workflows/workflow-shot-setup-panel";
+import { isVisualizerEnabled } from "@/lib/visualizer";
 import { formatBrewRatio, roundValue } from "@/lib/recipe-utils";
 import { getProfileFingerprint, getProfileTitle, readString } from "@/lib/workflow-utils";
 import {
-  useExportProfilesMutation,
-  useImportProfilesMutation,
+  useImportVisualizerProfileMutation,
   useProfilesQuery,
-  useRestoreDefaultProfileMutation,
   useUpdateWorkflowMutation,
+  useVisualizerSettingsQuery,
   useWorkflowQuery,
 } from "@/rest/queries";
 import type {
@@ -19,15 +19,13 @@ import type {
   WorkflowContext,
   WorkflowProfile,
 } from "@/rest/types";
-import { profileRecordListSchema } from "@/rest/types";
 
 export function WorkflowsPage() {
   const workflowQuery = useWorkflowQuery();
   const profilesQuery = useProfilesQuery();
+  const visualizerSettingsQuery = useVisualizerSettingsQuery();
   const updateWorkflowMutation = useUpdateWorkflowMutation();
-  const importProfilesMutation = useImportProfilesMutation();
-  const exportProfilesMutation = useExportProfilesMutation();
-  const restoreDefaultProfileMutation = useRestoreDefaultProfileMutation();
+  const importVisualizerProfileMutation = useImportVisualizerProfileMutation();
   const [framePreviewProfile, setFramePreviewProfile] = useState<WorkflowProfile | null>(null);
   const [profileLibraryStatus, setProfileLibraryStatus] = useState<{
     message: string | null;
@@ -58,9 +56,8 @@ export function WorkflowsPage() {
   const targetYield = workflow?.context?.targetYield;
   const ratio = formatBrewRatio(targetDose, targetYield);
   const isUpdating = updateWorkflowMutation.isPending;
-  const isImportingProfiles = importProfilesMutation.isPending;
-  const isExportingProfiles = exportProfilesMutation.isPending;
-  const isRestoringDefaultProfile = restoreDefaultProfileMutation.isPending;
+  const isImportingVisualizer = importVisualizerProfileMutation.isPending;
+  const isVisualizerReady = isVisualizerEnabled(visualizerSettingsQuery.data);
 
   const dosePresets = [
     { label: "16g", value: 16 },
@@ -152,63 +149,28 @@ export function WorkflowsPage() {
     });
   }
 
-  async function handleImportProfiles(file: File) {
-    try {
-      const parsedPayload = JSON.parse(await file.text()) as unknown;
-      const parsedProfiles = profileRecordListSchema.safeParse(parsedPayload);
+  async function handleImportVisualizerProfile(shareCode: string) {
+    if (!isVisualizerReady) {
+      setProfileLibraryError("Enable Visualizer in Setup.");
+      return;
+    }
 
-      if (!parsedProfiles.success) {
-        setProfileLibraryError("Import file must be a JSON array of bridge profile records.");
-        return;
+    let importedProfileTitle = "Visualizer profile";
+
+    try {
+      const result = await importVisualizerProfileMutation.mutateAsync(shareCode);
+
+      if (result.profileTitle) {
+        importedProfileTitle = result.profileTitle;
       }
-
-      const result = await importProfilesMutation.mutateAsync(parsedProfiles.data);
-      const errorSummary = result.errors.length ? ` ${result.errors.join(" ")}` : "";
-
-      setProfileLibrarySuccess(
-        `Imported ${result.imported}, skipped ${result.skipped}, failed ${result.failed}.${errorSummary}`,
-      );
     } catch (error) {
       setProfileLibraryError(
-        error instanceof Error ? error.message : "Unable to import the selected profile library.",
+        getWorkflowActionErrorMessage(error, "Unable to import from Visualizer."),
       );
+      return;
     }
-  }
 
-  async function handleExportProfiles() {
-    try {
-      const profiles = await exportProfilesMutation.mutateAsync();
-      const blob = new Blob([JSON.stringify(profiles, null, 2)], {
-        type: "application/json",
-      });
-      const objectUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      const stamp = new Date().toISOString().slice(0, 10);
-
-      anchor.href = objectUrl;
-      anchor.download = `profiles_export_${stamp}.json`;
-      anchor.click();
-      URL.revokeObjectURL(objectUrl);
-
-      setProfileLibrarySuccess(`Exported ${profiles.length} profiles to a JSON download.`);
-    } catch (error) {
-      setProfileLibraryError(
-        error instanceof Error ? error.message : "Unable to export the current profile library.",
-      );
-    }
-  }
-
-  async function handleRestoreDefaultProfile(filename: string) {
-    try {
-      const restoredProfile = await restoreDefaultProfileMutation.mutateAsync(filename);
-      setProfileLibrarySuccess(
-        `Restored ${getProfileTitle(restoredProfile.profile)} from ${filename}.`,
-      );
-    } catch (error) {
-      setProfileLibraryError(
-        error instanceof Error ? error.message : "Unable to restore the requested default profile.",
-      );
-    }
+    setProfileLibrarySuccess(`Imported ${importedProfileTitle}.`);
   }
 
   return (
@@ -220,15 +182,12 @@ export function WorkflowsPage() {
               activeProfile={activeProfile}
               availableProfiles={availableProfiles}
               isApplying={isUpdating}
-              isExporting={isExportingProfiles}
-              isImporting={isImportingProfiles}
-              isRestoringDefault={isRestoringDefaultProfile}
+              isImporting={isImportingVisualizer}
+              isVisualizerReady={isVisualizerReady}
               libraryStatus={profileLibraryStatus}
               onApplyProfile={applyProfile}
-              onExportProfiles={handleExportProfiles}
-              onImportProfiles={handleImportProfiles}
+              onImportVisualizerProfile={handleImportVisualizerProfile}
               onOpenFrames={openFramePreview}
-              onRestoreDefaultProfile={handleRestoreDefaultProfile}
             />
 
             <WorkflowShotSetupPanel
@@ -262,4 +221,12 @@ export function WorkflowsPage() {
       ) : null}
     </div>
   );
+}
+
+function getWorkflowActionErrorMessage(error: unknown, fallbackMessage: string) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return fallbackMessage;
 }

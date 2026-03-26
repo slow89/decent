@@ -46,7 +46,6 @@ export function HistoryPage() {
   const selectedShotTelemetry = selectedShot
     ? adaptShotMeasurementsToTelemetry(selectedShot.measurements)
     : [];
-  const isRefreshing = shotsQuery.isFetching || shotQuery.isFetching;
   const isDetailPending = effectiveSelectedShotId != null && shotQuery.isPending && !selectedShot;
 
   async function handleRefresh() {

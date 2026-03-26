@@ -7,7 +7,7 @@ import {
 
 import { createBridgeClient } from "@/rest/client";
 import { queryClient } from "@/rest/query-client";
-import { type MachineStateChange, type ProfileRecord } from "@/rest/types";
+import { type MachineStateChange } from "@/rest/types";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 
 function getClient() {
@@ -24,6 +24,7 @@ export const bridgeQueryKeys = {
   presenceSettings: () => [...bridgeQueryKeys.all, "presence-settings"] as const,
   shots: () => [...bridgeQueryKeys.all, "shots"] as const,
   shot: (id: string) => [...bridgeQueryKeys.all, "shots", id] as const,
+  visualizerSettings: () => [...bridgeQueryKeys.all, "visualizer-settings"] as const,
 };
 
 export const machineStateQueryOptions = () =>
@@ -60,6 +61,12 @@ export const shotsQueryOptions = () =>
   queryOptions({
     queryKey: bridgeQueryKeys.shots(),
     queryFn: () => getClient().listShots(),
+  });
+
+export const visualizerSettingsQueryOptions = () =>
+  queryOptions({
+    queryKey: bridgeQueryKeys.visualizerSettings(),
+    queryFn: () => getClient().getVisualizerSettings(),
   });
 
 export const shotQueryOptions = (id: string) =>
@@ -105,6 +112,10 @@ export function useShotQuery(id: string | null | undefined) {
     ...shotQueryOptions(id ?? ""),
     enabled: Boolean(id),
   });
+}
+
+export function useVisualizerSettingsQuery() {
+  return useQuery(visualizerSettingsQueryOptions());
 }
 
 export function useScanDevicesMutation() {
@@ -170,30 +181,34 @@ export function useUpdatePresenceSettingsMutation() {
   });
 }
 
-export function useImportProfilesMutation() {
+export function useUpdateVisualizerSettingsMutation() {
   const client = useQueryClient();
 
   return useMutation({
-    mutationFn: (records: ProfileRecord[]) => getClient().importProfiles(records),
-    onSuccess: async () => {
-      await client.invalidateQueries({
-        queryKey: bridgeQueryKeys.profiles(),
-      });
+    mutationFn: (settings: {
+      Username?: string | null;
+      Password?: string | null;
+      AutoUpload?: boolean;
+      LengthThreshold?: number | null;
+    }) => getClient().updateVisualizerSettings(settings),
+    onSuccess: (settings) => {
+      client.setQueryData(bridgeQueryKeys.visualizerSettings(), settings);
     },
   });
 }
 
-export function useExportProfilesMutation() {
+export function useVerifyVisualizerCredentialsMutation() {
   return useMutation({
-    mutationFn: () => getClient().exportProfiles(),
+    mutationFn: (credentials: { username: string; password: string }) =>
+      getClient().verifyVisualizerCredentials(credentials),
   });
 }
 
-export function useRestoreDefaultProfileMutation() {
+export function useImportVisualizerProfileMutation() {
   const client = useQueryClient();
 
   return useMutation({
-    mutationFn: (filename: string) => getClient().restoreDefaultProfile(filename),
+    mutationFn: (shareCode: string) => getClient().importVisualizerProfile(shareCode),
     onSuccess: async () => {
       await client.invalidateQueries({
         queryKey: bridgeQueryKeys.profiles(),

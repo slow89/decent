@@ -16,7 +16,10 @@ const {
   useDisconnectDeviceMutationMock,
   usePresenceSettingsQueryMock,
   useScanDevicesMutationMock,
+  useUpdateVisualizerSettingsMutationMock,
   useUpdatePresenceSettingsMutationMock,
+  useVerifyVisualizerCredentialsMutationMock,
+  useVisualizerSettingsQueryMock,
 } = vi.hoisted(() => ({
   useConnectDeviceMutationMock: vi.fn(),
   useDisconnectDeviceMutationMock: vi.fn(),
@@ -24,7 +27,10 @@ const {
   routerInvalidate: vi.fn(async () => undefined),
   useDevicesQueryMock: vi.fn(),
   useScanDevicesMutationMock: vi.fn(),
+  useUpdateVisualizerSettingsMutationMock: vi.fn(),
   useUpdatePresenceSettingsMutationMock: vi.fn(),
+  useVerifyVisualizerCredentialsMutationMock: vi.fn(),
+  useVisualizerSettingsQueryMock: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -44,6 +50,9 @@ vi.mock("@/rest/queries", async () => {
     usePresenceSettingsQuery: usePresenceSettingsQueryMock,
     useScanDevicesMutation: useScanDevicesMutationMock,
     useUpdatePresenceSettingsMutation: useUpdatePresenceSettingsMutationMock,
+    useUpdateVisualizerSettingsMutation: useUpdateVisualizerSettingsMutationMock,
+    useVerifyVisualizerCredentialsMutation: useVerifyVisualizerCredentialsMutationMock,
+    useVisualizerSettingsQuery: useVisualizerSettingsQueryMock,
   };
 });
 
@@ -52,6 +61,8 @@ describe("SettingsPage", () => {
   const disconnectMutateAsync = vi.fn(async () => undefined);
   const scanMutateAsync = vi.fn(async () => []);
   const updatePresenceSettingsMutateAsync = vi.fn(async (patch: unknown) => patch);
+  const updateVisualizerSettingsMutateAsync = vi.fn(async (settings: unknown) => settings);
+  const verifyVisualizerCredentialsMutateAsync = vi.fn(async () => ({ valid: true }));
   const requestFullscreenMock = vi.fn(async () => {
     Object.defineProperty(document, "fullscreenElement", {
       configurable: true,
@@ -159,10 +170,28 @@ describe("SettingsPage", () => {
       isPending: false,
       mutateAsync: scanMutateAsync,
     });
+    useUpdateVisualizerSettingsMutationMock.mockReturnValue({
+      isPending: false,
+      mutateAsync: updateVisualizerSettingsMutateAsync,
+    });
     useUpdatePresenceSettingsMutationMock.mockReturnValue({
       error: null,
       isPending: false,
       mutateAsync: updatePresenceSettingsMutateAsync,
+    });
+    useVerifyVisualizerCredentialsMutationMock.mockReturnValue({
+      isPending: false,
+      mutateAsync: verifyVisualizerCredentialsMutateAsync,
+    });
+    useVisualizerSettingsQueryMock.mockReturnValue({
+      data: {
+        AutoUpload: false,
+        LengthThreshold: 5,
+        Password: "secret",
+        Username: "brew-user",
+      },
+      error: null,
+      isPending: false,
     });
   });
 
@@ -185,6 +214,8 @@ describe("SettingsPage", () => {
     expect(screen.getByText("connected")).toBeInTheDocument();
     expect(screen.getByText("disconnected")).toBeInTheDocument();
     expect(screen.getByText("Scale Pairing")).toBeInTheDocument();
+    expect(screen.getByText("Visualizer")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("brew-user")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Disconnect scale" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Connect machine" })).toBeInTheDocument();
   });
@@ -362,6 +393,71 @@ describe("SettingsPage", () => {
 
     await waitFor(() => {
       expect(exitFullscreenMock).toHaveBeenCalled();
+    });
+  });
+
+  it("verifies credentials before enabling visualizer uploads", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Verify" }));
+
+    await waitFor(() => {
+      expect(verifyVisualizerCredentialsMutateAsync).toHaveBeenCalledWith({
+        password: "secret",
+        username: "brew-user",
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Enable uploads" }));
+
+    await waitFor(() => {
+      expect(updateVisualizerSettingsMutateAsync).toHaveBeenCalledWith({
+        AutoUpload: true,
+        LengthThreshold: 5,
+        Password: "secret",
+        Username: "brew-user",
+      });
+    });
+  });
+
+  it("blocks visualizer enablement when verification fails", async () => {
+    verifyVisualizerCredentialsMutateAsync.mockResolvedValueOnce({ valid: false });
+
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Verify" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Check credentials")).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole("button", { name: "Enable uploads" })).toBeDisabled();
+    expect(updateVisualizerSettingsMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("disables visualizer uploads without clearing saved gateway credentials", async () => {
+    useVisualizerSettingsQueryMock.mockReturnValue({
+      data: {
+        AutoUpload: true,
+        LengthThreshold: 5,
+        Password: "secret",
+        Username: "brew-user",
+      },
+      error: null,
+      isPending: false,
+    });
+
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Disable" }));
+
+    await waitFor(() => {
+      expect(updateVisualizerSettingsMutateAsync).toHaveBeenCalledWith({
+        AutoUpload: false,
+        LengthThreshold: 5,
+        Password: "secret",
+        Username: "brew-user",
+      });
     });
   });
 });

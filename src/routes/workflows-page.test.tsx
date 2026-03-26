@@ -4,18 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkflowsPage } from "./workflows-page";
 
 const {
-  useExportProfilesMutationMock,
-  useImportProfilesMutationMock,
+  useImportVisualizerProfileMutationMock,
   useProfilesQueryMock,
-  useRestoreDefaultProfileMutationMock,
   useUpdateWorkflowMutationMock,
+  useVisualizerSettingsQueryMock,
   useWorkflowQueryMock,
 } = vi.hoisted(() => ({
-  useExportProfilesMutationMock: vi.fn(),
-  useImportProfilesMutationMock: vi.fn(),
+  useImportVisualizerProfileMutationMock: vi.fn(),
   useProfilesQueryMock: vi.fn(),
-  useRestoreDefaultProfileMutationMock: vi.fn(),
   useUpdateWorkflowMutationMock: vi.fn(),
+  useVisualizerSettingsQueryMock: vi.fn(),
   useWorkflowQueryMock: vi.fn(),
 }));
 
@@ -24,37 +22,20 @@ vi.mock("@/rest/queries", async () => {
 
   return {
     ...actual,
-    useExportProfilesMutation: useExportProfilesMutationMock,
-    useImportProfilesMutation: useImportProfilesMutationMock,
+    useImportVisualizerProfileMutation: useImportVisualizerProfileMutationMock,
     useProfilesQuery: useProfilesQueryMock,
-    useRestoreDefaultProfileMutation: useRestoreDefaultProfileMutationMock,
     useUpdateWorkflowMutation: useUpdateWorkflowMutationMock,
+    useVisualizerSettingsQuery: useVisualizerSettingsQueryMock,
     useWorkflowQuery: useWorkflowQueryMock,
   };
 });
 
 describe("WorkflowsPage", () => {
   const updateWorkflowMutate = vi.fn();
-  const importProfilesMutateAsync = vi.fn();
-  const exportProfilesMutateAsync = vi.fn();
-  const restoreDefaultProfileMutateAsync = vi.fn();
-  const anchorClick = vi.fn();
-  const createObjectURL = vi.fn(() => "blob:profiles");
-  const revokeObjectURL = vi.fn();
+  const importVisualizerProfileMutateAsync = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    Object.defineProperty(window.URL, "createObjectURL", {
-      configurable: true,
-      value: createObjectURL,
-    });
-    Object.defineProperty(window.URL, "revokeObjectURL", {
-      configurable: true,
-      value: revokeObjectURL,
-    });
-
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(anchorClick);
 
     useWorkflowQueryMock.mockReturnValue({
       data: {
@@ -107,95 +88,55 @@ describe("WorkflowsPage", () => {
       isPending: false,
       mutate: updateWorkflowMutate,
     });
-    useImportProfilesMutationMock.mockReturnValue({
+    useImportVisualizerProfileMutationMock.mockReturnValue({
       isPending: false,
-      mutateAsync: importProfilesMutateAsync.mockResolvedValue({
-        imported: 1,
-        skipped: 0,
-        failed: 0,
-        errors: [],
+      mutateAsync: importVisualizerProfileMutateAsync.mockResolvedValue({
+        profileTitle: "Imported Profile",
+        success: true,
       }),
     });
-    useExportProfilesMutationMock.mockReturnValue({
+    useVisualizerSettingsQueryMock.mockReturnValue({
+      data: {
+        AutoUpload: true,
+        Password: "secret",
+        Username: "brew-user",
+      },
       isPending: false,
-      mutateAsync: exportProfilesMutateAsync.mockResolvedValue([
-        {
-          id: "profile:exported",
-          profile: {
-            title: "Exported Profile",
-          },
-        },
-      ]),
-    });
-    useRestoreDefaultProfileMutationMock.mockReturnValue({
-      isPending: false,
-      mutateAsync: restoreDefaultProfileMutateAsync.mockResolvedValue({
-        id: "profile:restored",
-        profile: {
-          title: "Best Practice",
-        },
-      }),
     });
   });
 
-  it("imports, exports, and restores profile defaults", async () => {
+  it("imports from visualizer and removes bundled restore controls", async () => {
     render(<WorkflowsPage />);
 
-    const importInput = screen.getByLabelText("Import JSON");
-    const importFile = new File(
-      [
-        JSON.stringify([
-          {
-            id: "profile:imported",
-            profile: {
-              title: "Imported Profile",
-            },
-          },
-        ]),
-      ],
-      "profiles.json",
-      { type: "application/json" },
-    );
+    fireEvent.change(screen.getByLabelText("Share code"), {
+      target: { value: "AB12" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
 
-    fireEvent.change(importInput, {
-      target: {
-        files: [importFile],
+    await waitFor(() => {
+      expect(importVisualizerProfileMutateAsync).toHaveBeenCalledWith("AB12");
+    });
+
+    expect(screen.getByText("Imported Imported Profile.")).toBeInTheDocument();
+    expect(screen.queryByText("Import JSON")).not.toBeInTheDocument();
+    expect(screen.queryByText("Export JSON")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Bundled filename")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Restore Default" })).not.toBeInTheDocument();
+  });
+
+  it("shows setup guidance when visualizer is not enabled", () => {
+    useVisualizerSettingsQueryMock.mockReturnValue({
+      data: {
+        AutoUpload: false,
+        Password: "secret",
+        Username: "brew-user",
       },
+      isPending: false,
     });
 
-    await waitFor(() => {
-      expect(importProfilesMutateAsync).toHaveBeenCalledWith([
-        {
-          id: "profile:imported",
-          profile: {
-            title: "Imported Profile",
-          },
-        },
-      ]);
-    });
+    render(<WorkflowsPage />);
 
-    expect(screen.getByText("Imported 1, skipped 0, failed 0.")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Export JSON" }));
-
-    await waitFor(() => {
-      expect(exportProfilesMutateAsync).toHaveBeenCalled();
-    });
-
-    expect(createObjectURL).toHaveBeenCalled();
-    expect(anchorClick).toHaveBeenCalled();
-    expect(revokeObjectURL).toHaveBeenCalledWith("blob:profiles");
-    expect(screen.getByText("Exported 1 profiles to a JSON download.")).toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText("Bundled filename"), {
-      target: { value: "best_practice.json" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Restore Default" }));
-
-    await waitFor(() => {
-      expect(restoreDefaultProfileMutateAsync).toHaveBeenCalledWith("best_practice.json");
-    });
-
-    expect(screen.getByText("Restored Best Practice from best_practice.json.")).toBeInTheDocument();
+    expect(screen.getByText("Enable Visualizer in Setup.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Import" })).toBeDisabled();
   });
 });

@@ -9,6 +9,7 @@ import {
 
 import { useRouter } from "@tanstack/react-router";
 
+import { VisualizerSettingsPanel } from "@/components/settings/visualizer-settings-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -295,6 +296,8 @@ export function SettingsPage() {
                 </div>
               </ControlBlock>
 
+              <VisualizerSettingsPanel />
+
               <ControlBlock
                 description="Use these if the tablet should stay visible all shift or fill the whole screen."
                 label="Screen tools"
@@ -523,8 +526,6 @@ function DeviceSummary({
   onDisconnectDevice: (deviceId: string) => void;
   scanErrorMessage?: string;
 }) {
-  const connectedDevices = devices.filter((device) => device.state === "connected");
-  const disconnectedDevices = devices.filter((device) => device.state !== "connected");
   const scaleDevices = devices.filter((device) => device.type === "scale");
   const otherDevices = devices.filter((device) => device.type !== "scale");
   const connectedScales = scaleDevices.filter((device) => device.state === "connected");

@@ -62,7 +62,6 @@ export function TabletTelemetryMonitor({
       <TelemetryMonitorCanvas
         density="compact"
         hoveredSample={model.activeSample}
-        hoveredSampleIndex={model.hoveredSampleIndex}
         laneVisibility={model.laneVisibility}
         onPointerLeave={onPointerLeave}
         onPointerMove={onPointerMove}
@@ -104,7 +103,6 @@ export function DesktopTelemetryMonitor({
           <TelemetryMonitorCanvas
             density="regular"
             hoveredSample={model.activeSample}
-            hoveredSampleIndex={model.hoveredSampleIndex}
             laneVisibility={model.laneVisibility}
             onPointerLeave={onPointerLeave}
             onPointerMove={onPointerMove}
@@ -162,7 +160,6 @@ function DesktopMonitorBar({
 function TelemetryMonitorCanvas({
   density,
   hoveredSample,
-  hoveredSampleIndex,
   laneVisibility,
   onPointerLeave,
   onPointerMove,
@@ -172,7 +169,6 @@ function TelemetryMonitorCanvas({
 }: {
   density: ChartDensity;
   hoveredSample: TelemetrySample | null;
-  hoveredSampleIndex: number | null;
   laneVisibility: Record<TelemetrySeriesFamily, boolean>;
   onPointerLeave: () => void;
   onPointerMove: (index: number | null) => void;

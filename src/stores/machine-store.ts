@@ -19,6 +19,7 @@ import {
   type TelemetrySample,
 } from "@/lib/telemetry";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
+import { visualizerRuntimeStore } from "@/stores/visualizer-runtime-store";
 
 export type LiveConnectionState = "idle" | "connecting" | "live" | "error";
 
@@ -148,6 +149,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
 
         const snapshot = parsed.data;
         queryClient.setQueryData(bridgeQueryKeys.machineState(), snapshot);
+        visualizerRuntimeStore.getState().handleSnapshot(snapshot);
         set((state) => ({
           error: null,
           telemetry: appendTelemetryHistory(state.telemetry, snapshot),
@@ -247,6 +249,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       waterLevels: null,
       waterSocket: null,
     });
+    visualizerRuntimeStore.getState().reset();
   },
   disconnectScale() {
     const currentScaleSocket = get().scaleSocket;
