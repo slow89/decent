@@ -187,7 +187,7 @@ describe("WorkflowsPage", () => {
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:profiles");
     expect(screen.getByText("Exported 1 profiles to a JSON download.")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Default profile filename"), {
+    fireEvent.change(screen.getByLabelText("Bundled filename"), {
       target: { value: "best_practice.json" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Restore Default" }));

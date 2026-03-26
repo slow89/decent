@@ -43,10 +43,9 @@ export function WorkflowProfileChooserPanel({
     <WorkflowPanel
       className="md:flex md:h-full md:min-h-0 md:flex-col"
       contentClassName="md:flex md:min-h-0 md:flex-1"
-      description="Keep the current profile visible, then swap to another saved profile when you want a different profile."
       title="Choose Profile"
     >
-      <div className="grid gap-2.5 md:min-h-0 md:flex-1 md:grid-rows-[auto_minmax(0,1fr)]">
+      <div className="grid gap-2 md:min-h-0 md:flex-1 md:grid-rows-[auto_auto_minmax(0,1fr)]">
         <ProfileLibraryActions
           isExporting={isExporting}
           isImporting={isImporting}
@@ -62,7 +61,7 @@ export function WorkflowProfileChooserPanel({
         />
         <div className="grid gap-1.5 md:min-h-0 md:overflow-hidden">
           <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Available profiles
+            Saved profiles
           </p>
           {availableProfiles.length ? (
             <div className="grid max-h-[420px] gap-1.5 overflow-y-auto overscroll-contain pr-1 md:max-h-none md:min-h-0 md:grid-cols-1 xl:gap-2">
@@ -80,7 +79,7 @@ export function WorkflowProfileChooserPanel({
           ) : (
             <WorkflowEmptyState
               body="No other visible profiles came back from the bridge."
-              title="Only the applied profile is available"
+              title="Only the current profile is available"
             />
           )}
         </div>
@@ -134,13 +133,12 @@ function ProfileLibraryActions({
   return (
     <section className="rounded-[10px] border border-border bg-panel-subtle px-2.5 py-2.5 md:px-2 md:py-2">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
+        <div className="space-y-1">
           <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-highlight">
             Library Actions
           </p>
-          <p className="mt-1 text-[0.72rem] leading-4 text-muted-foreground">
-            Import an exported library, save the current library to disk, or restore a bundled
-            default by filename.
+          <p className="text-[0.7rem] leading-4 text-muted-foreground">
+            Import, export, or restore a bundled default.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -176,7 +174,7 @@ function ProfileLibraryActions({
       <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <label className="grid gap-1" htmlFor="restore-default-profile">
           <span className="font-mono text-[0.54rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Default profile filename
+            Bundled filename
           </span>
           <Input
             className="h-10 rounded-[10px] border-border bg-panel-strong font-mono text-[0.74rem]"
@@ -212,8 +210,7 @@ function ProfileLibraryActions({
         </p>
       ) : (
         <p className="mt-2 text-[0.72rem] leading-5 text-muted-foreground">
-          Restore needs the exact bundled filename exposed by the bridge, such as{" "}
-          <code>best_practice.json</code>.
+          Use the exact bridge filename, like <code>best_practice.json</code>.
         </p>
       )}
     </section>
@@ -231,7 +228,7 @@ function CurrentProfileRow({
     <div className="rounded-[10px] border border-border bg-panel-subtle px-2.5 py-2.5 md:px-2 md:py-2">
       <div className="flex flex-wrap items-center gap-2">
         <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-highlight">
-          Applied now
+          Current profile
         </p>
         <span className="rounded-full border border-accent/35 bg-accent/12 px-2 py-0.5 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-accent">
           Active
@@ -332,7 +329,7 @@ function ProfileCard({
           />
         </div>
         <p
-          className="mt-1.5 truncate text-[0.76rem] leading-5 text-muted-foreground"
+          className="mt-1 line-clamp-1 text-[0.74rem] leading-5 text-muted-foreground"
           title={profile.notes?.trim() || "No profile notes from the bridge."}
         >
           {profile.notes?.trim() || "No profile notes from the bridge."}

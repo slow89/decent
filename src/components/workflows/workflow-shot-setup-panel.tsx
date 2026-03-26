@@ -47,7 +47,7 @@ export function WorkflowShotSetupPanel({
     <WorkflowPanel
       className="md:flex md:h-full md:min-h-0 md:flex-col"
       contentClassName="md:flex md:min-h-0 md:flex-1"
-      description="Name the workflow if needed, then set the dose, yield, grinder, and coffee details for the shot you are preparing."
+      description="Set recipe, grinder, and coffee details."
       title="Shot Setup"
     >
       <form

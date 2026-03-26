@@ -213,7 +213,7 @@ export function WorkflowsPage() {
 
   return (
     <div>
-      <div className="panel min-h-[calc(100vh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100vh-var(--app-footer-height))] md:flex-col">
+      <div className="panel min-h-[calc(100svh-var(--app-footer-height))] overflow-hidden rounded-none border-x-0 border-t-0 bg-shell md:flex md:h-[calc(100svh-var(--app-footer-height))] md:flex-col">
         <section className="px-3 py-3 md:flex-1 md:min-h-0 md:px-4">
           <div className="grid gap-3 md:h-full md:grid-cols-[minmax(290px,320px)_minmax(0,1fr)] md:items-stretch xl:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
             <WorkflowProfileChooserPanel
