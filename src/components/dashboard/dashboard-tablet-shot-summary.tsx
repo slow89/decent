@@ -6,21 +6,21 @@ export function DashboardTabletShotSummary() {
 
   return (
     <div
-      className="flex items-stretch border-b border-border/40"
+      className="flex items-stretch border-b border-border/70"
       data-testid="dashboard-shot-summary"
     >
       {items.map((item, i) => (
         <div
           className={cn(
-            "flex min-w-0 flex-1 flex-col justify-center px-2.5 py-1.5 md:px-3",
-            i > 0 && "border-l border-border/30",
+            "flex min-w-0 flex-1 flex-col justify-center px-2.5 py-1.5 md:px-4 md:py-2",
+            i > 0 && "border-l border-border/60",
           )}
           key={item.label}
         >
-          <p className="truncate font-mono text-[0.44rem] font-medium uppercase tracking-[0.08em] text-muted-foreground md:text-[0.48rem]">
+          <p className="truncate font-mono text-[0.44rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground md:text-[0.56rem]">
             {item.label}
           </p>
-          <p className="mt-0.5 truncate font-mono text-[0.74rem] font-semibold tabular-nums text-foreground md:text-[0.78rem]">
+          <p className="mt-0.5 truncate font-mono text-[0.74rem] font-semibold tabular-nums text-foreground md:text-[0.92rem]">
             {item.value}
           </p>
         </div>

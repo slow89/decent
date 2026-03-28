@@ -15,7 +15,7 @@ export function DashboardControlRail() {
   const { controlRows, recipeControls, workflowDisabled } = useDashboardControlPanelModel();
 
   return (
-    <aside className="border-b border-border/40 md:h-full md:min-h-0 md:overflow-y-auto md:overscroll-contain md:border-b-0 md:border-r md:border-border/40">
+    <aside className="border-b border-border/70 md:h-full md:min-h-0 md:overflow-y-auto md:overscroll-contain md:border-b-0 md:border-r md:border-border/70">
       <DoseDrinkControlRow disabled={workflowDisabled} {...recipeControls} />
       {controlRows.map((row) => (
         <ControlRailRow
@@ -53,13 +53,13 @@ function DoseDrinkControlRow({
   onSelectDrinkPreset,
 }: DashboardRecipeControls & { disabled: boolean }) {
   return (
-    <div className="border-b border-border/40 px-3 py-2.5 md:max-xl:px-3 md:max-xl:py-2">
+    <div className="border-b border-border/70 px-3 py-2.5 md:max-xl:px-3 md:max-xl:py-2">
       <div className="flex items-center gap-2">
-        <p className="font-mono text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-highlight-muted md:max-xl:text-[0.62rem]">
+        <p className="font-mono text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-highlight-muted md:max-xl:text-[0.72rem]">
           Recipe
         </p>
-        <span className="font-mono text-[0.5rem] text-muted-foreground/50">|</span>
-        <p className="min-w-[48px] font-mono text-[0.64rem] font-medium tabular-nums text-muted-foreground md:max-xl:text-[0.66rem]">
+        <span className="font-mono text-[0.5rem] text-muted-foreground/70">|</span>
+        <p className="min-w-[48px] font-mono text-[0.64rem] font-medium tabular-nums text-muted-foreground md:max-xl:text-[0.76rem]">
           {drinkDetail}
         </p>
       </div>
@@ -67,26 +67,26 @@ function DoseDrinkControlRow({
       <div className="mt-2 space-y-2 md:max-xl:mt-2 md:max-xl:space-y-2">
         <div className="space-y-1">
           <div className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-2 md:max-xl:grid-cols-[48px_minmax(0,1fr)] md:max-xl:gap-2">
-            <p className="font-mono text-[0.54rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:max-xl:text-[0.56rem]">
+            <p className="font-mono text-[0.54rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:max-xl:text-[0.64rem]">
               Dose
             </p>
             <RecipeValueControl
-              buttonClassName="md:max-xl:h-7 md:max-xl:w-7 md:max-xl:rounded-[3px]"
-              className="md:max-xl:grid-cols-[28px_minmax(0,1fr)_28px] md:max-xl:gap-1 md:max-xl:rounded-[4px] md:max-xl:px-1 md:max-xl:py-1"
+              buttonClassName="md:max-xl:h-8 md:max-xl:w-8 md:max-xl:rounded-[4px]"
+              className="md:max-xl:grid-cols-[32px_minmax(0,1fr)_32px] md:max-xl:gap-1 md:max-xl:rounded-[4px] md:max-xl:px-1 md:max-xl:py-1"
               disabled={disabled}
-              iconClassName="md:max-xl:size-[13px]"
+              iconClassName="md:max-xl:size-[15px]"
               label="Dose"
               onDecrease={onDecreaseDose}
               onIncrease={onIncreaseDose}
               value={doseValue}
-              valueClassName="md:max-xl:text-[0.88rem]"
+              valueClassName="md:max-xl:text-[1rem]"
             />
           </div>
           <RecipePresetRow
             activePresetValue={doseActivePresetValue}
-            className="md:max-xl:gap-1 md:max-xl:text-[0.66rem]"
+            className="md:max-xl:gap-1 md:max-xl:text-[0.76rem]"
             disabled={disabled}
-            itemClassName="md:max-xl:rounded-[3px] md:max-xl:px-1 md:max-xl:py-0.5"
+            itemClassName="md:max-xl:rounded-[4px] md:max-xl:px-1.5 md:max-xl:py-1"
             onPresetClick={onSelectDosePreset}
             presets={dosePresets}
           />
@@ -94,26 +94,26 @@ function DoseDrinkControlRow({
 
         <div className="space-y-1">
           <div className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-2 md:max-xl:grid-cols-[48px_minmax(0,1fr)] md:max-xl:gap-2">
-            <p className="font-mono text-[0.54rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:max-xl:text-[0.56rem]">
+            <p className="font-mono text-[0.54rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:max-xl:text-[0.64rem]">
               Yield
             </p>
             <RecipeValueControl
-              buttonClassName="md:max-xl:h-7 md:max-xl:w-7 md:max-xl:rounded-[3px]"
-              className="md:max-xl:grid-cols-[28px_minmax(0,1fr)_28px] md:max-xl:gap-1 md:max-xl:rounded-[4px] md:max-xl:px-1 md:max-xl:py-1"
+              buttonClassName="md:max-xl:h-8 md:max-xl:w-8 md:max-xl:rounded-[4px]"
+              className="md:max-xl:grid-cols-[32px_minmax(0,1fr)_32px] md:max-xl:gap-1 md:max-xl:rounded-[4px] md:max-xl:px-1 md:max-xl:py-1"
               disabled={disabled}
-              iconClassName="md:max-xl:size-[13px]"
+              iconClassName="md:max-xl:size-[15px]"
               label="Yield"
               onDecrease={onDecreaseDrink}
               onIncrease={onIncreaseDrink}
               value={drinkValue}
-              valueClassName="md:max-xl:text-[0.88rem]"
+              valueClassName="md:max-xl:text-[1rem]"
             />
           </div>
           <RecipePresetRow
             activePresetValue={drinkActivePresetValue}
-            className="md:max-xl:gap-1 md:max-xl:text-[0.66rem]"
+            className="md:max-xl:gap-1 md:max-xl:text-[0.76rem]"
             disabled={disabled}
-            itemClassName="md:max-xl:rounded-[3px] md:max-xl:px-1 md:max-xl:py-0.5"
+            itemClassName="md:max-xl:rounded-[4px] md:max-xl:px-1.5 md:max-xl:py-1"
             onPresetClick={onSelectDrinkPreset}
             presets={drinkPresets}
           />
@@ -136,11 +136,11 @@ function ControlRailRow({
   value,
 }: DashboardControlRow & { disabled: boolean }) {
   return (
-    <div className="border-b border-border/40 px-3 py-2.5 last:border-b-0 md:max-xl:px-3 md:max-xl:py-2">
-      <div className="grid grid-cols-[48px_minmax(0,1fr)] items-start gap-2 md:max-xl:grid-cols-[52px_minmax(0,1fr)] md:max-xl:gap-2">
+    <div className="border-b border-border/70 px-3 py-2.5 last:border-b-0 md:max-xl:px-3 md:max-xl:py-2">
+      <div className="grid grid-cols-[48px_minmax(0,1fr)] items-start gap-2 md:max-xl:grid-cols-[56px_minmax(0,1fr)] md:max-xl:gap-2">
         <p
           className={cn(
-            "pt-1.5 font-mono text-[0.62rem] font-semibold uppercase tracking-[0.1em] md:max-xl:pt-1 md:max-xl:text-[0.64rem]",
+            "pt-1.5 font-mono text-[0.62rem] font-semibold uppercase tracking-[0.1em] md:max-xl:pt-1 md:max-xl:text-[0.74rem]",
             tint,
           )}
         >
@@ -160,9 +160,9 @@ function ControlRailRow({
       <RecipePresetRow
         activePresetValue={activePresetValue}
         align="left"
-        className="mt-1.5 gap-1 md:max-xl:mt-1 md:max-xl:gap-1 md:max-xl:text-[0.66rem]"
+        className="mt-1.5 gap-1 md:max-xl:mt-1 md:max-xl:gap-1 md:max-xl:text-[0.76rem]"
         disabled={disabled}
-        itemClassName="md:max-xl:rounded-[3px] md:max-xl:px-1 md:max-xl:py-0.5"
+        itemClassName="md:max-xl:rounded-[4px] md:max-xl:px-1.5 md:max-xl:py-1"
         onPresetClick={onPresetClick}
         presets={presets}
       />
@@ -189,19 +189,19 @@ function RailValueControl({
     <div className="grid grid-cols-[36px_minmax(0,1fr)_36px] items-center gap-1.5 md:max-xl:grid-cols-[36px_minmax(0,1fr)_36px] md:max-xl:gap-1.5">
       <RecipeControlButton
         ariaLabel={`Decrease ${label}`}
-        className="md:max-xl:h-8 md:max-xl:w-8 md:max-xl:rounded-[3px]"
+        className="md:max-xl:h-9 md:max-xl:w-9 md:max-xl:rounded-[4px]"
         disabled={disabled}
         onClick={onDecrease}
       >
-        <Minus className="size-3.5 md:max-xl:size-[15px]" />
+        <Minus className="size-3.5 md:max-xl:size-4" />
       </RecipeControlButton>
 
       <div className="min-w-0 text-center">
-        <p className="font-mono text-[0.88rem] font-semibold tabular-nums text-foreground md:max-xl:text-[0.92rem]">
+        <p className="font-mono text-[0.88rem] font-semibold tabular-nums text-foreground md:max-xl:text-[1.05rem]">
           {value}
         </p>
         {detail ? (
-          <p className="mt-0.5 font-mono text-[0.64rem] tabular-nums text-muted-foreground md:max-xl:text-[0.66rem]">
+          <p className="mt-0.5 font-mono text-[0.64rem] tabular-nums text-muted-foreground md:max-xl:text-[0.76rem]">
             {detail}
           </p>
         ) : null}
@@ -209,11 +209,11 @@ function RailValueControl({
 
       <RecipeControlButton
         ariaLabel={`Increase ${label}`}
-        className="md:max-xl:h-8 md:max-xl:w-8 md:max-xl:rounded-[3px]"
+        className="md:max-xl:h-9 md:max-xl:w-9 md:max-xl:rounded-[4px]"
         disabled={disabled}
         onClick={onIncrease}
       >
-        <Plus className="size-3.5 md:max-xl:size-[15px]" />
+        <Plus className="size-3.5 md:max-xl:size-4" />
       </RecipeControlButton>
     </div>
   );

@@ -20,7 +20,7 @@ export function DashboardTabletPrepBoard() {
       data-testid="dashboard-tablet-prep-board"
     >
       {/* Status ticker — compact, full-bleed */}
-      <div className="border-b border-border/40 bg-panel/60">
+      <div className="border-b border-border/70 bg-panel/60">
         <DashboardTabletPrepStatus status={prepStatus} />
       </div>
 
@@ -68,18 +68,18 @@ function DashboardTabletRecipeCard({
   onSelectDrinkPreset,
 }: DashboardRecipeControls & { disabled: boolean }) {
   return (
-    <section className="border-b border-border/40 px-3 py-2.5 md:col-span-2 md:px-5 md:py-4">
+    <section className="border-b border-border/70 px-3 py-2.5 md:col-span-2 md:px-5 md:py-2.5">
       <div className="flex items-center gap-2">
-        <p className="font-mono text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-highlight-muted md:text-[0.74rem]">
+        <p className="font-mono text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-highlight-muted md:text-[0.84rem]">
           Recipe
         </p>
         <span className="font-mono text-[0.5rem] text-muted-foreground/60">|</span>
-        <p className="font-mono text-[0.64rem] font-medium tabular-nums text-muted-foreground md:text-[0.78rem]">
+        <p className="font-mono text-[0.64rem] font-medium tabular-nums text-muted-foreground md:text-[0.88rem]">
           {drinkDetail}
         </p>
       </div>
 
-      <div className="mt-2 grid gap-3 md:mt-3 md:grid-cols-2 md:gap-6">
+      <div className="mt-2 grid gap-3 md:mt-2 md:grid-cols-2 md:gap-4">
         <DashboardTabletAdjustSection
           activePresetValue={doseActivePresetValue}
           disabled={disabled}
@@ -121,9 +121,9 @@ function DashboardTabletControlCard({
   return (
     <section
       className={cn(
-        "border-b border-border/40 px-3 py-2.5 md:px-5 md:py-4",
+        "border-b border-border/70 px-3 py-2.5 md:px-5 md:py-2.5",
         /* vertical divider between left/right columns */
-        index % 2 === 1 && "md:border-l",
+        index % 2 === 1 && "md:border-l md:border-l-border/70",
       )}
     >
       <DashboardTabletAdjustSection
@@ -170,22 +170,22 @@ function DashboardTabletAdjustSection({
       <div className="flex items-center justify-between gap-2">
         <p
           className={cn(
-            "font-mono text-[0.56rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:text-[0.72rem]",
+            "font-mono text-[0.56rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:text-[0.82rem]",
             labelClassName,
           )}
         >
           {label}
         </p>
         {detail ? (
-          <p className="font-mono text-[0.56rem] tabular-nums text-muted-foreground/70 md:text-[0.72rem]">
+          <p className="font-mono text-[0.56rem] tabular-nums text-muted-foreground/70 md:text-[0.82rem]">
             {detail}
           </p>
         ) : null}
       </div>
 
       <RecipeValueControl
-        buttonClassName="h-9 w-9 rounded-[3px] md:h-12 md:w-12"
-        className="mt-1.5 grid-cols-[36px_minmax(0,1fr)_36px] gap-1.5 rounded-[4px] px-1.5 py-1.5 md:mt-2 md:grid-cols-[48px_minmax(0,1fr)_48px] md:gap-2 md:px-2 md:py-2"
+        buttonClassName="h-9 w-9 rounded-[4px] md:h-11 md:w-11 md:border-border/80"
+        className="mt-1.5 grid-cols-[36px_minmax(0,1fr)_36px] gap-1.5 rounded-[4px] px-1.5 py-1.5 md:mt-1.5 md:grid-cols-[44px_minmax(0,1fr)_44px] md:gap-2 md:px-2 md:py-1.5"
         disabled={disabled}
         iconClassName="size-3.5 md:size-5"
         label={label}
@@ -197,9 +197,9 @@ function DashboardTabletAdjustSection({
 
       <RecipePresetRow
         activePresetValue={activePresetValue}
-        className="mt-1.5 gap-1 text-[0.68rem] md:mt-2.5 md:gap-1.5 md:text-[0.84rem]"
+        className="mt-1.5 gap-1 text-[0.68rem] md:mt-1.5 md:gap-1.5 md:text-[0.88rem]"
         disabled={disabled}
-        itemClassName="rounded-[3px] px-1.5 py-1 md:px-2 md:py-1.5"
+        itemClassName="rounded-[4px] border border-border/60 px-1.5 py-1 md:px-2 md:py-1"
         onPresetClick={onPresetClick}
         presets={presets}
       />
