@@ -6,10 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "pnpm test && pnpm build",
+    "check": "pnpm test && pnpm build && pnpm test:browser:smoke",
     "deploy:tablet": "pnpm build && node scripts/deploy-tablet-skin.mjs",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:agent": "PLAYWRIGHT_AGENT_MODE=1 pnpm test:browser:smoke",
+    "test:browser:full": "playwright test",
+    "test:browser:real": "PLAYWRIGHT_REAL_GATEWAY_URL=${PLAYWRIGHT_REAL_GATEWAY_URL:-} playwright test tests/browser/real-gateway.spec.ts",
+    "test:browser:smoke": "playwright test --project=tablet-sm-portrait --grep @smoke",
+    "test:browser:update-snapshots": "playwright test --update-snapshots"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
@@ -31,10 +36,12 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@rolldown/plugin-babel": "^0.2.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25.5.0",
+    "@types/ws": "^8.18.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
@@ -43,8 +50,10 @@
     "jsdom": "^29.0.1",
     "postcss": "^8.5.8",
     "tailwindcss": "^3.4.19",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vite": "^8.0.1",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "ws": "^8.18.3"
   }
 }

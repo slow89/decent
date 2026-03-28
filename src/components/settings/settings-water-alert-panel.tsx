@@ -41,6 +41,7 @@ export function SettingsWaterAlertPanel() {
               Off
             </span>
             <input
+              aria-label="Water alert threshold"
               className="h-1.5 w-full cursor-pointer accent-[#d0a954]"
               max={60}
               min={0}

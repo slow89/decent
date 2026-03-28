@@ -234,6 +234,7 @@ function HistoryTopBar({
             </p>
           </div>
           <button
+            aria-label="Refresh shot history"
             className={cn(
               "flex size-6 items-center justify-center rounded-[3px] border border-border/50 bg-panel-strong text-muted-foreground transition hover:text-foreground md:max-xl:size-7",
               isRefreshing && "animate-spin text-highlight",

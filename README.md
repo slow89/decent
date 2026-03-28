@@ -77,6 +77,22 @@ The workspace includes a local [`.mcp.json`](/Users/stephenlowinger/dev/decent/.
 entry for Playwright MCP so the UI can be exercised against a running dev
 server.
 
+## Testing
+
+```bash
+pnpm test
+pnpm test:browser:smoke
+pnpm test:agent
+```
+
+`pnpm test:agent` writes a summary to `output/testing/latest.json` and stores
+Playwright artifacts under `output/playwright/`.
+
+The browser suite runs against a repo-local fake Streamline Gateway so the app
+can be regression-tested against deterministic REST and WebSocket scenarios
+without real hardware. See [docs/agent-testing.md](/Users/stephenlowinger/dev/decent/docs/agent-testing.md)
+for the agent workflow and rerun patterns.
+
 ## Current scope
 
 - Persisted bridge URL

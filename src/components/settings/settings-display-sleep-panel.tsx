@@ -122,6 +122,7 @@ export function SettingsDisplaySleepPanel() {
               Dim
             </span>
             <input
+              aria-label="Brightness level"
               className="h-1.5 w-full cursor-pointer accent-[#d0a954] disabled:cursor-not-allowed disabled:opacity-50"
               disabled={displayState?.platformSupported.brightness === false}
               max={100}

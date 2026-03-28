@@ -29,6 +29,7 @@ export default defineConfig({
     exclude: [
       ...configDefaults.exclude,
       "**/.claude/**",
+      "tests/browser/**",
     ],
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],

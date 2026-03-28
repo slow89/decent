@@ -1,0 +1,56 @@
+name: Browser Regression
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+    inputs:
+      run_real_gateway:
+        default: false
+        description: "Run the optional real-gateway smoke pass when REAL_GATEWAY_URL is configured"
+        required: false
+        type: boolean
+
+jobs:
+  full-browser-suite:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          node-version: 22
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run full fake-gateway browser suite
+        run: pnpm test:browser:full
+
+      - name: Run optional real-gateway smoke
+        if: github.event_name == 'workflow_dispatch' && inputs.run_real_gateway && secrets.REAL_GATEWAY_URL != ''
+        env:
+          PLAYWRIGHT_REAL_GATEWAY_URL: ${{ secrets.REAL_GATEWAY_URL }}
+        run: pnpm test:browser:real
+
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: ignore
+          name: nightly-browser-failures
+          path: |
+            output/playwright
+            output/testing/latest.json
