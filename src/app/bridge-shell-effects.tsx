@@ -4,6 +4,7 @@ import {
 } from "react";
 
 import { useDevicesQuery } from "@/rest/queries";
+import { useBridgeSettingsQuery } from "@/rest/queries";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 import { displayStore } from "@/stores/display-store";
 import { useMachineStore } from "@/stores/machine-store";
@@ -19,6 +20,10 @@ export function BridgeShellEffects() {
   const gatewayUrl = useBridgeConfigStore((state) => state.gatewayUrl);
   const connectScale = useMachineStore((state) => state.connectScale);
   const disconnectScale = useMachineStore((state) => state.disconnectScale);
+  const reconnectPreferredScale = useMachineStore((state) => state.reconnectPreferredScale);
+  const { data: bridgeSettings } = useBridgeSettingsQuery({
+    refetchInterval: 5_000,
+  });
   const { data: devices } = useDevicesQuery({
     refetchInterval: 2_000,
   });
@@ -36,6 +41,7 @@ export function BridgeShellEffects() {
   });
   const connectedScaleId =
     devices?.find((device) => device.type === "scale" && device.state === "connected")?.id ?? null;
+  const preferredScaleId = bridgeSettings?.preferredScaleId ?? null;
 
   useEffect(() => {
     void useMachineStore.getState().connectLive();
@@ -58,6 +64,14 @@ export function BridgeShellEffects() {
 
     reconnectScaleFeed();
   }, [connectedScaleId, disconnectScale, reconnectScaleFeed]);
+
+  useEffect(() => {
+    if (!preferredScaleId || connectedScaleId) {
+      return;
+    }
+
+    void reconnectPreferredScale();
+  }, [connectedScaleId, preferredScaleId, reconnectPreferredScale]);
 
   useEffect(() => {
     function handleVisibilityChange() {

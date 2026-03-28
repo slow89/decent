@@ -26,10 +26,12 @@ export type LiveConnectionState = "idle" | "connecting" | "live" | "error";
 
 interface MachineState {
   error: string | null;
+  lastScaleReconnectAttemptAt: number | null;
   liveConnection: LiveConnectionState;
   machineSocket: WebSocket | null;
   connectScale: () => Promise<void>;
   disconnectScale: () => void;
+  reconnectPreferredScale: () => Promise<void>;
   scaleConnection: LiveConnectionState;
   scaleSnapshot: ScaleSnapshot | null;
   scaleSocket: WebSocket | null;
@@ -58,8 +60,11 @@ function getErrorMessage(error: unknown) {
   return "Unexpected bridge error";
 }
 
+const preferredScaleReconnectIntervalMs = 5_000;
+
 export const useMachineStore = create<MachineState>((set, get) => ({
   error: null,
+  lastScaleReconnectAttemptAt: null,
   liveConnection: "idle",
   machineSocket: null,
   async connectScale() {
@@ -261,10 +266,48 @@ export const useMachineStore = create<MachineState>((set, get) => ({
     }
 
     set({
+      lastScaleReconnectAttemptAt: null,
       scaleConnection: "idle",
       scaleSnapshot: null,
       scaleSocket: null,
     });
+  },
+  async reconnectPreferredScale() {
+    const now = Date.now();
+    const {
+      lastScaleReconnectAttemptAt,
+      liveConnection,
+      scaleConnection,
+    } = get();
+
+    if (liveConnection !== "live") {
+      return;
+    }
+
+    if (scaleConnection === "connecting" || scaleConnection === "live") {
+      return;
+    }
+
+    if (
+      lastScaleReconnectAttemptAt != null &&
+      now - lastScaleReconnectAttemptAt < preferredScaleReconnectIntervalMs
+    ) {
+      return;
+    }
+
+    set({
+      lastScaleReconnectAttemptAt: now,
+    });
+
+    try {
+      await getClient().scanDevices({
+        quick: true,
+      });
+    } catch (error) {
+      set({
+        error: getErrorMessage(error),
+      });
+    }
   },
   async requestState(nextState) {
     set({ error: null });

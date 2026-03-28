@@ -15,6 +15,7 @@ const {
   useDisconnectDeviceMutationMock,
   usePresenceSettingsQueryMock,
   useScanDevicesMutationMock,
+  useUpdateBridgeSettingsMutationMock,
   useUpdateVisualizerSettingsMutationMock,
   useUpdatePresenceSettingsMutationMock,
   useVerifyVisualizerCredentialsMutationMock,
@@ -26,6 +27,7 @@ const {
   routerInvalidate: vi.fn(async () => undefined),
   useDevicesQueryMock: vi.fn(),
   useScanDevicesMutationMock: vi.fn(),
+  useUpdateBridgeSettingsMutationMock: vi.fn(),
   useUpdateVisualizerSettingsMutationMock: vi.fn(),
   useUpdatePresenceSettingsMutationMock: vi.fn(),
   useVerifyVisualizerCredentialsMutationMock: vi.fn(),
@@ -48,6 +50,7 @@ vi.mock("@/rest/queries", async () => {
     useDevicesQuery: useDevicesQueryMock,
     usePresenceSettingsQuery: usePresenceSettingsQueryMock,
     useScanDevicesMutation: useScanDevicesMutationMock,
+    useUpdateBridgeSettingsMutation: useUpdateBridgeSettingsMutationMock,
     useUpdatePresenceSettingsMutation: useUpdatePresenceSettingsMutationMock,
     useUpdateVisualizerSettingsMutation: useUpdateVisualizerSettingsMutationMock,
     useVerifyVisualizerCredentialsMutation: useVerifyVisualizerCredentialsMutationMock,
@@ -59,6 +62,7 @@ describe("SettingsPage", () => {
   const connectMutateAsync = vi.fn(async () => undefined);
   const disconnectMutateAsync = vi.fn(async () => undefined);
   const scanMutateAsync = vi.fn(async () => []);
+  const updateBridgeSettingsMutateAsync = vi.fn(async (settings: unknown) => settings);
   const updatePresenceSettingsMutateAsync = vi.fn(async (patch: unknown) => patch);
   const updateVisualizerSettingsMutateAsync = vi.fn(async (settings: unknown) => settings);
   const verifyVisualizerCredentialsMutateAsync = vi.fn(async () => ({ valid: true }));
@@ -169,6 +173,11 @@ describe("SettingsPage", () => {
       isPending: false,
       mutateAsync: scanMutateAsync,
     });
+    useUpdateBridgeSettingsMutationMock.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: updateBridgeSettingsMutateAsync,
+    });
     useUpdateVisualizerSettingsMutationMock.mockReturnValue({
       isPending: false,
       mutateAsync: updateVisualizerSettingsMutateAsync,
@@ -225,7 +234,7 @@ describe("SettingsPage", () => {
     fireEvent.change(screen.getByLabelText("REST origin"), {
       target: { value: "http://new-bridge.local:8080/" },
     });
-    fireEvent.click(screen.getByText("Save and reconnect"));
+    fireEvent.click(screen.getByRole("button", { name: "Save & reconnect" }));
 
     await waitFor(() => {
       expect(useBridgeConfigStore.getState().gatewayUrl).toBe(
@@ -264,6 +273,9 @@ describe("SettingsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Disconnect scale" }));
 
     await waitFor(() => {
+      expect(updateBridgeSettingsMutateAsync).toHaveBeenCalledWith({
+        preferredScaleId: null,
+      });
       expect(disconnectMutateAsync).toHaveBeenCalledWith("scale-1");
     });
   });
@@ -376,13 +388,13 @@ describe("SettingsPage", () => {
   it("toggles full screen from settings", async () => {
     render(<SettingsPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Enter full screen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enter fullscreen" }));
 
     await waitFor(() => {
       expect(requestFullscreenMock).toHaveBeenCalled();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Exit full screen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Exit fullscreen" }));
 
     await waitFor(() => {
       expect(exitFullscreenMock).toHaveBeenCalled();

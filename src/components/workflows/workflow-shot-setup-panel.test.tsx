@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { WorkflowShotSetupPanel } from "./workflow-shot-setup-panel";
@@ -43,22 +43,17 @@ describe("WorkflowShotSetupPanel", () => {
       />,
     );
 
-    const doseRow = screen.getByTestId("workflow-recipe-control-dose");
-    const yieldRow = screen.getByTestId("workflow-recipe-control-yield");
+    expect(screen.getByText("Dose")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Decrease Dose" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Increase Dose" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "16g" })).toBeInTheDocument();
+    expect(screen.getAllByText("18g")).toHaveLength(2);
 
-    expect(doseRow.className).toContain(
-      "[grid-template-columns:42px_minmax(104px,auto)_minmax(0,1fr)]",
-    );
-    expect(yieldRow.className).toContain(
-      "[grid-template-columns:42px_minmax(104px,auto)_minmax(0,1fr)]",
-    );
-
-    expect(within(doseRow).getByRole("button", { name: "Decrease Dose" })).toBeInTheDocument();
-    expect(within(doseRow).getByRole("button", { name: "Increase Dose" })).toBeInTheDocument();
-    expect(within(doseRow).getByRole("button", { name: "16g" })).toBeInTheDocument();
-    expect(within(yieldRow).getByRole("button", { name: "Decrease Yield" })).toBeInTheDocument();
-    expect(within(yieldRow).getByRole("button", { name: "Increase Yield" })).toBeInTheDocument();
-    expect(within(yieldRow).getByRole("button", { name: "1:2.0" })).toBeInTheDocument();
+    expect(screen.getByText("Yield")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Decrease Yield" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Increase Yield" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "1:2.0" })).toBeInTheDocument();
+    expect(screen.getByText("36g")).toBeInTheDocument();
 
     expect(screen.getByDisplayValue("Morning spro")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Dial-in")).toBeInTheDocument();

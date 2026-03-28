@@ -5,6 +5,7 @@ import {
   useDevicesQuery,
   useDisconnectDeviceMutation,
   useScanDevicesMutation,
+  useUpdateBridgeSettingsMutation,
 } from "@/rest/queries";
 import type { DeviceSummary } from "@/rest/types";
 import {
@@ -25,8 +26,19 @@ export function SettingsDevicePairingPanel() {
   const scanDevicesMutation = useScanDevicesMutation();
   const connectDeviceMutation = useConnectDeviceMutation();
   const disconnectDeviceMutation = useDisconnectDeviceMutation();
+  const updateBridgeSettingsMutation = useUpdateBridgeSettingsMutation();
   const connectedDevices = devices.filter((device) => device.state === "connected");
   const disconnectedDevices = devices.filter((device) => device.state !== "connected");
+
+  async function handleDisconnectDevice(device: DeviceSummary) {
+    if (device.type === "scale") {
+      await updateBridgeSettingsMutation.mutateAsync({
+        preferredScaleId: null,
+      });
+    }
+
+    await disconnectDeviceMutation.mutateAsync(device.id);
+  }
 
   return (
     <SettingsSection
@@ -69,8 +81,9 @@ export function SettingsDevicePairingPanel() {
           devices={devices}
           errorMessage={devicesError?.message}
           isFetching={isFetchingDevices}
+          isMutatingSettings={updateBridgeSettingsMutation.isPending}
           onConnectDevice={(deviceId) => void connectDeviceMutation.mutateAsync(deviceId)}
-          onDisconnectDevice={(deviceId) => void disconnectDeviceMutation.mutateAsync(deviceId)}
+          onDisconnectDevice={(device) => void handleDisconnectDevice(device)}
           scanErrorMessage={scanDevicesMutation.error?.message}
         />
       </div>
@@ -84,6 +97,7 @@ function DeviceSummaryPanel({
   devices,
   errorMessage,
   isFetching,
+  isMutatingSettings,
   onConnectDevice,
   onDisconnectDevice,
   scanErrorMessage,
@@ -93,8 +107,9 @@ function DeviceSummaryPanel({
   devices: DeviceSummary[];
   errorMessage?: string;
   isFetching: boolean;
+  isMutatingSettings: boolean;
   onConnectDevice: (deviceId: string) => void;
-  onDisconnectDevice: (deviceId: string) => void;
+  onDisconnectDevice: (device: DeviceSummary) => void;
   scanErrorMessage?: string;
 }) {
   const scaleDevices = devices.filter((device) => device.type === "scale");
@@ -142,6 +157,7 @@ function DeviceSummaryPanel({
         devices={scaleDevices}
         disconnectPendingDeviceId={disconnectPendingDeviceId}
         emptyMessage="No scales discovered yet. Use Find only, then pair your scale here."
+        isMutatingSettings={isMutatingSettings}
         onConnectDevice={onConnectDevice}
         onDisconnectDevice={onDisconnectDevice}
         title="Scale Pairing"
@@ -153,6 +169,7 @@ function DeviceSummaryPanel({
           description="Machines and other bridge-managed devices remain available below."
           devices={otherDevices}
           disconnectPendingDeviceId={disconnectPendingDeviceId}
+          isMutatingSettings={isMutatingSettings}
           onConnectDevice={onConnectDevice}
           onDisconnectDevice={onDisconnectDevice}
           title="Other Devices"
@@ -170,6 +187,7 @@ function DeviceGroup({
   devices,
   disconnectPendingDeviceId,
   emptyMessage,
+  isMutatingSettings,
   onConnectDevice,
   onDisconnectDevice,
   title,
@@ -179,8 +197,9 @@ function DeviceGroup({
   devices: DeviceSummary[];
   disconnectPendingDeviceId: string | null;
   emptyMessage?: string;
+  isMutatingSettings: boolean;
   onConnectDevice: (deviceId: string) => void;
-  onDisconnectDevice: (deviceId: string) => void;
+  onDisconnectDevice: (device: DeviceSummary) => void;
   title: string;
 }) {
   const connectedDevices = devices.filter((device) => device.state === "connected");
@@ -218,6 +237,7 @@ function DeviceGroup({
           connectPendingDeviceId={connectPendingDeviceId}
           devices={connectedDevices}
           disconnectPendingDeviceId={disconnectPendingDeviceId}
+          isMutatingSettings={isMutatingSettings}
           onConnectDevice={onConnectDevice}
           onDisconnectDevice={onDisconnectDevice}
           title="Connected"
@@ -230,6 +250,7 @@ function DeviceGroup({
           connectPendingDeviceId={connectPendingDeviceId}
           devices={disconnectedDevices}
           disconnectPendingDeviceId={disconnectPendingDeviceId}
+          isMutatingSettings={isMutatingSettings}
           onConnectDevice={onConnectDevice}
           onDisconnectDevice={onDisconnectDevice}
           title="Available"
@@ -244,6 +265,7 @@ function DeviceList({
   connectPendingDeviceId,
   devices,
   disconnectPendingDeviceId,
+  isMutatingSettings,
   onConnectDevice,
   onDisconnectDevice,
   title,
@@ -252,8 +274,9 @@ function DeviceList({
   connectPendingDeviceId: string | null;
   devices: DeviceSummary[];
   disconnectPendingDeviceId: string | null;
+  isMutatingSettings: boolean;
   onConnectDevice: (deviceId: string) => void;
-  onDisconnectDevice: (deviceId: string) => void;
+  onDisconnectDevice: (device: DeviceSummary) => void;
   title: string;
 }) {
   return (
@@ -277,9 +300,13 @@ function DeviceList({
             }
             actionVariant={actionVariant}
             device={device}
-            disabled={Boolean(connectPendingDeviceId || disconnectPendingDeviceId)}
+            disabled={Boolean(connectPendingDeviceId || disconnectPendingDeviceId || isMutatingSettings)}
             key={device.id}
-            onAction={device.state === "connected" ? onDisconnectDevice : onConnectDevice}
+            onAction={
+              device.state === "connected"
+                ? () => onDisconnectDevice(device)
+                : () => onConnectDevice(device.id)
+            }
           />
         ))}
       </div>
@@ -298,7 +325,7 @@ function DeviceRow({
   actionVariant: "default" | "secondary";
   device: DeviceSummary;
   disabled: boolean;
-  onAction: (deviceId: string) => void;
+  onAction: () => void;
 }) {
   return (
     <div className="flex items-center justify-between gap-2 px-2.5 py-1.5">
@@ -324,7 +351,7 @@ function DeviceRow({
       <Button
         className="min-h-[34px] shrink-0 rounded-[3px] px-2.5 text-[0.52rem] uppercase tracking-[0.12em]"
         disabled={disabled}
-        onClick={() => onAction(device.id)}
+        onClick={onAction}
         size="sm"
         variant={actionVariant}
       >

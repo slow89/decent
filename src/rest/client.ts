@@ -1,6 +1,7 @@
 import { type z } from "zod";
 
 import {
+  bridgeSettingsSchema,
   displayStateSchema,
   deviceSummaryListSchema,
   heartbeatResponseSchema,
@@ -122,9 +123,10 @@ export function createBridgeClient(baseUrl: string) {
     async listDevices() {
       return request("/api/v1/devices", deviceSummaryListSchema);
     },
-    async scanDevices(options?: { connect?: boolean }) {
+    async scanDevices(options?: { connect?: boolean; quick?: boolean }) {
       const searchParams = new URLSearchParams({
         connect: options?.connect === false ? "false" : "true",
+        quick: options?.quick === true ? "true" : "false",
       });
 
       return request(`/api/v1/devices/scan?${searchParams.toString()}`, deviceSummaryListSchema);
@@ -187,6 +189,26 @@ export function createBridgeClient(baseUrl: string) {
       return request("/api/v1/machine/heartbeat", heartbeatResponseSchema, {
         method: "POST",
       });
+    },
+    async getSettings() {
+      return request("/api/v1/settings", bridgeSettingsSchema);
+    },
+    async updateSettings(settings: {
+      preferredMachineId?: string | null;
+      preferredScaleId?: string | null;
+      scalePowerMode?: string | null;
+    }) {
+      const response = await fetch(`${origin}/api/v1/settings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(settings),
+      });
+
+      if (!response.ok) {
+        throw new BridgeClientError("Unable to update bridge settings", response.status);
+      }
     },
     async getPresenceSettings() {
       return request("/api/v1/presence/settings", presenceSettingsSchema);

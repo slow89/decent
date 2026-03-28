@@ -9,6 +9,7 @@ import { usePresenceStore } from "@/stores/presence-store";
 import { BridgeShellEffects } from "./bridge-shell-effects";
 
 const queryMocks = vi.hoisted(() => ({
+  useBridgeSettingsQuery: vi.fn(),
   useDevicesQuery: vi.fn(),
 }));
 
@@ -17,6 +18,7 @@ vi.mock("@/rest/queries", async () => {
 
   return {
     ...actual,
+    useBridgeSettingsQuery: queryMocks.useBridgeSettingsQuery,
     useDevicesQuery: queryMocks.useDevicesQuery,
   };
 });
@@ -26,6 +28,12 @@ describe("BridgeShellEffects", () => {
     vi.clearAllMocks();
     useBridgeConfigStore.setState({
       gatewayUrl: "http://bridge.local:8080",
+    });
+    queryMocks.useBridgeSettingsQuery.mockReturnValue({
+      data: {
+        preferredScaleId: "scale-1",
+      },
+      error: null,
     });
   });
 
@@ -96,6 +104,35 @@ describe("BridgeShellEffects", () => {
 
     await waitFor(() => {
       expect(disconnectScaleSpy).toHaveBeenCalled();
+    });
+  });
+
+  it("keeps scanning for the preferred scale when it is not currently connected", async () => {
+    vi.spyOn(useMachineStore.getState(), "connectLive").mockResolvedValue(undefined);
+    vi.spyOn(useMachineStore.getState(), "disconnectLive").mockImplementation(() => undefined);
+    vi.spyOn(useDisplayStore.getState(), "connect").mockResolvedValue(undefined);
+    vi.spyOn(useDisplayStore.getState(), "disconnect").mockImplementation(() => undefined);
+    vi.spyOn(usePresenceStore.getState(), "signalPresence").mockResolvedValue(undefined);
+    const reconnectPreferredScaleSpy = vi
+      .spyOn(useMachineStore.getState(), "reconnectPreferredScale")
+      .mockResolvedValue(undefined);
+
+    queryMocks.useDevicesQuery.mockReturnValue({
+      data: [
+        {
+          id: "scale-1",
+          name: "Acaia Lunar",
+          state: "disconnected",
+          type: "scale",
+        },
+      ],
+      error: null,
+    });
+
+    render(<BridgeShellEffects />);
+
+    await waitFor(() => {
+      expect(reconnectPreferredScaleSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

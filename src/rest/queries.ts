@@ -28,6 +28,8 @@ function getClient(gatewayOrigin = getGatewayOrigin()) {
 export const bridgeQueryKeys = {
   root: ["bridge"] as const,
   all: (gatewayOrigin: string) => [...bridgeQueryKeys.root, gatewayOrigin] as const,
+  settings: (gatewayOrigin: string) =>
+    [...bridgeQueryKeys.all(gatewayOrigin), "settings"] as const,
   machineState: (gatewayOrigin: string) =>
     [...bridgeQueryKeys.all(gatewayOrigin), "machine-state"] as const,
   workflow: (gatewayOrigin: string) =>
@@ -52,6 +54,12 @@ export const machineStateQueryOptions = (gatewayOrigin = getGatewayOrigin()) =>
   queryOptions({
     queryKey: bridgeQueryKeys.machineState(gatewayOrigin),
     queryFn: () => getClient(gatewayOrigin).getMachineState(),
+  });
+
+export const bridgeSettingsQueryOptions = (gatewayOrigin = getGatewayOrigin()) =>
+  queryOptions({
+    queryKey: bridgeQueryKeys.settings(gatewayOrigin),
+    queryFn: () => getClient(gatewayOrigin).getSettings(),
   });
 
 export const workflowQueryOptions = (gatewayOrigin = getGatewayOrigin()) =>
@@ -100,6 +108,19 @@ export const shotQueryOptions = (gatewayOrigin = getGatewayOrigin(), id: string)
 export function useMachineStateQuery() {
   const gatewayOrigin = useGatewayOrigin();
   return useQuery(machineStateQueryOptions(gatewayOrigin));
+}
+
+export function useBridgeSettingsQuery(
+  options?: {
+    refetchInterval?: number | false;
+  },
+) {
+  const gatewayOrigin = useGatewayOrigin();
+
+  return useQuery({
+    ...bridgeSettingsQueryOptions(gatewayOrigin),
+    ...options,
+  });
 }
 
 export function useWorkflowQuery() {
@@ -214,6 +235,36 @@ export function useUpdatePresenceSettingsMutation() {
     }) => getClient(gatewayOrigin).updatePresenceSettings(patch),
     onSuccess: (settings) => {
       client.setQueryData(bridgeQueryKeys.presenceSettings(gatewayOrigin), settings);
+    },
+  });
+}
+
+export function useUpdateBridgeSettingsMutation() {
+  const client = useQueryClient();
+  const gatewayOrigin = useGatewayOrigin();
+
+  return useMutation({
+    mutationFn: (settings: {
+      preferredMachineId?: string | null;
+      preferredScaleId?: string | null;
+      scalePowerMode?: string | null;
+    }) => getClient(gatewayOrigin).updateSettings(settings),
+    onSuccess: async (_, variables) => {
+      const previousSettings = client.getQueryData(bridgeQueryKeys.settings(gatewayOrigin));
+
+      client.setQueryData(bridgeQueryKeys.settings(gatewayOrigin), (current) => ({
+        ...(typeof current === "object" && current ? (current as Record<string, unknown>) : {}),
+        ...variables,
+      }));
+
+      try {
+        await client.invalidateQueries({
+          queryKey: bridgeQueryKeys.settings(gatewayOrigin),
+        });
+      } catch (error) {
+        client.setQueryData(bridgeQueryKeys.settings(gatewayOrigin), previousSettings);
+        throw error;
+      }
     },
   });
 }

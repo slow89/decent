@@ -46,6 +46,12 @@ export const presenceSettingsSchema = z.looseObject({
   schedules: z.array(z.unknown()).default([]),
 });
 
+export const bridgeSettingsSchema = z.looseObject({
+  preferredMachineId: optionalString,
+  preferredScaleId: optionalString,
+  scalePowerMode: optionalString,
+});
+
 export const displayPlatformSupportSchema = z.looseObject({
   brightness: z.boolean(),
   wakeLock: z.boolean(),
@@ -220,6 +226,7 @@ export type ScaleSnapshot = z.infer<typeof scaleSnapshotSchema>;
 export type MachineWaterLevels = z.infer<typeof machineWaterLevelsSchema>;
 export type HeartbeatResponse = z.infer<typeof heartbeatResponseSchema>;
 export type PresenceSettings = z.infer<typeof presenceSettingsSchema>;
+export type BridgeSettings = z.infer<typeof bridgeSettingsSchema>;
 export type DisplayPlatformSupport = z.infer<typeof displayPlatformSupportSchema>;
 export type DisplayState = z.infer<typeof displayStateSchema>;
 export type DeviceSummary = z.infer<typeof deviceSummarySchema>;

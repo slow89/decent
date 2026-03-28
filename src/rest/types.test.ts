@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  bridgeSettingsSchema,
   displayStateSchema,
   heartbeatResponseSchema,
   machineSnapshotSchema,
@@ -16,6 +17,19 @@ describe("bridge realtime schemas", () => {
       }),
     ).toEqual({
       timeout: 1800,
+    });
+  });
+
+  it("accepts bridge settings with preferred scale metadata", () => {
+    expect(
+      bridgeSettingsSchema.parse({
+        preferredMachineId: "machine-1",
+        preferredScaleId: "scale-1",
+        scalePowerMode: "disabled",
+      }),
+    ).toMatchObject({
+      preferredMachineId: "machine-1",
+      preferredScaleId: "scale-1",
     });
   });
 

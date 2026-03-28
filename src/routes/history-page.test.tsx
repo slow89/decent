@@ -178,7 +178,7 @@ describe("HistoryPage", () => {
 
     expect(onSelectShotId).not.toHaveBeenCalled();
     expect(screen.getByText("Shot not found")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Show latest shot" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show latest" })).toBeInTheDocument();
     expect(screen.queryByTestId("telemetry-chart")).not.toBeInTheDocument();
   });
 
@@ -197,7 +197,7 @@ describe("HistoryPage", () => {
 
     render(<HistoryPage />);
 
-    expect(screen.getByText("No shots have been synced yet.")).toBeInTheDocument();
+    expect(screen.getByText("No shots synced yet.")).toBeInTheDocument();
     expect(screen.getByText("Select a shot")).toBeInTheDocument();
   });
 
@@ -212,7 +212,7 @@ describe("HistoryPage", () => {
 
     render(<HistoryPage />);
 
-    expect(screen.getByText("Unable to load shot detail")).toBeInTheDocument();
+    expect(screen.getByText("Unable to load shot")).toBeInTheDocument();
     expect(screen.getByText("Detail failed")).toBeInTheDocument();
   });
 });
