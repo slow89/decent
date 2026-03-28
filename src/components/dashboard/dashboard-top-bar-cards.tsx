@@ -156,19 +156,19 @@ export function ScaleStatusCard() {
 
   if (!isPaired) {
     return (
-      <div className="min-w-[200px] flex-[1.1] rounded-[3px] border border-status-warning-border/60 bg-status-warning-surface/60 px-2.5 py-1 md:flex-none md:max-w-[300px] md:max-xl:min-w-[250px] md:max-xl:px-3 md:max-xl:py-1.5">
+      <div className="min-w-[200px] flex-[1.1] animate-pulse rounded-[3px] border-2 border-status-warning-foreground/70 bg-status-warning-surface px-2.5 py-1 shadow-[0_0_8px_0_rgba(var(--color-status-warning-foreground)/0.15)] md:flex-none md:max-w-[300px] md:max-xl:min-w-[250px] md:max-xl:px-3 md:max-xl:py-1.5">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-0.5 md:grid-cols-[minmax(0,1fr)_8ch_auto] md:items-center md:max-xl:gap-x-2">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <p className="flex items-center gap-1 font-mono text-[0.46rem] font-medium uppercase tracking-[0.08em] text-status-warning-foreground md:max-xl:text-[0.5rem]">
-                <Scale className="size-2 md:max-xl:size-2.5" />
+              <p className="flex items-center gap-1 font-mono text-[0.5rem] font-bold uppercase tracking-[0.08em] text-status-warning-foreground md:max-xl:text-[0.54rem]">
+                <Scale className="size-2.5 md:max-xl:size-3" />
                 Scale
               </p>
-              <span className="font-mono text-[0.42rem] font-semibold uppercase tracking-[0.06em] text-status-warning-foreground/80 md:max-xl:text-[0.46rem]">
+              <span className="rounded-sm bg-status-warning-foreground/20 px-1 py-px font-mono text-[0.44rem] font-bold uppercase tracking-[0.06em] text-status-warning-foreground md:max-xl:text-[0.48rem]">
                 {getScaleStatusLabel(isPaired, scaleConnection)}
               </span>
             </div>
-            <p className="mt-0.5 truncate font-mono text-[0.5rem] uppercase tracking-[0.06em] text-foreground/60 md:max-xl:text-[0.52rem]">
+            <p className="mt-0.5 truncate font-mono text-[0.5rem] font-medium uppercase tracking-[0.06em] text-status-warning-foreground/80 md:max-xl:text-[0.52rem]">
               No scale paired
             </p>
           </div>
@@ -179,7 +179,7 @@ export function ScaleStatusCard() {
 
           <Button
             asChild
-            className="col-start-2 row-span-2 row-start-1 h-[22px] rounded-[3px] border-status-warning-border/50 bg-panel-strong/60 px-2 font-mono text-[0.48rem] text-foreground hover:bg-panel-strong md:col-start-3 md:row-span-1 md:max-xl:h-7 md:max-xl:px-2.5 md:max-xl:text-[0.5rem]"
+            className="col-start-2 row-span-2 row-start-1 h-[22px] rounded-[3px] border-status-warning-foreground/50 bg-status-warning-foreground/15 px-2 font-mono text-[0.48rem] font-semibold text-status-warning-foreground hover:bg-status-warning-foreground/25 md:col-start-3 md:row-span-1 md:max-xl:h-7 md:max-xl:px-2.5 md:max-xl:text-[0.5rem]"
             size="sm"
             variant="outline"
           >
@@ -190,29 +190,54 @@ export function ScaleStatusCard() {
     );
   }
 
+  const isScaleDisconnected = scaleConnection === "error" || scaleConnection === "idle";
+
   return (
-    <div className="min-w-[200px] flex-[1.1] rounded-[3px] border border-border/50 bg-panel-strong/60 px-2.5 py-1 md:flex-none md:max-w-[300px] md:max-xl:min-w-[250px] md:max-xl:px-3 md:max-xl:py-1.5">
+    <div
+      className={cn(
+        "min-w-[200px] flex-[1.1] rounded-[3px] border px-2.5 py-1 md:flex-none md:max-w-[300px] md:max-xl:min-w-[250px] md:max-xl:px-3 md:max-xl:py-1.5",
+        isScaleDisconnected
+          ? "border-2 border-destructive/60 bg-destructive/10"
+          : "border-border/50 bg-panel-strong/60",
+      )}
+    >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-0.5 md:grid-cols-[minmax(0,1fr)_8ch_auto] md:items-center md:max-xl:gap-x-2">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <p className="flex items-center gap-1 font-mono text-[0.46rem] font-medium uppercase tracking-[0.08em] text-muted-foreground md:max-xl:text-[0.5rem]">
-              <Scale className="size-2 text-status-info-foreground md:max-xl:size-2.5" />
+            <p
+              className={cn(
+                "flex items-center gap-1 font-mono text-[0.46rem] font-medium uppercase tracking-[0.08em] md:max-xl:text-[0.5rem]",
+                isScaleDisconnected ? "text-destructive" : "text-muted-foreground",
+              )}
+            >
+              <Scale
+                className={cn(
+                  "size-2 md:max-xl:size-2.5",
+                  isScaleDisconnected ? "text-destructive" : "text-status-info-foreground",
+                )}
+              />
               Scale
             </p>
-            {batteryLevel != null ? (
+            {batteryLevel != null && !isScaleDisconnected ? (
               <p className="shrink-0 font-mono text-[0.44rem] tabular-nums uppercase tracking-[0.06em] text-muted-foreground/70 md:max-xl:text-[0.48rem]">
                 {batteryLevel.toFixed(0)}%
               </p>
             ) : null}
+            {isScaleDisconnected ? (
+              <span className="rounded-sm bg-destructive/20 px-1 py-px font-mono text-[0.44rem] font-bold uppercase tracking-[0.06em] text-destructive md:max-xl:text-[0.48rem]">
+                {getScaleStatusLabel(isPaired, scaleConnection)}
+              </span>
+            ) : null}
           </div>
-          <p
-            className={cn(
-              "mt-0.5 truncate font-mono text-[0.5rem] uppercase tracking-[0.06em] md:max-xl:text-[0.52rem]",
-              isPaired ? "text-status-info-foreground" : "text-status-warning-foreground",
-            )}
-          >
-            {getScaleStatusLabel(isPaired, scaleConnection)}
-          </p>
+          {!isScaleDisconnected ? (
+            <p className="mt-0.5 truncate font-mono text-[0.5rem] uppercase tracking-[0.06em] text-status-info-foreground md:max-xl:text-[0.52rem]">
+              {getScaleStatusLabel(isPaired, scaleConnection)}
+            </p>
+          ) : (
+            <p className="mt-0.5 truncate font-mono text-[0.5rem] font-medium uppercase tracking-[0.06em] text-destructive/80 md:max-xl:text-[0.52rem]">
+              Connection lost
+            </p>
+          )}
         </div>
 
         <p className="col-start-1 row-start-2 whitespace-nowrap font-mono text-[0.82rem] font-semibold tabular-nums text-foreground md:col-start-2 md:row-start-1 md:justify-self-end md:text-[0.88rem] md:max-xl:text-[0.92rem]">
