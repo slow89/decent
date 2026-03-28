@@ -1,5 +1,6 @@
 import { DashboardSleepScreen } from "@/components/dashboard/dashboard-sleep-screen";
 import { DashboardTopBar } from "@/components/dashboard/dashboard-top-bar";
+import { DashboardWaterAlertOverlay } from "@/components/dashboard/dashboard-water-alert-overlay";
 import { DashboardWorkspaceContainer } from "@/components/dashboard/dashboard-workspace-container";
 import {
   useMachineStateQuery,
@@ -36,6 +37,7 @@ export function DashboardPage() {
 
   return (
     <div>
+      <DashboardWaterAlertOverlay />
       <div className="min-h-[calc(100svh-var(--app-footer-height))] overflow-hidden border-b border-border/30 bg-shell md:flex md:h-[calc(100svh-var(--app-footer-height))] md:flex-col">
         <DashboardTopBar />
         <DashboardWorkspaceContainer />
