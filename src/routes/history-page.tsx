@@ -375,7 +375,7 @@ function HistoryDetailContent({
         <TelemetryChart
           className="h-full rounded-[4px] border-0 bg-transparent p-0 shadow-none"
           data={selectedShotTelemetry}
-          layout="tablet"
+          layout="desktop"
         />
       </div>
 
