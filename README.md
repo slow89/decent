@@ -1,109 +1,125 @@
 # Espresso Cockpit
 
-Espresso Cockpit is a React skin for the Decent DE1 built on top of Streamline Bridge.
+Espresso Cockpit is a tablet-first skin for the Decent DE1, built on top of Streamline Gateway. It is designed for compact machine-side operation: live telemetry, recipe control, workflow management, and setup surfaces that work on a small mounted display.
 
-Gateway source of truth for runtime, API, and deployment details:
-[tadelv/reaprime](https://github.com/tadelv/reaprime)
+For gateway runtime, API, deployment, and browser behavior, use [tadelv/reaprime](https://github.com/tadelv/reaprime) as the source of truth.
 
-## Stack
+## Highlights
+
+- Live machine state over WebSocket
+- Typed REST client for workflows, devices, settings, and shot history
+- Portrait-tablet layout tuned for dense control surfaces
+- GitHub Release packaging for skin distribution
+- One-command tablet deployment for local hardware installs
+
+## Screenshots
+
+<p align="center">
+  <img src="./docs/screenshots/dashboard-landscape.png" alt="Dashboard in before running" width="49%" />
+  <img src="./docs/screenshots/dashboard-telemetry.png" alt="Dashboard while running" width="49%" />
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/workflows-landscape.png" alt="Workflow editor in landscape mode" width="49%" />
+  <img src="./docs/screenshots/settings-landscape.png" alt="Settings in landscape mode" width="49%" />
+</p>
+
+## Tech Stack
 
 - Vite
 - React 19
 - TanStack Router
 - TanStack Query
 - Zustand
-- @visx/visx
-- Tailwind CSS v4
-- shadcn-compatible component setup
+- `@visx/visx`
+- Tailwind CSS
 
-## Run
+## Getting Started
+
+### Prerequisites
+
+- Node.js 22 or newer
+- `pnpm`
+- A running Streamline Gateway instance
+
+### Install
+
+```bash
+pnpm install
+```
+
+### Run the app
 
 ```bash
 pnpm dev
 ```
 
-By default the app targets `http://localhost:8080`, which matches the
-Streamline Bridge REST/WebSocket server.
+By default, the app targets `http://localhost:8080`, which matches the default Streamline Gateway REST and WebSocket origin used during local development.
 
-## Tablet Deploy
+## Development Workflow
+
+```bash
+pnpm test
+pnpm test:browser:smoke
+pnpm check
+```
+
+- `pnpm test` runs the Vitest unit and component suite.
+- `pnpm test:browser:smoke` runs the Playwright smoke path against the repo-local fake gateway.
+- `pnpm check` is the preferred full validation command. It runs tests, production build, and browser smoke coverage.
+
+For agent-oriented browser runs and targeted reruns, see [docs/agent-testing.md](./docs/agent-testing.md).
+
+## Tablet Deployment
+
+Deploy the current build directly to a tablet-connected gateway with:
 
 ```bash
 pnpm deploy:tablet
 ```
 
-That command builds the skin, packages `dist/`, starts a temporary local zip
-server, installs the skin into the tablet gateway, and sets it as the default
-skin. It reads `.env` from the repo root before deploying.
+That workflow:
 
-Required `.env` value:
+1. builds the app
+2. packages `dist/` into a skin archive
+3. serves the archive from a temporary local HTTP server
+4. asks the gateway to install the archive
+5. sets the deployed skin as the default
+
+The deploy script reads `.env` from the repo root.
+
+Required:
 
 ```bash
 TABLET_GATEWAY_ORIGIN=http://192.168.68.69:8080
 ```
 
-Optional overrides:
+Optional:
 
 ```bash
 SKIN_DEPLOY_HOST=192.168.68.51
 SKIN_DEPLOY_PORT=9000
 ```
 
-## Production Release
+## Release Packaging
 
-Streamline Gateway's skin docs recommend distributing production skins with a
-GitHub Release that contains a zip of the built static app.
+Production skins are distributed as GitHub Release assets. The workflow in [`.github/workflows/release.yml`](./.github/workflows/release.yml):
 
-This repo now includes [release.yml](/Users/stephenlowinger/dev/decent/.github/workflows/release.yml),
-which:
+- installs dependencies with `pnpm`
+- builds the app
+- stamps `dist/manifest.json` with the release version and repository URL
+- creates a zip archive of the built skin
+- publishes that archive to the tagged GitHub Release
 
-- builds the app with `pnpm`
-- updates `dist/manifest.json` with the release version and repository URL
-- zips the built skin
-- publishes that zip as a GitHub Release asset
-
-Release flow:
+Typical release flow:
 
 ```bash
 git tag v0.1.3
 git push origin v0.1.3
 ```
 
-Once that release exists, Streamline Gateway users can install it via the
-gateway's GitHub Release skin endpoint by pointing at your `owner/repo`.
+Once published, the release asset can be installed through Streamline Gateway's GitHub Release skin endpoint using the repository's `owner/repo`.
 
-## MCP
+## Local Tooling
 
-The workspace includes a local [`.mcp.json`](/Users/stephenlowinger/dev/decent/.mcp.json)
-entry for Playwright MCP so the UI can be exercised against a running dev
-server.
-
-## Testing
-
-```bash
-pnpm test
-pnpm test:browser:smoke
-pnpm test:agent
-```
-
-`pnpm test:agent` writes a summary to `output/testing/latest.json` and stores
-Playwright artifacts under `output/playwright/`.
-
-The browser suite runs against a repo-local fake Streamline Gateway so the app
-can be regression-tested against deterministic REST and WebSocket scenarios
-without real hardware. See [docs/agent-testing.md](/Users/stephenlowinger/dev/decent/docs/agent-testing.md)
-for the agent workflow and rerun patterns.
-
-## Current scope
-
-- Persisted bridge URL
-- Live machine snapshot WebSocket
-- Zod-validated REST client with TanStack Query for workflow, devices, and shot history pages
-- Warm-toned dashboard layout as a starting point for a tablet-first DE1 skin
-
-## UI Direction
-
-- Target visual language: neo-brutalism
-- Favor bold outlines, hard shadows, high-contrast surfaces, oversized type, and intentionally assertive layout rhythm over soft glassmorphism
-- Prefer `@visx/visx` for charts so telemetry visuals feel custom, structural, and consistent with the neo-brutalist UI direction
-- The primary device is a small tablet mounted near the machine. Optimize dashboard and brew surfaces for compact, data-dense display rather than spacious editorial layout.
-- Do not add explanatory filler copy, decorative empty states, or large content blocks that reduce live telemetry/control density on the brew route.
+The repo includes [`.mcp.json`](./.mcp.json) for Playwright MCP, which makes it easier to exercise the UI from the local Codex workspace when a dev server is running.
