@@ -164,7 +164,12 @@ describe("useMachineStore", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    vi.setSystemTime(new Date("2026-03-28T20:00:06.000Z"));
+    vi.setSystemTime(new Date("2026-03-28T20:00:01.000Z"));
+    await useMachineStore.getState().reconnectPreferredScale();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    vi.setSystemTime(new Date("2026-03-28T20:00:02.000Z"));
     await useMachineStore.getState().reconnectPreferredScale();
 
     expect(fetchMock).toHaveBeenCalledTimes(2);

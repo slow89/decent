@@ -29,10 +29,24 @@ describe("BridgeShellEffects", () => {
     useBridgeConfigStore.setState({
       gatewayUrl: "http://bridge.local:8080",
     });
+    useMachineStore.setState({
+      error: null,
+      lastScaleReconnectAttemptAt: null,
+      liveConnection: "live",
+      machineSocket: null,
+      scaleConnection: "idle",
+      scaleSnapshot: null,
+      scaleSocket: null,
+      telemetry: [],
+      waterConnection: "idle",
+      waterLevels: null,
+      waterSocket: null,
+    });
     queryMocks.useBridgeSettingsQuery.mockReturnValue({
       data: {
         preferredScaleId: "scale-1",
       },
+      dataUpdatedAt: 1,
       error: null,
     });
   });
@@ -58,6 +72,7 @@ describe("BridgeShellEffects", () => {
           type: "scale",
         },
       ],
+      dataUpdatedAt: 1,
       error: null,
     });
 
@@ -82,6 +97,7 @@ describe("BridgeShellEffects", () => {
         type: "scale",
       },
     ];
+    let devicesUpdatedAt = 1;
 
     vi.spyOn(useMachineStore.getState(), "connectLive").mockResolvedValue(undefined);
     vi.spyOn(useMachineStore.getState(), "disconnectLive").mockImplementation(() => undefined);
@@ -94,12 +110,14 @@ describe("BridgeShellEffects", () => {
 
     queryMocks.useDevicesQuery.mockImplementation(() => ({
       data: devices,
+      dataUpdatedAt: devicesUpdatedAt,
       error: null,
     }));
 
     const { rerender } = render(<BridgeShellEffects />);
 
     devices = [];
+    devicesUpdatedAt = 2;
     rerender(<BridgeShellEffects />);
 
     await waitFor(() => {
@@ -108,6 +126,8 @@ describe("BridgeShellEffects", () => {
   });
 
   it("keeps scanning for the preferred scale when it is not currently connected", async () => {
+    let devicesUpdatedAt = 1;
+
     vi.spyOn(useMachineStore.getState(), "connectLive").mockResolvedValue(undefined);
     vi.spyOn(useMachineStore.getState(), "disconnectLive").mockImplementation(() => undefined);
     vi.spyOn(useDisplayStore.getState(), "connect").mockResolvedValue(undefined);
@@ -117,7 +137,7 @@ describe("BridgeShellEffects", () => {
       .spyOn(useMachineStore.getState(), "reconnectPreferredScale")
       .mockResolvedValue(undefined);
 
-    queryMocks.useDevicesQuery.mockReturnValue({
+    queryMocks.useDevicesQuery.mockImplementation(() => ({
       data: [
         {
           id: "scale-1",
@@ -126,10 +146,73 @@ describe("BridgeShellEffects", () => {
           type: "scale",
         },
       ],
+      dataUpdatedAt: devicesUpdatedAt,
       error: null,
+    }));
+
+    const { rerender } = render(<BridgeShellEffects />);
+
+    await waitFor(() => {
+      expect(reconnectPreferredScaleSpy).toHaveBeenCalledTimes(1);
     });
 
-    render(<BridgeShellEffects />);
+    devicesUpdatedAt = 2;
+    rerender(<BridgeShellEffects />);
+
+    await waitFor(() => {
+      expect(reconnectPreferredScaleSpy).toHaveBeenCalledTimes(2);
+    });
+
+    devicesUpdatedAt = 3;
+    rerender(<BridgeShellEffects />);
+
+    await waitFor(() => {
+      expect(reconnectPreferredScaleSpy).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  it("stops retrying once the preferred scale reports as connected", async () => {
+    let devices = [
+      {
+        id: "scale-1",
+        name: "Acaia Lunar",
+        state: "disconnected",
+        type: "scale",
+      },
+    ];
+    let devicesUpdatedAt = 1;
+
+    vi.spyOn(useMachineStore.getState(), "connectLive").mockResolvedValue(undefined);
+    vi.spyOn(useMachineStore.getState(), "disconnectLive").mockImplementation(() => undefined);
+    vi.spyOn(useDisplayStore.getState(), "connect").mockResolvedValue(undefined);
+    vi.spyOn(useDisplayStore.getState(), "disconnect").mockImplementation(() => undefined);
+    vi.spyOn(usePresenceStore.getState(), "signalPresence").mockResolvedValue(undefined);
+    const reconnectPreferredScaleSpy = vi
+      .spyOn(useMachineStore.getState(), "reconnectPreferredScale")
+      .mockResolvedValue(undefined);
+
+    queryMocks.useDevicesQuery.mockImplementation(() => ({
+      data: devices,
+      dataUpdatedAt: devicesUpdatedAt,
+      error: null,
+    }));
+
+    const { rerender } = render(<BridgeShellEffects />);
+
+    await waitFor(() => {
+      expect(reconnectPreferredScaleSpy).toHaveBeenCalledTimes(1);
+    });
+
+    devices = [
+      {
+        id: "scale-1",
+        name: "Acaia Lunar",
+        state: "connected",
+        type: "scale",
+      },
+    ];
+    devicesUpdatedAt = 2;
+    rerender(<BridgeShellEffects />);
 
     await waitFor(() => {
       expect(reconnectPreferredScaleSpy).toHaveBeenCalledTimes(1);

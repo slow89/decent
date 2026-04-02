@@ -21,10 +21,16 @@ export function BridgeShellEffects() {
   const connectScale = useMachineStore((state) => state.connectScale);
   const disconnectScale = useMachineStore((state) => state.disconnectScale);
   const reconnectPreferredScale = useMachineStore((state) => state.reconnectPreferredScale);
-  const { data: bridgeSettings } = useBridgeSettingsQuery({
+  const {
+    data: bridgeSettings,
+    dataUpdatedAt: bridgeSettingsUpdatedAt,
+  } = useBridgeSettingsQuery({
     refetchInterval: 5_000,
   });
-  const { data: devices } = useDevicesQuery({
+  const {
+    data: devices,
+    dataUpdatedAt: devicesUpdatedAt,
+  } = useDevicesQuery({
     refetchInterval: 2_000,
   });
   const signalPresence = useEffectEvent(() => {
@@ -71,7 +77,13 @@ export function BridgeShellEffects() {
     }
 
     void reconnectPreferredScale();
-  }, [connectedScaleId, preferredScaleId, reconnectPreferredScale]);
+  }, [
+    bridgeSettingsUpdatedAt,
+    connectedScaleId,
+    devicesUpdatedAt,
+    preferredScaleId,
+    reconnectPreferredScale,
+  ]);
 
   useEffect(() => {
     function handleVisibilityChange() {

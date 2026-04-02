@@ -61,7 +61,7 @@ function getErrorMessage(error: unknown) {
   return "Unexpected bridge error";
 }
 
-const preferredScaleReconnectIntervalMs = 5_000;
+const preferredScaleReconnectIntervalMs = 2_000;
 
 export const useMachineStore = create<MachineState>((set, get) => ({
   error: null,
