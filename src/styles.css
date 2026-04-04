@@ -4,7 +4,7 @@
 
 :root,
 :root[data-theme="dark"] {
-  --app-footer-height: 5.4rem;
+  --app-footer-height: 4.5rem;
 
   --canvas-rgb: 2, 3, 4;
   --canvas-alpha: 1;

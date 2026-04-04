@@ -9,8 +9,7 @@ import {
 test.describe("workflows", () => {
   function isTabletProject(projectName: string) {
     return (
-      projectName === "tablet-xs-portrait" ||
-      projectName === "tablet-xs-landscape" ||
+      projectName === "tablet-7-landscape" ||
       projectName === "tablet-sm-portrait" ||
       projectName === "tablet-sm-landscape"
     );

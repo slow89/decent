@@ -7,14 +7,10 @@ import {
 } from "./fixtures";
 
 test.describe("dashboard", () => {
-  function isTabletPortraitProject(projectName: string) {
-    return projectName === "tablet-xs-portrait" || projectName === "tablet-sm-portrait";
-  }
-
   function usesTabletDashboardLayout(projectName: string) {
     return (
-      isTabletPortraitProject(projectName) ||
-      projectName === "tablet-xs-landscape"
+      projectName === "tablet-sm-portrait" ||
+      projectName === "tablet-7-landscape"
     );
   }
 

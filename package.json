@@ -13,7 +13,7 @@
     "test:agent": "PLAYWRIGHT_AGENT_MODE=1 pnpm test:browser:smoke",
     "test:browser:full": "playwright test",
     "test:browser:real": "PLAYWRIGHT_REAL_GATEWAY_URL=${PLAYWRIGHT_REAL_GATEWAY_URL:-} playwright test tests/browser/real-gateway.spec.ts",
-    "test:browser:smoke": "playwright test --project=tablet-sm-portrait --grep @smoke",
+    "test:browser:smoke": "playwright test --project=tablet-sm-portrait --project=tablet-7-landscape --grep @smoke",
     "test:browser:update-snapshots": "playwright test --update-snapshots"
   },
   "dependencies": {

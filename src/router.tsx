@@ -155,9 +155,9 @@ function RootLayout() {
         >
           <div
             className={cn(
-              "nav-surface grid grid-cols-4 gap-1.5 p-1.5",
+              "nav-surface grid grid-cols-4 gap-1 p-1",
               isImmersiveRoute
-                ? "rounded-none border-x-0 border-b-0 px-3 pb-2 pt-1.5"
+                ? "rounded-none border-x-0 border-b-0 px-2.5 pb-1.5 pt-1"
                 : "rounded-[28px]",
             )}
           >
@@ -169,14 +169,14 @@ function RootLayout() {
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-[18px] border border-transparent bg-transparent px-2 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:bg-background hover:text-foreground",
+                    "flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[18px] border border-transparent bg-transparent px-2 py-1 text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:bg-background hover:text-foreground",
                   )}
                   activeProps={{
                     className:
                       "border-primary/25 bg-primary/18 text-foreground shadow-soft",
                   }}
                 >
-                  <Icon className="size-[18px]" />
+                  <Icon className="size-4" />
                   {item.label}
                 </Link>
               );

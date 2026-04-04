@@ -12,15 +12,15 @@ export function DashboardTabletShotSummary() {
       {items.map((item, i) => (
         <div
           className={cn(
-            "flex min-w-0 flex-1 flex-col justify-center px-2.5 py-1.5 md:px-4 md:py-2",
+            "flex min-w-0 flex-1 flex-col justify-center px-2.5 py-1.5",
             i > 0 && "border-l border-border/60",
           )}
           key={item.label}
         >
-          <p className="truncate font-mono text-[0.44rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground md:text-[0.56rem]">
+          <p className="truncate font-mono text-[0.44rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             {item.label}
           </p>
-          <p className="mt-0.5 truncate font-mono text-[0.74rem] font-semibold tabular-nums text-foreground md:text-[0.92rem]">
+          <p className="mt-0.5 truncate font-mono text-[0.74rem] font-semibold tabular-nums text-foreground">
             {item.value}
           </p>
         </div>
