@@ -203,9 +203,7 @@ function TelemetryMonitorCanvas({
     range: [chartMetrics.plotHeight, 0],
   });
 
-  const timelineValues = timelineSamples.map((sample) =>
-    getSampleXValue(sample, usesShotTimeline),
-  );
+  const timelineValues = timelineSamples.map((sample) => getSampleXValue(sample, usesShotTimeline));
   const maxTimelineValue = Math.max(8, timelineValues[timelineValues.length - 1] ?? 0);
   const xScale: LinearScale = scaleLinear<number>({
     domain: [0, maxTimelineValue || 1],
@@ -236,12 +234,7 @@ function TelemetryMonitorCanvas({
 
     const bounds = event.currentTarget.getBoundingClientRect();
     const relativeX = ((event.clientX - bounds.left) / bounds.width) * chartMetrics.innerWidth;
-    const nextIndex = findNearestSampleIndex(
-      timelineSamples,
-      relativeX,
-      xScale,
-      usesShotTimeline,
-    );
+    const nextIndex = findNearestSampleIndex(timelineSamples, relativeX, xScale, usesShotTimeline);
 
     onPointerMove(nextIndex);
   }
@@ -353,9 +346,8 @@ function TelemetryMonitorCanvas({
           {/* State events as vertical markers */}
           {stateEvents.map((event, index) => {
             const x = xScale(event.xValue);
-            const eventLabelY = index % 2 === 0
-              ? (density === "compact" ? 10 : 14)
-              : (density === "compact" ? 22 : 28);
+            const eventLabelY =
+              index % 2 === 0 ? (density === "compact" ? 10 : 14) : density === "compact" ? 22 : 28;
 
             return (
               <Group key={`${event.label}-${event.xValue}-${index}`}>
@@ -533,11 +525,7 @@ function TelemetryMonitorCanvas({
 
           {/* Legend */}
           {visibleSeries.length > 0 ? (
-            <ChartLegend
-              density={density}
-              series={solidSeries}
-              width={chartMetrics.innerWidth}
-            />
+            <ChartLegend density={density} series={solidSeries} width={chartMetrics.innerWidth} />
           ) : null}
 
           {/* Atmosphere edge glow */}
@@ -659,7 +647,7 @@ function ChartYAxis({
           <line
             stroke={chartTheme.axis}
             x1={isLeft ? -(density === "compact" ? 4 : 5) : 0}
-            x2={isLeft ? 0 : (density === "compact" ? 4 : 5)}
+            x2={isLeft ? 0 : density === "compact" ? 4 : 5}
             y1={scale(tick)}
             y2={scale(tick)}
           />
@@ -755,12 +743,16 @@ function ChartLegend({
   const topY = density === "compact" ? -10 : -14;
   const charW = density === "compact" ? 4.2 : 5.2;
 
-  const items = series.reduce<Array<TelemetrySeriesDefinition & { x: number; itemWidth: number }>>((acc, s) => {
-    const prevEnd = acc.length > 0 ? acc[acc.length - 1].x + acc[acc.length - 1].itemWidth + gap : 0;
-    const itemWidth = lineW + itemPad + s.shortLabel.length * charW;
-    acc.push({ ...s, x: prevEnd, itemWidth });
-    return acc;
-  }, []);
+  const items = series.reduce<Array<TelemetrySeriesDefinition & { x: number; itemWidth: number }>>(
+    (acc, s) => {
+      const prevEnd =
+        acc.length > 0 ? acc[acc.length - 1].x + acc[acc.length - 1].itemWidth + gap : 0;
+      const itemWidth = lineW + itemPad + s.shortLabel.length * charW;
+      acc.push({ ...s, x: prevEnd, itemWidth });
+      return acc;
+    },
+    [],
+  );
   const lastItem = items[items.length - 1];
   const totalWidth = lastItem ? lastItem.x + lastItem.itemWidth : 0;
   const offsetX = (width - totalWidth) / 2;

@@ -2,10 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { showVisualizerToast } from "@/lib/toast";
 import { queryClient } from "@/rest/query-client";
-import {
-  bridgeQueryKeys,
-  getGatewayOrigin,
-} from "@/rest/queries";
+import { bridgeQueryKeys, getGatewayOrigin } from "@/rest/queries";
 import type { MachineSnapshot } from "@/rest/types";
 import { visualizerRuntimeStore } from "@/stores/visualizer-runtime-store";
 

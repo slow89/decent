@@ -16,14 +16,8 @@ import {
   StateCallout,
   ThemeOptionButton,
 } from "@/components/settings/settings-shell";
-import {
-  usePresenceSettingsQuery,
-  useUpdatePresenceSettingsMutation,
-} from "@/rest/queries";
-import type {
-  DisplayState,
-  PresenceSettings,
-} from "@/rest/types";
+import { usePresenceSettingsQuery, useUpdatePresenceSettingsMutation } from "@/rest/queries";
+import type { DisplayState, PresenceSettings } from "@/rest/types";
 import { useDisplayStore } from "@/stores/display-store";
 import { usePresenceStore } from "@/stores/presence-store";
 import { useThemeStore } from "@/stores/theme-store";
@@ -99,10 +93,7 @@ export function SettingsDisplaySleepPanel() {
   }
 
   return (
-    <SettingsSection
-      description="Brightness, sleep, theme, screen tools"
-      title="Display & Sleep"
-    >
+    <SettingsSection description="Brightness, sleep, theme, screen tools" title="Display & Sleep">
       <div className="grid gap-2">
         {/* Quick-glance metric row */}
         <div className="grid grid-cols-3 gap-1.5">
@@ -164,11 +155,7 @@ export function SettingsDisplaySleepPanel() {
         </ControlBlock>
 
         {/* Theme */}
-        <ControlBlock
-          description="Surface appearance"
-          label="Theme"
-          value={theme}
-        >
+        <ControlBlock description="Surface appearance" label="Theme" value={theme}>
           <div className="mt-2 grid grid-cols-2 gap-1.5">
             <ThemeOptionButton
               isActive={theme === "dark"}
@@ -244,10 +231,7 @@ function formatBrightness(displayState: DisplayState | null) {
     return "Unknown";
   }
 
-  const base =
-    displayState.requestedBrightness === 100
-      ? "Auto"
-      : `${displayState.brightness}%`;
+  const base = displayState.requestedBrightness === 100 ? "Auto" : `${displayState.brightness}%`;
 
   if (
     displayState.lowBatteryBrightnessActive &&

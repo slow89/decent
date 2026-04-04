@@ -35,8 +35,8 @@ export const telemetryChartDefaultPreferences: TelemetryChartPreferences = {
 function uniqueSeriesIds(seriesIds: TelemetrySeriesId[]) {
   const knownIds = new Set(telemetryAllSeriesIds);
 
-  return [...new Set(seriesIds)].filter(
-    (seriesId): seriesId is TelemetrySeriesId => knownIds.has(seriesId),
+  return [...new Set(seriesIds)].filter((seriesId): seriesId is TelemetrySeriesId =>
+    knownIds.has(seriesId),
   );
 }
 
@@ -45,7 +45,7 @@ function buildPresetSelection(preset: Exclude<TelemetryPresetId, "custom">): Tel
     return telemetryAllSeriesIds;
   }
 
-      return telemetryDefaultSeriesIds;
+  return telemetryDefaultSeriesIds;
 }
 
 export const useTelemetryChartStore = create<TelemetryChartState>()(

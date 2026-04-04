@@ -4,11 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isVisualizerEnabled } from "@/lib/visualizer";
 import { cn } from "@/lib/utils";
-import {
-  getProfileFingerprint,
-  getProfileTitle,
-  joinValues,
-} from "@/lib/workflow-utils";
+import { getProfileFingerprint, getProfileTitle, joinValues } from "@/lib/workflow-utils";
 import {
   useImportVisualizerProfileMutation,
   useProfilesQuery,
@@ -187,10 +183,7 @@ function CurrentProfileRow() {
       </p>
       <div className="mt-1 flex items-center gap-2">
         <p className="font-mono text-[0.52rem] uppercase tracking-[0.08em] text-muted-foreground">
-          {joinValues([
-            profile?.author ?? "Unknown author",
-            profile?.beverage_type ?? "espresso",
-          ])}
+          {joinValues([profile?.author ?? "Unknown author", profile?.beverage_type ?? "espresso"])}
         </p>
         <FrameCountButton
           count={profile?.steps?.length ?? 0}
@@ -202,13 +195,7 @@ function CurrentProfileRow() {
   );
 }
 
-function ProfileCard({
-  isApplying,
-  record,
-}: {
-  isApplying: boolean;
-  record: ProfileRecord;
-}) {
+function ProfileCard({ isApplying, record }: { isApplying: boolean; record: ProfileRecord }) {
   const updateWorkflowMutation = useUpdateWorkflowMutation();
   const openFramePreview = useWorkflowPageStore((state) => state.openFramePreview);
   const profile = record.profile;
@@ -262,10 +249,7 @@ function ProfileCard({
         </div>
         <div className="mt-1 flex items-center gap-2">
           <p className="font-mono text-[0.5rem] uppercase tracking-[0.08em] text-muted-foreground">
-            {joinValues([
-              profile.author ?? "Unknown author",
-              profile.beverage_type ?? "espresso",
-            ])}
+            {joinValues([profile.author ?? "Unknown author", profile.beverage_type ?? "espresso"])}
           </p>
           <FrameCountButton
             count={profile.steps?.length ?? 0}

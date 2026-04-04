@@ -8,39 +8,21 @@ import {
   lazyRouteComponent,
   useRouterState,
 } from "@tanstack/react-router";
-import {
-  Coffee,
-  Settings2,
-  SlidersHorizontal,
-  TimerReset,
-} from "lucide-react";
+import { Coffee, Settings2, SlidersHorizontal, TimerReset } from "lucide-react";
 import { z } from "zod";
 
 import { BridgeShellEffects } from "@/app/bridge-shell-effects";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  prefetchOverviewQueries,
-  prefetchShotsQuery,
-  prefetchWorkflowQuery,
-} from "@/rest/queries";
+import { prefetchOverviewQueries, prefetchShotsQuery, prefetchWorkflowQuery } from "@/rest/queries";
 
-const DashboardPage = lazyRouteComponent(
-  () => import("@/routes/dashboard-page"),
-  "DashboardPage",
-);
+const DashboardPage = lazyRouteComponent(() => import("@/routes/dashboard-page"), "DashboardPage");
 const HistoryRoutePage = lazyRouteComponent(
   () => import("@/routes/history-page"),
   "HistoryRoutePage",
 );
-const SettingsPage = lazyRouteComponent(
-  () => import("@/routes/settings-page"),
-  "SettingsPage",
-);
-const WorkflowsPage = lazyRouteComponent(
-  () => import("@/routes/workflows-page"),
-  "WorkflowsPage",
-);
+const SettingsPage = lazyRouteComponent(() => import("@/routes/settings-page"), "SettingsPage");
+const WorkflowsPage = lazyRouteComponent(() => import("@/routes/workflows-page"), "WorkflowsPage");
 const historySearchSchema = z.object({
   shotId: z.string().optional(),
 });
@@ -52,9 +34,7 @@ const rootRoute = createRootRoute({
       <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
         Off recipe
       </p>
-      <h1 className="mt-3 font-display text-3xl text-foreground">
-        This screen does not exist.
-      </h1>
+      <h1 className="mt-3 font-display text-3xl text-foreground">This screen does not exist.</h1>
       <Button asChild className="mt-6">
         <Link to="/">Return to brew</Link>
       </Button>
@@ -90,12 +70,7 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
-const routeTree = rootRoute.addChildren([
-  indexRoute,
-  workflowsRoute,
-  historyRoute,
-  settingsRoute,
-]);
+const routeTree = rootRoute.addChildren([indexRoute, workflowsRoute, historyRoute, settingsRoute]);
 
 const router = createRouter({
   routeTree,
@@ -131,26 +106,17 @@ function RootLayout() {
       <div
         className={cn(
           "flex min-h-screen flex-col",
-          isImmersiveRoute
-            ? "w-full"
-            : "mx-auto max-w-[1400px] px-3 pb-5 pt-3 md:px-5 md:pt-5",
+          isImmersiveRoute ? "w-full" : "mx-auto max-w-[1400px] px-3 pb-5 pt-3 md:px-5 md:pt-5",
         )}
       >
-        <main
-          className={cn(
-            "flex-1 min-h-0 tablet-safe",
-            isImmersiveRoute ? "py-0" : "py-4",
-          )}
-        >
+        <main className={cn("flex-1 min-h-0 tablet-safe", isImmersiveRoute ? "py-0" : "py-4")}>
           <Outlet />
         </main>
 
         <nav
           className={cn(
             "fixed inset-x-0 bottom-0 z-30",
-            isImmersiveRoute
-              ? "w-full px-0"
-              : "mx-auto w-full max-w-[1400px] px-3 pb-2 md:px-5",
+            isImmersiveRoute ? "w-full px-0" : "mx-auto w-full max-w-[1400px] px-3 pb-2 md:px-5",
           )}
         >
           <div
@@ -172,8 +138,7 @@ function RootLayout() {
                     "flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-[18px] border border-transparent bg-transparent px-2 py-1 text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition hover:bg-background hover:text-foreground",
                   )}
                   activeProps={{
-                    className:
-                      "border-primary/25 bg-primary/18 text-foreground shadow-soft",
+                    className: "border-primary/25 bg-primary/18 text-foreground shadow-soft",
                   }}
                 >
                   <Icon className="size-4" />

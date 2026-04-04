@@ -1,10 +1,6 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from "react";
 
-import {
-  ControlBlock,
-  SettingsSection,
-  StateCallout,
-} from "@/components/settings/settings-shell";
+import { ControlBlock, SettingsSection, StateCallout } from "@/components/settings/settings-shell";
 import { useUpdateMachineWaterLevelsMutation } from "@/rest/queries";
 import { useMachineStore } from "@/stores/machine-store";
 import { useWaterAlertStore } from "@/stores/water-alert-store";
@@ -63,10 +59,7 @@ export function SettingsWaterAlertPanel() {
   }
 
   return (
-    <SettingsSection
-      description="Bridge-backed DE1 refill warning"
-      title="Water Alert"
-    >
+    <SettingsSection description="Bridge-backed DE1 refill warning" title="Water Alert">
       <div className="grid gap-2">
         <ControlBlock
           description={

@@ -10,11 +10,7 @@ import {
   roundValue,
   type RecipePreset,
 } from "@/lib/recipe-utils";
-import {
-  useMachineStateQuery,
-  useUpdateWorkflowMutation,
-  useWorkflowQuery,
-} from "@/rest/queries";
+import { useMachineStateQuery, useUpdateWorkflowMutation, useWorkflowQuery } from "@/rest/queries";
 import type { WorkflowRecord } from "@/rest/types";
 import { useDashboardUiStore } from "@/stores/dashboard-ui-store";
 import { useMachineStore } from "@/stores/machine-store";
@@ -200,8 +196,7 @@ export function useDashboardControlPanelModel(): {
         label: "Brew",
         onDecrease: () =>
           updateBrewTemperature(Math.max(70, Math.round((snapshot?.mixTemperature ?? 87) - 1))),
-        onIncrease: () =>
-          updateBrewTemperature(Math.round((snapshot?.mixTemperature ?? 87) + 1)),
+        onIncrease: () => updateBrewTemperature(Math.round((snapshot?.mixTemperature ?? 87) + 1)),
         onPresetClick: (value) => updateBrewTemperature(value),
         presets: [
           { label: "75°C", value: 75 },
@@ -248,12 +243,7 @@ export function useDashboardControlPanelModel(): {
       },
       {
         activePresetValue: workflow?.hotWaterData?.volume ?? 50,
-        detail: formatPrimaryNumber(
-          workflow?.hotWaterData?.targetTemperature,
-          "°C",
-          "75°C",
-          0,
-        ),
+        detail: formatPrimaryNumber(workflow?.hotWaterData?.targetTemperature, "°C", "75°C", 0),
         label: "Hot Water",
         onDecrease: () =>
           updateHotWaterVolume(Math.max(10, (workflow?.hotWaterData?.volume ?? 50) - 10)),
@@ -312,8 +302,7 @@ export function useDashboardPrepStatusModel(): DashboardPrepStatus {
   const { data: snapshot, error: machineQueryError } = useMachineStateQuery();
   const { error: workflowQueryError } = useWorkflowQuery();
   const isOffline =
-    liveConnection !== "live" ||
-    Boolean(machineError || machineQueryError || workflowQueryError);
+    liveConnection !== "live" || Boolean(machineError || machineQueryError || workflowQueryError);
 
   return getDashboardPrepStatus({
     isOffline,

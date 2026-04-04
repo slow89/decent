@@ -96,9 +96,7 @@ function buildMachineSnapshot(
   });
 }
 
-function buildScaleSnapshot(
-  overrides: Partial<ScaleSnapshot> = {},
-): ScaleSnapshot {
+function buildScaleSnapshot(overrides: Partial<ScaleSnapshot> = {}): ScaleSnapshot {
   return scaleSnapshotSchema.parse({
     batteryLevel: 82,
     timerValue: 0,
@@ -109,9 +107,7 @@ function buildScaleSnapshot(
   });
 }
 
-function buildWaterLevels(
-  overrides: Partial<MachineWaterLevels> = {},
-): MachineWaterLevels {
+function buildWaterLevels(overrides: Partial<MachineWaterLevels> = {}): MachineWaterLevels {
   return machineWaterLevelsSchema.parse({
     currentLevel: 48,
     refillLevel: 25,
@@ -119,9 +115,7 @@ function buildWaterLevels(
   });
 }
 
-function buildDisplayState(
-  overrides: Partial<DisplayState> = {},
-): DisplayState {
+function buildDisplayState(overrides: Partial<DisplayState> = {}): DisplayState {
   return displayStateSchema.parse({
     brightness: 76,
     lowBatteryBrightnessActive: false,
@@ -136,9 +130,7 @@ function buildDisplayState(
   });
 }
 
-function buildWorkflow(
-  overrides: Partial<WorkflowRecord> = {},
-): WorkflowRecord {
+function buildWorkflow(overrides: Partial<WorkflowRecord> = {}): WorkflowRecord {
   return workflowRecordSchema.parse({
     context: {
       coffeeName: "Red Brick",
@@ -249,9 +241,7 @@ function buildDevices(overrides?: DeviceSummary[]): DeviceSummary[] {
   );
 }
 
-function buildBridgeSettings(
-  overrides: Partial<BridgeSettings> = {},
-): BridgeSettings {
+function buildBridgeSettings(overrides: Partial<BridgeSettings> = {}): BridgeSettings {
   return bridgeSettingsSchema.parse({
     preferredMachineId: "machine-1",
     preferredScaleId: "scale-1",
@@ -260,9 +250,7 @@ function buildBridgeSettings(
   });
 }
 
-function buildPresenceSettings(
-  overrides: Partial<PresenceSettings> = {},
-): PresenceSettings {
+function buildPresenceSettings(overrides: Partial<PresenceSettings> = {}): PresenceSettings {
   return presenceSettingsSchema.parse({
     schedules: [],
     sleepTimeoutMinutes: 30,
@@ -361,10 +349,7 @@ function buildShots(): {
   shotDetails: Record<string, ShotDetailRecord>;
   shots: ShotListResponse;
 } {
-  const firstShot = buildShotDetail(
-    "shot-1",
-    "2026-03-28T19:58:00.000Z",
-  );
+  const firstShot = buildShotDetail("shot-1", "2026-03-28T19:58:00.000Z");
   const secondShot = buildShotDetail(
     "shot-2",
     "2026-03-28T18:31:00.000Z",
@@ -421,9 +406,7 @@ function buildShots(): {
   };
 }
 
-function buildBaseState(
-  overrides: Partial<GatewayScenarioState> = {},
-): GatewayScenarioState {
+function buildBaseState(overrides: Partial<GatewayScenarioState> = {}): GatewayScenarioState {
   const { shotDetails, shots } = buildShots();
 
   return {
@@ -455,9 +438,7 @@ function buildScenario(input: GatewayScenario): GatewayScenario {
       presenceSettings: buildPresenceSettings(input.state.presenceSettings),
       profiles: profileRecordListSchema.parse(input.state.profiles),
       scaleSnapshot:
-        input.state.scaleSnapshot == null
-          ? null
-          : buildScaleSnapshot(input.state.scaleSnapshot),
+        input.state.scaleSnapshot == null ? null : buildScaleSnapshot(input.state.scaleSnapshot),
       shotDetails: Object.fromEntries(
         Object.entries(input.state.shotDetails).map(([shotId, detail]) => [
           shotId,

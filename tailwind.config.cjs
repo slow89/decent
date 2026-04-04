@@ -1,4 +1,5 @@
-const withOpacity = (rgbVar, alphaVar) =>
+const withOpacity =
+  (rgbVar, alphaVar) =>
   ({ opacityValue } = {}) => {
     if (opacityValue !== undefined) {
       if (alphaVar) {
@@ -57,20 +58,56 @@ module.exports = {
         "primary-foreground": withOpacity("--primary-foreground-rgb", "--primary-foreground-alpha"),
         ring: withOpacity("--ring-rgb", "--ring-alpha"),
         secondary: withOpacity("--secondary-rgb", "--secondary-alpha"),
-        "secondary-foreground": withOpacity("--secondary-foreground-rgb", "--secondary-foreground-alpha"),
+        "secondary-foreground": withOpacity(
+          "--secondary-foreground-rgb",
+          "--secondary-foreground-alpha",
+        ),
         shell: withOpacity("--shell-rgb", "--shell-alpha"),
-        "status-error-border": withOpacity("--status-error-border-rgb", "--status-error-border-alpha"),
-        "status-error-foreground": withOpacity("--status-error-foreground-rgb", "--status-error-foreground-alpha"),
-        "status-error-surface": withOpacity("--status-error-surface-rgb", "--status-error-surface-alpha"),
+        "status-error-border": withOpacity(
+          "--status-error-border-rgb",
+          "--status-error-border-alpha",
+        ),
+        "status-error-foreground": withOpacity(
+          "--status-error-foreground-rgb",
+          "--status-error-foreground-alpha",
+        ),
+        "status-error-surface": withOpacity(
+          "--status-error-surface-rgb",
+          "--status-error-surface-alpha",
+        ),
         "status-info-border": withOpacity("--status-info-border-rgb", "--status-info-border-alpha"),
-        "status-info-foreground": withOpacity("--status-info-foreground-rgb", "--status-info-foreground-alpha"),
-        "status-info-surface": withOpacity("--status-info-surface-rgb", "--status-info-surface-alpha"),
-        "status-success-border": withOpacity("--status-success-border-rgb", "--status-success-border-alpha"),
-        "status-success-foreground": withOpacity("--status-success-foreground-rgb", "--status-success-foreground-alpha"),
-        "status-success-surface": withOpacity("--status-success-surface-rgb", "--status-success-surface-alpha"),
-        "status-warning-border": withOpacity("--status-warning-border-rgb", "--status-warning-border-alpha"),
-        "status-warning-foreground": withOpacity("--status-warning-foreground-rgb", "--status-warning-foreground-alpha"),
-        "status-warning-surface": withOpacity("--status-warning-surface-rgb", "--status-warning-surface-alpha"),
+        "status-info-foreground": withOpacity(
+          "--status-info-foreground-rgb",
+          "--status-info-foreground-alpha",
+        ),
+        "status-info-surface": withOpacity(
+          "--status-info-surface-rgb",
+          "--status-info-surface-alpha",
+        ),
+        "status-success-border": withOpacity(
+          "--status-success-border-rgb",
+          "--status-success-border-alpha",
+        ),
+        "status-success-foreground": withOpacity(
+          "--status-success-foreground-rgb",
+          "--status-success-foreground-alpha",
+        ),
+        "status-success-surface": withOpacity(
+          "--status-success-surface-rgb",
+          "--status-success-surface-alpha",
+        ),
+        "status-warning-border": withOpacity(
+          "--status-warning-border-rgb",
+          "--status-warning-border-alpha",
+        ),
+        "status-warning-foreground": withOpacity(
+          "--status-warning-foreground-rgb",
+          "--status-warning-foreground-alpha",
+        ),
+        "status-warning-surface": withOpacity(
+          "--status-warning-surface-rgb",
+          "--status-warning-surface-alpha",
+        ),
       },
       fontFamily: {
         display: ["var(--font-display)"],

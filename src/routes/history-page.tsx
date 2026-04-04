@@ -13,10 +13,7 @@ import {
   getShotFinalWeight,
 } from "@/lib/shot-history";
 import { cn, formatNumber, formatRelativeTimestamp } from "@/lib/utils";
-import {
-  useShotQuery,
-  useShotsQuery,
-} from "@/rest/queries";
+import { useShotQuery, useShotsQuery } from "@/rest/queries";
 import type {
   ShotDetailRecord,
   ShotListResponse,
@@ -64,13 +61,12 @@ export function HistoryPage({
   const requestedSelectedShot =
     selectedShotId == null
       ? null
-      : shotList.items.find((shot) => shot.id != null && shot.id === selectedShotId) ?? null;
-  const hasInvalidSelectedShot =
-    selectedShotId != null && requestedSelectedShot == null;
+      : (shotList.items.find((shot) => shot.id != null && shot.id === selectedShotId) ?? null);
+  const hasInvalidSelectedShot = selectedShotId != null && requestedSelectedShot == null;
   const fallbackSelectedShot = shotList.items[0] ?? null;
   const effectiveSelectedShot = hasInvalidSelectedShot
     ? null
-    : requestedSelectedShot ?? fallbackSelectedShot;
+    : (requestedSelectedShot ?? fallbackSelectedShot);
   const effectiveSelectedShotId = effectiveSelectedShot?.id ?? null;
   const shotQuery = useShotQuery(effectiveSelectedShotId);
   const selectedShot = shotQuery.data;
@@ -129,7 +125,9 @@ export function HistoryPage({
                 {shotList.items.map((shot, index) => (
                   <HistoryShotRow
                     index={index}
-                    isSelected={effectiveSelectedShotId != null && shot.id === effectiveSelectedShotId}
+                    isSelected={
+                      effectiveSelectedShotId != null && shot.id === effectiveSelectedShotId
+                    }
                     key={shot.id ?? `${shot.timestamp ?? "shot"}-${index}`}
                     onSelect={() => {
                       if (shot.id) {
@@ -273,24 +271,14 @@ function HistoryTopBar({
         />
         <HistoryTopBarMetric
           label="Dose"
-          value={formatMetricValue(
-            displayShot?.workflow?.context?.targetDoseWeight,
-            "g",
-            1,
-          )}
+          value={formatMetricValue(displayShot?.workflow?.context?.targetDoseWeight, "g", 1)}
         />
       </div>
     </section>
   );
 }
 
-function HistoryTopBarMetric({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function HistoryTopBarMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-[72px] flex-1 rounded-[3px] border border-border/50 bg-panel-strong/60 px-2.5 py-1 md:flex-none md:min-w-[84px] md:max-xl:px-2.5 md:max-xl:py-1">
       <p className="font-mono text-[0.46rem] font-medium uppercase tracking-[0.08em] text-muted-foreground md:max-xl:text-[0.5rem]">
@@ -350,8 +338,7 @@ function HistoryShotRow({
         </span>
         {dose != null ? (
           <span className="shrink-0 font-mono text-[0.56rem] tabular-nums text-muted-foreground/50 md:text-[0.6rem]">
-            {dose.toFixed(1)}g
-            {yield_ != null ? ` / ${yield_.toFixed(1)}g` : ""}
+            {dose.toFixed(1)}g{yield_ != null ? ` / ${yield_.toFixed(1)}g` : ""}
           </span>
         ) : null}
       </div>
@@ -383,18 +370,9 @@ function HistoryDetailContent({
       <div className="border-t border-border/40">
         <div className="grid md:grid-cols-2">
           <HistoryInfoCell title="Profile">
-            <HistoryDataRow
-              label="Workflow"
-              value={selectedShot.workflow?.name ?? "-"}
-            />
-            <HistoryDataRow
-              label="Profile"
-              value={selectedShot.workflow?.profile?.title ?? "-"}
-            />
-            <HistoryDataRow
-              label="Author"
-              value={selectedShot.workflow?.profile?.author ?? "-"}
-            />
+            <HistoryDataRow label="Workflow" value={selectedShot.workflow?.name ?? "-"} />
+            <HistoryDataRow label="Profile" value={selectedShot.workflow?.profile?.title ?? "-"} />
+            <HistoryDataRow label="Author" value={selectedShot.workflow?.profile?.author ?? "-"} />
             <HistoryDataRow
               label="Beverage"
               value={selectedShot.workflow?.profile?.beverage_type ?? "-"}
@@ -423,19 +401,11 @@ function HistoryDetailContent({
             />
             <HistoryDataRow
               label="Dose"
-              value={formatMetricValue(
-                selectedShot.workflow?.context?.targetDoseWeight,
-                "g",
-                1,
-              )}
+              value={formatMetricValue(selectedShot.workflow?.context?.targetDoseWeight, "g", 1)}
             />
             <HistoryDataRow
               label="Target yield"
-              value={formatMetricValue(
-                selectedShot.workflow?.context?.targetYield,
-                "g",
-                1,
-              )}
+              value={formatMetricValue(selectedShot.workflow?.context?.targetYield, "g", 1)}
             />
             <HistoryDataRow
               label="Target ratio"
@@ -494,13 +464,7 @@ function HistoryInfoCell({
 
 /* ─── Data row — compact key/value like dashboard ─── */
 
-function HistoryDataRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function HistoryDataRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <p className="font-mono text-[0.5rem] uppercase tracking-[0.06em] text-muted-foreground md:text-[0.54rem]">
@@ -576,11 +540,7 @@ function HistoryStatePanel({
   );
 }
 
-function formatMetricValue(
-  value: number | null | undefined,
-  suffix: string,
-  digits = 1,
-) {
+function formatMetricValue(value: number | null | undefined, suffix: string, digits = 1) {
   if (value == null || Number.isNaN(value)) {
     return "-";
   }
@@ -589,9 +549,7 @@ function formatMetricValue(
 }
 
 function joinValues(...values: Array<string | null | undefined>) {
-  const filteredValues = values.filter(
-    (value): value is string => Boolean(value && value !== "-"),
-  );
+  const filteredValues = values.filter((value): value is string => Boolean(value && value !== "-"));
 
   return filteredValues.length > 0 ? filteredValues.join(" / ") : "-";
 }

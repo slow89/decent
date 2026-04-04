@@ -377,7 +377,7 @@ function buildFrameTicks(maxFrameValue: number, tickCount: number) {
   const ticks = new Set<number>();
 
   for (let index = 0; index <= tickCount; index += 1) {
-    const raw = 1 + ((Math.max(maxFrameValue - 1, 0) / Math.max(tickCount, 1)) * index);
+    const raw = 1 + (Math.max(maxFrameValue - 1, 0) / Math.max(tickCount, 1)) * index;
     ticks.add(Math.round(raw));
   }
 

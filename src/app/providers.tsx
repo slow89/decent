@@ -17,8 +17,7 @@ export function AppProviders({ children }: PropsWithChildren) {
         position="bottom-right"
         richColors
         toastOptions={{
-          className:
-            "w-[min(17rem,calc(100vw-1rem))] border-none bg-transparent p-0 shadow-none",
+          className: "w-[min(17rem,calc(100vw-1rem))] border-none bg-transparent p-0 shadow-none",
           unstyled: true,
         }}
         visibleToasts={2}

@@ -59,14 +59,19 @@ By default, the app targets `http://localhost:8080`, which matches the default S
 ## Development Workflow
 
 ```bash
+pnpm lint
+pnpm format:check
 pnpm test
 pnpm test:browser:smoke
 pnpm check
 ```
 
+- `pnpm lint` runs `oxlint`.
+- `pnpm format:check` verifies formatting with `oxfmt`.
+- `pnpm format` rewrites files with `oxfmt`.
 - `pnpm test` runs the Vitest unit and component suite.
 - `pnpm test:browser:smoke` runs the Playwright smoke path against the repo-local fake gateway.
-- `pnpm check` is the preferred full validation command. It runs tests, production build, and browser smoke coverage.
+- `pnpm check` is the preferred full validation command. It runs lint, format checks, tests, the production build, and browser smoke coverage.
 
 For agent-oriented browser runs and targeted reruns, see [docs/agent-testing.md](./docs/agent-testing.md).
 

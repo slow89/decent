@@ -61,13 +61,7 @@ export function ControlBlock({
   );
 }
 
-export function MetricTile({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+export function MetricTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[3px] border border-border/50 bg-panel-strong/60 px-2.5 py-1.5">
       <div className="flex items-center justify-between gap-2">
@@ -82,13 +76,7 @@ export function MetricTile({
   );
 }
 
-export function EndpointRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+export function EndpointRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[3px] border border-border/50 bg-panel-strong/60 px-2.5 py-1.5">
       <p className="font-mono text-[0.42rem] font-medium uppercase tracking-[0.08em] text-muted-foreground/70">

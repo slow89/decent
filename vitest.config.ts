@@ -3,10 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import babel from "@rolldown/plugin-babel";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import {
-  configDefaults,
-  defineConfig,
-} from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 const reactCompilerConfig = {
@@ -26,11 +23,7 @@ export default defineConfig({
     },
   },
   test: {
-    exclude: [
-      ...configDefaults.exclude,
-      "**/.claude/**",
-      "tests/browser/**",
-    ],
+    exclude: [...configDefaults.exclude, "**/.claude/**", "tests/browser/**"],
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
   },

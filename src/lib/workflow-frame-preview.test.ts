@@ -48,9 +48,7 @@ describe("buildFramePreviewData", () => {
     });
 
     expect(preview.series.find((series) => series.id === "mysteryScalar")?.family).toBe("other");
-    expect(preview.series.find((series) => series.id === "soak_seconds")?.family).toBe(
-      "progress",
-    );
+    expect(preview.series.find((series) => series.id === "soak_seconds")?.family).toBe("progress");
     expect(preview.frames[0]).toMatchObject({
       enabled: true,
       phase: "hold",

@@ -56,7 +56,10 @@ export type TelemetryStatusItem = {
   value: string;
 };
 
-export type LaneConfig<TSeries = TelemetrySeriesDefinition, TFamily extends string = TelemetrySeriesFamily> = {
+export type LaneConfig<
+  TSeries = TelemetrySeriesDefinition,
+  TFamily extends string = TelemetrySeriesFamily,
+> = {
   family: TFamily;
   label: string;
   series: TSeries[];
@@ -173,9 +176,7 @@ export function buildMonitorStatusItems({
 
   return [
     {
-      detail: activeSample
-        ? formatTelemetryTimestampLabel(activeSample.timestamp)
-        : "No live data",
+      detail: activeSample ? formatTelemetryTimestampLabel(activeSample.timestamp) : "No live data",
       label: usesShotTimeline ? "Shot time" : "Timeline",
       value: activeSample
         ? formatTelemetryClock(getSampleXValue(activeSample, usesShotTimeline))
@@ -229,7 +230,10 @@ export function buildVisibleLanes(
   });
 }
 
-export function getChartMetrics<TSeries = TelemetrySeriesDefinition, TFamily extends string = TelemetrySeriesFamily>(
+export function getChartMetrics<
+  TSeries = TelemetrySeriesDefinition,
+  TFamily extends string = TelemetrySeriesFamily,
+>(
   density: ChartDensity,
   visibleLanes: Array<LaneConfig<TSeries, TFamily>>,
   containerSize: { height: number; width: number },
@@ -416,12 +420,7 @@ export function formatPresetLabel(preset: TelemetryChartPreset) {
 }
 
 export function compactStateLabel(label: string) {
-  return label
-    .replace("Espresso / ", "")
-    .replace(" / ", " ")
-    .split(" ")
-    .slice(0, 2)
-    .join(" ");
+  return label.replace("Espresso / ", "").replace(" / ", " ").split(" ").slice(0, 2).join(" ");
 }
 
 function getCompactSeriesDetail(
@@ -434,9 +433,7 @@ function getCompactSeriesDetail(
     : null;
   const comparisonValue =
     comparisonSeries && activeSample ? comparisonSeries.accessor(activeSample) : null;
-  const delta = comparisonSeries
-    ? formatTelemetryDelta(series, value, comparisonValue)
-    : null;
+  const delta = comparisonSeries ? formatTelemetryDelta(series, value, comparisonValue) : null;
 
   return delta == null ? "Live" : delta;
 }

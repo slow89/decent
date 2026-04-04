@@ -121,15 +121,15 @@ export function WorkflowFrameChart({
             items={statusItems}
             onOpenConfig={() => setIsConfigOpen(true)}
           />
-        <WorkflowFrameCanvas
-          activeSample={activeSample}
-          density="compact"
-          hasNumericSeries={preview.series.length > 0}
-          laneVisibility={laneVisibility}
-          onSelectFrame={onSelectFrame}
-          selectedSeries={selectedSeries}
-          samples={preview.samples}
-        />
+          <WorkflowFrameCanvas
+            activeSample={activeSample}
+            density="compact"
+            hasNumericSeries={preview.series.length > 0}
+            laneVisibility={laneVisibility}
+            onSelectFrame={onSelectFrame}
+            selectedSeries={selectedSeries}
+            samples={preview.samples}
+          />
         </div>
       ) : null}
 
@@ -140,50 +140,50 @@ export function WorkflowFrameChart({
           )}
         >
           <div className="grid h-full min-h-0 gap-4 xl:grid-cols-[minmax(0,1fr)_290px]">
-          <section className="flex min-h-0 min-w-0 flex-col">
-            <DesktopMonitorBar
-              activePreset={activePreset}
-              items={statusItems}
-              onReset={handleReset}
-              onSetPreset={handleSetPreset}
-              presetOptions={[
-                { id: "core-frames", label: "Core frames" },
-                { id: "all-series", label: "All series" },
-              ]}
-            />
-            <div className="mt-3 min-h-0 flex-1">
-              <WorkflowFrameCanvas
-                activeSample={activeSample}
-                density="regular"
-                hasNumericSeries={preview.series.length > 0}
-                laneVisibility={laneVisibility}
-                onSelectFrame={onSelectFrame}
-                selectedSeries={selectedSeries}
-                samples={preview.samples}
+            <section className="flex min-h-0 min-w-0 flex-col">
+              <DesktopMonitorBar
+                activePreset={activePreset}
+                items={statusItems}
+                onReset={handleReset}
+                onSetPreset={handleSetPreset}
+                presetOptions={[
+                  { id: "core-frames", label: "Core frames" },
+                  { id: "all-series", label: "All series" },
+                ]}
               />
-            </div>
-          </section>
+              <div className="mt-3 min-h-0 flex-1">
+                <WorkflowFrameCanvas
+                  activeSample={activeSample}
+                  density="regular"
+                  hasNumericSeries={preview.series.length > 0}
+                  laneVisibility={laneVisibility}
+                  onSelectFrame={onSelectFrame}
+                  selectedSeries={selectedSeries}
+                  samples={preview.samples}
+                />
+              </div>
+            </section>
 
-          <aside
-            className={cn(
-              layout === "auto" ? "hidden h-full min-h-0 xl:block" : "h-full min-h-0",
-            )}
-          >
-            <MonitorConfigPanel
-              activePreset={activePreset}
-              laneOptions={laneOptions}
-              onReset={handleReset}
-              onSetPreset={handleSetPreset}
-              onToggleLane={toggleLane}
-              onToggleSeries={handleToggleSeries}
-              presetOptions={[
-                { id: "core-frames", label: "Core frames" },
-                { id: "all-series", label: "All series" },
-              ]}
-              seriesGroups={seriesGroups}
-            />
-          </aside>
-        </div>
+            <aside
+              className={cn(
+                layout === "auto" ? "hidden h-full min-h-0 xl:block" : "h-full min-h-0",
+              )}
+            >
+              <MonitorConfigPanel
+                activePreset={activePreset}
+                laneOptions={laneOptions}
+                onReset={handleReset}
+                onSetPreset={handleSetPreset}
+                onToggleLane={toggleLane}
+                onToggleSeries={handleToggleSeries}
+                presetOptions={[
+                  { id: "core-frames", label: "Core frames" },
+                  { id: "all-series", label: "All series" },
+                ]}
+                seriesGroups={seriesGroups}
+              />
+            </aside>
+          </div>
         </div>
       ) : null}
 

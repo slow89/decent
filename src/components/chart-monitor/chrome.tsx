@@ -68,10 +68,7 @@ export function CompactMonitorBar({
   );
 }
 
-export function DesktopMonitorBar<
-  TPreset extends string,
-  TActivePreset extends string = TPreset,
->({
+export function DesktopMonitorBar<TPreset extends string, TActivePreset extends string = TPreset>({
   activePreset,
   items,
   onReset,

@@ -2,10 +2,7 @@ import { DashboardSleepScreen } from "@/components/dashboard/dashboard-sleep-scr
 import { DashboardTopBar } from "@/components/dashboard/dashboard-top-bar";
 import { DashboardWaterAlertOverlay } from "@/components/dashboard/dashboard-water-alert-overlay";
 import { DashboardWorkspaceContainer } from "@/components/dashboard/dashboard-workspace-container";
-import {
-  useMachineStateQuery,
-  useRequestMachineStateMutation,
-} from "@/rest/queries";
+import { useMachineStateQuery, useRequestMachineStateMutation } from "@/rest/queries";
 
 export function DashboardPage() {
   const { data: snapshot, error: machineQueryError } = useMachineStateQuery();
@@ -17,9 +14,7 @@ export function DashboardPage() {
       return;
     }
 
-    requestMachineStateMutation.mutate(
-      snapshot.state.state === "sleeping" ? "idle" : "sleeping",
-    );
+    requestMachineStateMutation.mutate(snapshot.state.state === "sleeping" ? "idle" : "sleeping");
   }
 
   if (snapshot?.state.state === "sleeping") {

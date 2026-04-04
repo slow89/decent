@@ -56,7 +56,9 @@ test.describe("settings", () => {
     });
 
     await page.getByRole("button", { exact: true, name: "Connect machine" }).click();
-    await expect(page.getByRole("button", { exact: true, name: "Disconnect machine" })).toHaveCount(2);
+    await expect(page.getByRole("button", { exact: true, name: "Disconnect machine" })).toHaveCount(
+      2,
+    );
 
     await page.getByRole("button", { name: "45m" }).click();
     await expect(page.getByText("45 min").first()).toBeVisible();

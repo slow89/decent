@@ -24,9 +24,9 @@ describe("useTelemetryChartStore", () => {
     const raw = localStorage.getItem("espresso-cockpit-telemetry-chart");
 
     expect(raw).not.toBeNull();
-    expect(raw).toContain("\"activePreset\":\"all-signals\"");
-    expect(raw).toContain("\"progress\":false");
-    expect(raw).toContain("\"steamTemperature\"");
+    expect(raw).toContain('"activePreset":"all-signals"');
+    expect(raw).toContain('"progress":false');
+    expect(raw).toContain('"steamTemperature"');
   });
 
   it("resets back to the live shot defaults", () => {

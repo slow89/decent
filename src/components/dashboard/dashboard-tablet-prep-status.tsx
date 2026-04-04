@@ -1,19 +1,12 @@
 import type { DashboardPrepStatus } from "@/lib/dashboard-utils";
 import { cn } from "@/lib/utils";
 
-export function DashboardTabletPrepStatus({
-  status,
-}: {
-  status: DashboardPrepStatus;
-}) {
+export function DashboardTabletPrepStatus({ status }: { status: DashboardPrepStatus }) {
   const isWarming = status.tone === "warming";
 
   return (
     <section
-      className={cn(
-        "flex items-stretch",
-        isWarming && "animate-pulse bg-highlight-muted/10",
-      )}
+      className={cn("flex items-stretch", isWarming && "animate-pulse bg-highlight-muted/10")}
       data-testid="dashboard-tablet-prep-status"
     >
       {/* Status beacon */}
@@ -26,8 +19,10 @@ export function DashboardTabletPrepStatus({
         <span
           className={cn(
             "block size-2 rounded-full md:size-3",
-            status.tone === "ready" && "bg-status-success-foreground shadow-[0_0_6px_rgba(107,231,159,0.5)]",
-            isWarming && "size-3 bg-highlight-muted shadow-[0_0_10px_rgba(217,152,38,0.6)] md:size-4",
+            status.tone === "ready" &&
+              "bg-status-success-foreground shadow-[0_0_6px_rgba(107,231,159,0.5)]",
+            isWarming &&
+              "size-3 bg-highlight-muted shadow-[0_0_10px_rgba(217,152,38,0.6)] md:size-4",
             status.tone === "offline" && "bg-status-warning-foreground",
             status.tone === "sleeping" && "bg-muted-foreground/40",
           )}

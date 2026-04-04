@@ -106,8 +106,14 @@
   --chart-atmosphere-edge-alpha: 0.06;
 
   --chart-crosshair-glow: rgba(var(--chart-crosshair-glow-rgb), var(--chart-crosshair-glow-alpha));
-  --chart-atmosphere-tint: rgba(var(--chart-atmosphere-tint-rgb), var(--chart-atmosphere-tint-alpha));
-  --chart-atmosphere-edge: rgba(var(--chart-atmosphere-edge-rgb), var(--chart-atmosphere-edge-alpha));
+  --chart-atmosphere-tint: rgba(
+    var(--chart-atmosphere-tint-rgb),
+    var(--chart-atmosphere-tint-alpha)
+  );
+  --chart-atmosphere-edge: rgba(
+    var(--chart-atmosphere-edge-rgb),
+    var(--chart-atmosphere-edge-alpha)
+  );
 
   --canvas: rgba(var(--canvas-rgb), var(--canvas-alpha));
   --chart: rgba(var(--chart-rgb), var(--chart-alpha));
@@ -135,18 +141,42 @@
   --overlay: rgba(var(--overlay-rgb), var(--overlay-alpha));
   --highlight: rgba(var(--highlight-rgb), var(--highlight-alpha));
   --highlight-muted: rgba(var(--highlight-muted-rgb), var(--highlight-muted-alpha));
-  --status-success-surface: rgba(var(--status-success-surface-rgb), var(--status-success-surface-alpha));
-  --status-success-border: rgba(var(--status-success-border-rgb), var(--status-success-border-alpha));
-  --status-success-foreground: rgba(var(--status-success-foreground-rgb), var(--status-success-foreground-alpha));
-  --status-warning-surface: rgba(var(--status-warning-surface-rgb), var(--status-warning-surface-alpha));
-  --status-warning-border: rgba(var(--status-warning-border-rgb), var(--status-warning-border-alpha));
-  --status-warning-foreground: rgba(var(--status-warning-foreground-rgb), var(--status-warning-foreground-alpha));
+  --status-success-surface: rgba(
+    var(--status-success-surface-rgb),
+    var(--status-success-surface-alpha)
+  );
+  --status-success-border: rgba(
+    var(--status-success-border-rgb),
+    var(--status-success-border-alpha)
+  );
+  --status-success-foreground: rgba(
+    var(--status-success-foreground-rgb),
+    var(--status-success-foreground-alpha)
+  );
+  --status-warning-surface: rgba(
+    var(--status-warning-surface-rgb),
+    var(--status-warning-surface-alpha)
+  );
+  --status-warning-border: rgba(
+    var(--status-warning-border-rgb),
+    var(--status-warning-border-alpha)
+  );
+  --status-warning-foreground: rgba(
+    var(--status-warning-foreground-rgb),
+    var(--status-warning-foreground-alpha)
+  );
   --status-info-surface: rgba(var(--status-info-surface-rgb), var(--status-info-surface-alpha));
   --status-info-border: rgba(var(--status-info-border-rgb), var(--status-info-border-alpha));
-  --status-info-foreground: rgba(var(--status-info-foreground-rgb), var(--status-info-foreground-alpha));
+  --status-info-foreground: rgba(
+    var(--status-info-foreground-rgb),
+    var(--status-info-foreground-alpha)
+  );
   --status-error-surface: rgba(var(--status-error-surface-rgb), var(--status-error-surface-alpha));
   --status-error-border: rgba(var(--status-error-border-rgb), var(--status-error-border-alpha));
-  --status-error-foreground: rgba(var(--status-error-foreground-rgb), var(--status-error-foreground-alpha));
+  --status-error-foreground: rgba(
+    var(--status-error-foreground-rgb),
+    var(--status-error-foreground-alpha)
+  );
   --chart-surface: rgba(var(--chart-surface-rgb), var(--chart-surface-alpha));
   --chart-border: rgba(var(--chart-border-rgb), var(--chart-border-alpha));
   --chart-lane: rgba(var(--chart-lane-rgb), var(--chart-lane-alpha));
@@ -271,8 +301,7 @@
     min-height: 100vh;
     background:
       radial-gradient(circle at top center, var(--body-glow), transparent 18%),
-      linear-gradient(180deg, var(--body-start), var(--body-end)),
-      var(--canvas);
+      linear-gradient(180deg, var(--body-start), var(--body-end)), var(--canvas);
   }
 
   button,

@@ -71,10 +71,7 @@ export default class AgentReporter implements Reporter {
       });
     }
 
-    const reportPath = path.resolve(
-      process.cwd(),
-      "output/testing/latest.json",
-    );
+    const reportPath = path.resolve(process.cwd(), "output/testing/latest.json");
     await fs.mkdir(path.dirname(reportPath), {
       recursive: true,
     });
@@ -116,17 +113,16 @@ function flattenTests(suite: Suite | null): TestCase[] {
 }
 
 function getAnnotationValue(test: TestCase, annotationType: string) {
-  return test.annotations.find((annotation) => annotation.type === annotationType)?.description ?? null;
+  return (
+    test.annotations.find((annotation) => annotation.type === annotationType)?.description ?? null
+  );
 }
 
 function getAssertionFailures(result: TestResult) {
   return result.errors.map((error) => error.message ?? String(error.value ?? "Unknown error"));
 }
 
-async function readAttachmentJsonArray(
-  result: TestResult,
-  attachmentName: string,
-) {
+async function readAttachmentJsonArray(result: TestResult, attachmentName: string) {
   const attachment = result.attachments.find(
     (entry) => entry.name === attachmentName && entry.path,
   );

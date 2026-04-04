@@ -8,11 +8,7 @@ import {
   useUpdateBridgeSettingsMutation,
 } from "@/rest/queries";
 import type { DeviceSummary } from "@/rest/types";
-import {
-  MetricTile,
-  SettingsSection,
-  StateCallout,
-} from "@/components/settings/settings-shell";
+import { MetricTile, SettingsSection, StateCallout } from "@/components/settings/settings-shell";
 
 export function SettingsDevicePairingPanel() {
   const deviceRefreshMs = 3_000;
@@ -41,10 +37,7 @@ export function SettingsDevicePairingPanel() {
   }
 
   return (
-    <SettingsSection
-      description="Auto-refreshing every 3s"
-      title="Device Pairing"
-    >
+    <SettingsSection description="Auto-refreshing every 3s" title="Device Pairing">
       <div className="grid gap-2">
         {/* Metric row + action buttons */}
         <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-[1fr_1fr_1fr_auto_auto]">
@@ -300,7 +293,9 @@ function DeviceList({
             }
             actionVariant={actionVariant}
             device={device}
-            disabled={Boolean(connectPendingDeviceId || disconnectPendingDeviceId || isMutatingSettings)}
+            disabled={Boolean(
+              connectPendingDeviceId || disconnectPendingDeviceId || isMutatingSettings,
+            )}
             key={device.id}
             onAction={
               device.state === "connected"

@@ -1,13 +1,7 @@
 import { create } from "zustand";
 
-import {
-  BridgeClientError,
-  createBridgeClient,
-} from "@/rest/client";
-import {
-  displayStateSchema,
-  type DisplayState,
-} from "@/rest/types";
+import { BridgeClientError, createBridgeClient } from "@/rest/client";
+import { displayStateSchema, type DisplayState } from "@/rest/types";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 
 type DisplayConnectionState = "idle" | "connecting" | "live" | "error";

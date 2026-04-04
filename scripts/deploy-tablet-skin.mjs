@@ -48,22 +48,18 @@ async function main() {
 
   try {
     await expectReachable(archiveUrl);
-    const installResult = await postJson(
-      `${tabletGatewayOrigin}/api/v1/webui/skins/install/url`,
-      { url: archiveUrl },
-    );
-    const defaultResult = await putJson(
-      `${tabletGatewayOrigin}/api/v1/webui/skins/default`,
-      { skinId },
-    );
+    const installResult = await postJson(`${tabletGatewayOrigin}/api/v1/webui/skins/install/url`, {
+      url: archiveUrl,
+    });
+    const defaultResult = await putJson(`${tabletGatewayOrigin}/api/v1/webui/skins/default`, {
+      skinId,
+    });
     const skins = await getJson(`${tabletGatewayOrigin}/api/v1/webui/skins`);
 
     console.log(`Install response: ${JSON.stringify(installResult)}`);
     console.log(`Default response: ${JSON.stringify(defaultResult)}`);
     console.log(
-      `Tablet skins: ${skins
-        .map((skin) => `${skin.id}@${skin.version ?? "unknown"}`)
-        .join(", ")}`,
+      `Tablet skins: ${skins.map((skin) => `${skin.id}@${skin.version ?? "unknown"}`).join(", ")}`,
     );
     console.log(`Open on tablet: http://localhost:3000/`);
   } finally {
@@ -220,9 +216,7 @@ function getPreferredLanAddress() {
     candidates[0];
 
   if (!preferred) {
-    throw new Error(
-      "Unable to determine a LAN IPv4 address. Set SKIN_DEPLOY_HOST explicitly.",
-    );
+    throw new Error("Unable to determine a LAN IPv4 address. Set SKIN_DEPLOY_HOST explicitly.");
   }
 
   return preferred;

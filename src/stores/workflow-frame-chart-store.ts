@@ -41,7 +41,10 @@ export const workflowFrameChartDefaultPreferences: WorkflowFrameChartPreferences
   selectedSeriesIds: [],
 };
 
-function uniqueSeriesIds(seriesIds: WorkflowFrameSeriesId[], availableSeriesIds?: WorkflowFrameSeriesId[]) {
+function uniqueSeriesIds(
+  seriesIds: WorkflowFrameSeriesId[],
+  availableSeriesIds?: WorkflowFrameSeriesId[],
+) {
   const knownIds = availableSeriesIds ? new Set(availableSeriesIds) : null;
 
   return [...new Set(seriesIds)].filter((seriesId) => (knownIds ? knownIds.has(seriesId) : true));

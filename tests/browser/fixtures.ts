@@ -1,15 +1,8 @@
 import fs from "node:fs/promises";
 
-import {
-  expect,
-  test as base,
-  type Page,
-} from "@playwright/test";
+import { expect, test as base, type Page } from "@playwright/test";
 
-import {
-  defaultGatewayScenarioId,
-  type GatewayScenarioId,
-} from "../gateway/scenarios";
+import { defaultGatewayScenarioId, type GatewayScenarioId } from "../gateway/scenarios";
 
 const fakeGatewayOrigin = process.env.PLAYWRIGHT_REAL_GATEWAY_URL?.trim()
   ? null
@@ -47,10 +40,7 @@ interface AppHarness {
     scenarioId?: GatewayScenarioId;
   }) => Promise<void>;
   loadScenario: (scenarioId: GatewayScenarioId) => Promise<void>;
-  markMetadata: (metadata: {
-    route: string;
-    scenarioId: GatewayScenarioId;
-  }) => void;
+  markMetadata: (metadata: { route: string; scenarioId: GatewayScenarioId }) => void;
 }
 
 export const test = base.extend<{
@@ -62,11 +52,7 @@ export const test = base.extend<{
       advanceStep: async () => {
         await request.post(`${fakeGatewayOrigin}/__control/advance-step`);
       },
-      gotoScenario: async ({
-        path,
-        route,
-        scenarioId = defaultGatewayScenarioId,
-      } = {}) => {
+      gotoScenario: async ({ path, route, scenarioId = defaultGatewayScenarioId } = {}) => {
         const targetRoute = route ?? path ?? "/";
         await harness.loadScenario(scenarioId);
         harness.markMetadata({
@@ -261,10 +247,7 @@ export function assertNoAppErrors(
       return false;
     }
 
-    if (
-      entry.status &&
-      allowedStatusPaths.some((allowedPath) => entry.url.includes(allowedPath))
-    ) {
+    if (entry.status && allowedStatusPaths.some((allowedPath) => entry.url.includes(allowedPath))) {
       return false;
     }
 

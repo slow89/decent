@@ -53,11 +53,7 @@ export function DevShotToggleButton() {
       title={isSimulatedShotActive ? "Pause shot simulator" : "Play shot simulator"}
       type="button"
     >
-      {isSimulatedShotActive ? (
-        <Pause className="size-3" />
-      ) : (
-        <Play className="size-3" />
-      )}
+      {isSimulatedShotActive ? <Pause className="size-3" /> : <Play className="size-3" />}
     </button>
   );
 }
@@ -119,13 +115,10 @@ export function ScaleStatusCard() {
     (device) => device.type === "scale" && device.state === "connected",
   );
   const isPaired = Boolean(connectedScale);
-  const weight = connectedScale ? scaleSnapshot?.weight ?? null : null;
-  const batteryLevel = connectedScale ? scaleSnapshot?.batteryLevel ?? null : null;
+  const weight = connectedScale ? (scaleSnapshot?.weight ?? null) : null;
+  const batteryLevel = connectedScale ? (scaleSnapshot?.batteryLevel ?? null) : null;
   const canUseScaleWeightForDose =
-    isPaired &&
-    weight != null &&
-    Number.isFinite(weight) &&
-    weight > 0;
+    isPaired && weight != null && Number.isFinite(weight) && weight > 0;
 
   function handleSetDoseFromScale() {
     if (!canUseScaleWeightForDose || weight == null) {
@@ -270,9 +263,7 @@ export function MachineStatusCard() {
       return;
     }
 
-    requestMachineStateMutation.mutate(
-      snapshot.state.state === "sleeping" ? "idle" : "sleeping",
-    );
+    requestMachineStateMutation.mutate(snapshot.state.state === "sleeping" ? "idle" : "sleeping");
   }
 
   return (
@@ -332,10 +323,7 @@ function formatScaleWeight(weight: number | null) {
   return `${weight.toFixed(1)} g`;
 }
 
-function getScaleStatusLabel(
-  isPaired: boolean,
-  scaleConnection: LiveConnectionState,
-) {
+function getScaleStatusLabel(isPaired: boolean, scaleConnection: LiveConnectionState) {
   if (!isPaired && scaleConnection === "connecting") {
     return "Looking";
   }
@@ -355,10 +343,7 @@ function getScaleStatusLabel(
   return "Paired";
 }
 
-function getMachineConnectionLabel(
-  liveConnection: LiveConnectionState,
-  hasQueryError: boolean,
-) {
+function getMachineConnectionLabel(liveConnection: LiveConnectionState, hasQueryError: boolean) {
   if (hasQueryError || liveConnection === "error") {
     return "Error";
   }

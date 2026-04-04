@@ -39,10 +39,9 @@ export function TelemetryChart({
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   const timelineSamples = getTelemetryTimelineSample(data);
-  const latestSample =
-    timelineSamples[timelineSamples.length - 1] ?? data[data.length - 1] ?? null;
+  const latestSample = timelineSamples[timelineSamples.length - 1] ?? data[data.length - 1] ?? null;
   const hoveredSample =
-    hoveredSampleIndex == null ? null : timelineSamples[hoveredSampleIndex] ?? null;
+    hoveredSampleIndex == null ? null : (timelineSamples[hoveredSampleIndex] ?? null);
   const activeSample = hoveredSample ?? latestSample;
   const usesShotTimeline =
     timelineSamples.length > 0 &&
@@ -91,12 +90,7 @@ export function TelemetryChart({
       ) : null}
 
       {layout === "auto" || layout === "desktop" ? (
-        <div
-          className={cn(
-            "min-h-0 min-w-0 flex-1",
-            layout === "auto" && "hidden xl:block",
-          )}
-        >
+        <div className={cn("min-h-0 min-w-0 flex-1", layout === "auto" && "hidden xl:block")}>
           <DesktopTelemetryMonitor
             model={model}
             onPointerLeave={() => setHoveredSampleIndex(null)}

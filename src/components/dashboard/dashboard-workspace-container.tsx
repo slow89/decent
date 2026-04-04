@@ -23,9 +23,7 @@ export function DashboardWorkspaceContainer() {
           </div>
         </div>
       }
-      desktopRail={
-        <DashboardControlRail />
-      }
+      desktopRail={<DashboardControlRail />}
       isShotActive={isShotActive}
       tabletPrepBoard={<DashboardTabletPrepBoard />}
       tabletShotContent={

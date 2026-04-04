@@ -1,7 +1,4 @@
-import {
-  useEffect,
-  useEffectEvent,
-} from "react";
+import { useEffect, useEffectEvent } from "react";
 
 import { useDevicesQuery } from "@/rest/queries";
 import { useBridgeSettingsQuery } from "@/rest/queries";
@@ -10,27 +7,17 @@ import { displayStore } from "@/stores/display-store";
 import { useMachineStore } from "@/stores/machine-store";
 import { presenceStore } from "@/stores/presence-store";
 
-const activityEvents = [
-  "keydown",
-  "pointerdown",
-  "touchstart",
-] as const;
+const activityEvents = ["keydown", "pointerdown", "touchstart"] as const;
 
 export function BridgeShellEffects() {
   const gatewayUrl = useBridgeConfigStore((state) => state.gatewayUrl);
   const connectScale = useMachineStore((state) => state.connectScale);
   const disconnectScale = useMachineStore((state) => state.disconnectScale);
   const reconnectPreferredScale = useMachineStore((state) => state.reconnectPreferredScale);
-  const {
-    data: bridgeSettings,
-    dataUpdatedAt: bridgeSettingsUpdatedAt,
-  } = useBridgeSettingsQuery({
+  const { data: bridgeSettings, dataUpdatedAt: bridgeSettingsUpdatedAt } = useBridgeSettingsQuery({
     refetchInterval: 5_000,
   });
-  const {
-    data: devices,
-    dataUpdatedAt: devicesUpdatedAt,
-  } = useDevicesQuery({
+  const { data: devices, dataUpdatedAt: devicesUpdatedAt } = useDevicesQuery({
     refetchInterval: 2_000,
   });
   const signalPresence = useEffectEvent(() => {

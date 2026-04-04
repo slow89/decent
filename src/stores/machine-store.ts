@@ -1,9 +1,6 @@
 import { create } from "zustand";
 
-import {
-  BridgeClientError,
-  createBridgeClient,
-} from "@/rest/client";
+import { BridgeClientError, createBridgeClient } from "@/rest/client";
 import { queryClient } from "@/rest/query-client";
 import { bridgeQueryKeys } from "@/rest/queries";
 import {
@@ -106,8 +103,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       scaleSocket.onclose = () => {
         set((state) => ({
           scaleConnection: "idle",
-          scaleSnapshot:
-            state.scaleSocket === scaleSocket ? null : state.scaleSnapshot,
+          scaleSnapshot: state.scaleSocket === scaleSocket ? null : state.scaleSnapshot,
           scaleSocket: state.scaleSocket === scaleSocket ? null : state.scaleSocket,
         }));
       };
@@ -173,8 +169,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
 
       machineSocket.onclose = () => {
         set((state) => ({
-          machineSocket:
-            state.machineSocket === machineSocket ? null : state.machineSocket,
+          machineSocket: state.machineSocket === machineSocket ? null : state.machineSocket,
           liveConnection: "idle",
         }));
       };
@@ -210,8 +205,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       waterSocket.onclose = () => {
         set((state) => ({
           waterConnection: "idle",
-          waterLevels:
-            state.waterSocket === waterSocket ? null : state.waterLevels,
+          waterLevels: state.waterSocket === waterSocket ? null : state.waterLevels,
           waterSocket: state.waterSocket === waterSocket ? null : state.waterSocket,
         }));
       };
@@ -276,11 +270,7 @@ export const useMachineStore = create<MachineState>((set, get) => ({
   },
   async reconnectPreferredScale() {
     const now = Date.now();
-    const {
-      lastScaleReconnectAttemptAt,
-      liveConnection,
-      scaleConnection,
-    } = get();
+    const { lastScaleReconnectAttemptAt, liveConnection, scaleConnection } = get();
 
     if (liveConnection !== "live") {
       return;

@@ -1,9 +1,6 @@
 import { create } from "zustand";
 
-import {
-  BridgeClientError,
-  createBridgeClient,
-} from "@/rest/client";
+import { BridgeClientError, createBridgeClient } from "@/rest/client";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 
 const heartbeatIntervalMs = 30_000;

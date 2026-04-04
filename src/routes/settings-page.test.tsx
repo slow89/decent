@@ -237,9 +237,7 @@ describe("SettingsPage", () => {
     });
     expect(screen.getByDisplayValue("http://bridge.local:8080")).toBeInTheDocument();
     expect(screen.getByText("http://bridge.local:8080/api/v1/workflow")).toBeInTheDocument();
-    expect(
-      screen.getByText("ws://bridge.local:8080/ws/v1/machine/snapshot"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("ws://bridge.local:8080/ws/v1/machine/snapshot")).toBeInTheDocument();
     expect(screen.getByText("ws://bridge.local:8080/ws/v1/display")).toBeInTheDocument();
     expect(screen.getAllByText("30 min").length).toBeGreaterThan(0);
     expect(screen.getByText("Auto-managed on")).toBeInTheDocument();
@@ -265,9 +263,7 @@ describe("SettingsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save & reconnect" }));
 
     await waitFor(() => {
-      expect(useBridgeConfigStore.getState().gatewayUrl).toBe(
-        "http://new-bridge.local:8080",
-      );
+      expect(useBridgeConfigStore.getState().gatewayUrl).toBe("http://new-bridge.local:8080");
     });
 
     expect(screen.getByDisplayValue("http://new-bridge.local:8080")).toBeInTheDocument();
@@ -395,9 +391,7 @@ describe("SettingsPage", () => {
 
     render(<SettingsPage />);
 
-    expect(
-      screen.getByText("Checking the bridge for tracked devices."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Checking the bridge for tracked devices.")).toBeInTheDocument();
   });
 
   it("shows the empty device state when no tracked devices are returned", () => {
@@ -413,9 +407,7 @@ describe("SettingsPage", () => {
     expect(
       screen.getByText("No tracked devices are currently reported by the bridge."),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Use Find only, then pair your scale here."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Use Find only, then pair your scale here.")).toBeInTheDocument();
   });
 
   it("shows the device error state when discovery cannot be read", () => {

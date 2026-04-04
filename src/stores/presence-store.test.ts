@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 
@@ -30,12 +23,10 @@ describe("usePresenceStore", () => {
   });
 
   it("throttles heartbeats to the bridge interval", async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({ timeout: 1800 }),
-      } as Response);
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ timeout: 1800 }),
+    } as Response);
 
     await usePresenceStore.getState().signalPresence(true);
     await usePresenceStore.getState().signalPresence();

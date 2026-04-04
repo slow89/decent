@@ -66,10 +66,7 @@ async function parseResponse<TSchema extends z.ZodTypeAny>(
       }
     }
 
-    throw new BridgeClientError(
-      message,
-      response.status,
-    );
+    throw new BridgeClientError(message, response.status);
   }
 
   const parsed = schema.safeParse(await response.json());
@@ -81,10 +78,7 @@ async function parseResponse<TSchema extends z.ZodTypeAny>(
   return parsed.data;
 }
 
-async function ensureResponseOk(
-  response: Response,
-  fallbackMessage: string,
-) {
+async function ensureResponseOk(response: Response, fallbackMessage: string) {
   if (response.ok) {
     return;
   }
@@ -233,9 +227,7 @@ export function createBridgeClient(baseUrl: string) {
 
       await ensureResponseOk(response, "Unable to update bridge settings");
     },
-    async updateMachineWaterLevels(levels: {
-      refillLevel: number;
-    }) {
+    async updateMachineWaterLevels(levels: { refillLevel: number }) {
       const response = await fetch(`${origin}/api/v1/machine/waterLevels`, {
         method: "POST",
         headers: {
@@ -298,10 +290,7 @@ export function createBridgeClient(baseUrl: string) {
         },
       );
     },
-    async verifyVisualizerCredentials(credentials: {
-      username: string;
-      password: string;
-    }) {
+    async verifyVisualizerCredentials(credentials: { username: string; password: string }) {
       return request(
         "/api/v1/plugins/visualizer.reaplugin/verifyCredentials",
         visualizerCredentialCheckSchema,
@@ -312,14 +301,10 @@ export function createBridgeClient(baseUrl: string) {
       );
     },
     async importVisualizerProfile(shareCode: string) {
-      return request(
-        "/api/v1/plugins/visualizer.reaplugin/import",
-        visualizerImportResultSchema,
-        {
-          method: "POST",
-          body: JSON.stringify({ shareCode }),
-        },
-      );
+      return request("/api/v1/plugins/visualizer.reaplugin/import", visualizerImportResultSchema, {
+        method: "POST",
+        body: JSON.stringify({ shareCode }),
+      });
     },
     createMachineSnapshotSocket() {
       return new WebSocket(`${toWebSocketUrl(origin)}/ws/v1/machine/snapshot`);

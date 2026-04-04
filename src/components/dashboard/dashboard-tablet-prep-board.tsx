@@ -15,10 +15,7 @@ export function DashboardTabletPrepBoard() {
   const prepStatus = useDashboardPrepStatusModel();
 
   return (
-    <div
-      className="min-h-0 flex-1 overflow-y-auto"
-      data-testid="dashboard-tablet-prep-board"
-    >
+    <div className="min-h-0 flex-1 overflow-y-auto" data-testid="dashboard-tablet-prep-board">
       {/* Status ticker — compact, full-bleed */}
       <div
         className={cn(
@@ -31,10 +28,7 @@ export function DashboardTabletPrepBoard() {
 
       {/* Controls — dense grid with thin separators */}
       <div className="grid md:grid-cols-2">
-        <DashboardTabletRecipeCard
-          disabled={workflowDisabled}
-          {...recipeControls}
-        />
+        <DashboardTabletRecipeCard disabled={workflowDisabled} {...recipeControls} />
         {controlRows.map((row, i) => (
           <DashboardTabletControlCard
             activePresetValue={row.activePresetValue}

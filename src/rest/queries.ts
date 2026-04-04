@@ -1,14 +1,6 @@
-import {
-  queryOptions,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import {
-  createBridgeClient,
-  normalizeGatewayUrl,
-} from "@/rest/client";
+import { createBridgeClient, normalizeGatewayUrl } from "@/rest/client";
 import { queryClient } from "@/rest/query-client";
 import { type MachineStateChange } from "@/rest/types";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
@@ -28,22 +20,17 @@ function getClient(gatewayOrigin = getGatewayOrigin()) {
 export const bridgeQueryKeys = {
   root: ["bridge"] as const,
   all: (gatewayOrigin: string) => [...bridgeQueryKeys.root, gatewayOrigin] as const,
-  settings: (gatewayOrigin: string) =>
-    [...bridgeQueryKeys.all(gatewayOrigin), "settings"] as const,
+  settings: (gatewayOrigin: string) => [...bridgeQueryKeys.all(gatewayOrigin), "settings"] as const,
   machineState: (gatewayOrigin: string) =>
     [...bridgeQueryKeys.all(gatewayOrigin), "machine-state"] as const,
-  workflow: (gatewayOrigin: string) =>
-    [...bridgeQueryKeys.all(gatewayOrigin), "workflow"] as const,
-  profiles: (gatewayOrigin: string) =>
-    [...bridgeQueryKeys.all(gatewayOrigin), "profiles"] as const,
+  workflow: (gatewayOrigin: string) => [...bridgeQueryKeys.all(gatewayOrigin), "workflow"] as const,
+  profiles: (gatewayOrigin: string) => [...bridgeQueryKeys.all(gatewayOrigin), "profiles"] as const,
   profile: (gatewayOrigin: string, id: string) =>
     [...bridgeQueryKeys.all(gatewayOrigin), "profiles", id] as const,
-  devices: (gatewayOrigin: string) =>
-    [...bridgeQueryKeys.all(gatewayOrigin), "devices"] as const,
+  devices: (gatewayOrigin: string) => [...bridgeQueryKeys.all(gatewayOrigin), "devices"] as const,
   presenceSettings: (gatewayOrigin: string) =>
     [...bridgeQueryKeys.all(gatewayOrigin), "presence-settings"] as const,
-  shots: (gatewayOrigin: string) =>
-    [...bridgeQueryKeys.all(gatewayOrigin), "shots"] as const,
+  shots: (gatewayOrigin: string) => [...bridgeQueryKeys.all(gatewayOrigin), "shots"] as const,
   shot: (gatewayOrigin: string, id: string) =>
     [...bridgeQueryKeys.all(gatewayOrigin), "shots", id] as const,
   visualizerSettings: (gatewayOrigin: string) =>
@@ -110,11 +97,7 @@ export function useMachineStateQuery() {
   return useQuery(machineStateQueryOptions(gatewayOrigin));
 }
 
-export function useBridgeSettingsQuery(
-  options?: {
-    refetchInterval?: number | false;
-  },
-) {
+export function useBridgeSettingsQuery(options?: { refetchInterval?: number | false }) {
   const gatewayOrigin = useGatewayOrigin();
 
   return useQuery({
@@ -128,11 +111,7 @@ export function useWorkflowQuery() {
   return useQuery(workflowQueryOptions(gatewayOrigin));
 }
 
-export function useDevicesQuery(
-  options?: {
-    refetchInterval?: number | false;
-  },
-) {
+export function useDevicesQuery(options?: { refetchInterval?: number | false }) {
   const gatewayOrigin = useGatewayOrigin();
 
   return useQuery({
@@ -175,8 +154,7 @@ export function useScanDevicesMutation() {
   const gatewayOrigin = useGatewayOrigin();
 
   return useMutation({
-    mutationFn: (options?: { connect?: boolean }) =>
-      getClient(gatewayOrigin).scanDevices(options),
+    mutationFn: (options?: { connect?: boolean }) => getClient(gatewayOrigin).scanDevices(options),
     onSuccess: (devices) => {
       client.setQueryData(bridgeQueryKeys.devices(gatewayOrigin), devices);
     },
@@ -216,8 +194,7 @@ export function useUpdateWorkflowMutation() {
   const gatewayOrigin = useGatewayOrigin();
 
   return useMutation({
-    mutationFn: (patch: Record<string, unknown>) =>
-      getClient(gatewayOrigin).updateWorkflow(patch),
+    mutationFn: (patch: Record<string, unknown>) => getClient(gatewayOrigin).updateWorkflow(patch),
     onSuccess: (workflow) => {
       client.setQueryData(bridgeQueryKeys.workflow(gatewayOrigin), workflow);
     },
@@ -229,10 +206,8 @@ export function useUpdatePresenceSettingsMutation() {
   const gatewayOrigin = useGatewayOrigin();
 
   return useMutation({
-    mutationFn: (patch: {
-      sleepTimeoutMinutes?: number;
-      userPresenceEnabled?: boolean;
-    }) => getClient(gatewayOrigin).updatePresenceSettings(patch),
+    mutationFn: (patch: { sleepTimeoutMinutes?: number; userPresenceEnabled?: boolean }) =>
+      getClient(gatewayOrigin).updatePresenceSettings(patch),
     onSuccess: (settings) => {
       client.setQueryData(bridgeQueryKeys.presenceSettings(gatewayOrigin), settings);
     },
@@ -273,9 +248,8 @@ export function useUpdateMachineWaterLevelsMutation() {
   const gatewayOrigin = useGatewayOrigin();
 
   return useMutation({
-    mutationFn: (levels: {
-      refillLevel: number;
-    }) => getClient(gatewayOrigin).updateMachineWaterLevels(levels),
+    mutationFn: (levels: { refillLevel: number }) =>
+      getClient(gatewayOrigin).updateMachineWaterLevels(levels),
   });
 }
 
@@ -310,8 +284,7 @@ export function useImportVisualizerProfileMutation() {
   const gatewayOrigin = useGatewayOrigin();
 
   return useMutation({
-    mutationFn: (shareCode: string) =>
-      getClient(gatewayOrigin).importVisualizerProfile(shareCode),
+    mutationFn: (shareCode: string) => getClient(gatewayOrigin).importVisualizerProfile(shareCode),
     onSuccess: async () => {
       await client.invalidateQueries({
         queryKey: bridgeQueryKeys.profiles(gatewayOrigin),

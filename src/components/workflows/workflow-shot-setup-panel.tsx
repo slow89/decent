@@ -1,9 +1,6 @@
 import type { FormEvent, ReactNode } from "react";
 
-import {
-  RecipePresetRow,
-  RecipeValueControl,
-} from "@/components/recipe/recipe-controls";
+import { RecipePresetRow, RecipeValueControl } from "@/components/recipe/recipe-controls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatBrewRatio, roundValue, type RecipePreset } from "@/lib/recipe-utils";
@@ -252,13 +249,7 @@ function WorkflowAdjustSection({
   );
 }
 
-function Field({
-  children,
-  label,
-}: {
-  children: ReactNode;
-  label: string;
-}) {
+function Field({ children, label }: { children: ReactNode; label: string }) {
   return (
     <label className="grid gap-0.5">
       <span className="font-mono text-[0.48rem] font-medium uppercase tracking-[0.1em] text-muted-foreground/70">

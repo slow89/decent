@@ -15,7 +15,7 @@ describe("useBridgeConfigStore", () => {
 
     expect(useBridgeConfigStore.getState().gatewayUrl).toBe("http://bridge.local:8080");
     expect(localStorage.getItem("espresso-cockpit-config")).toContain(
-      "\"gatewayUrl\":\"http://bridge.local:8080\"",
+      '"gatewayUrl":"http://bridge.local:8080"',
     );
   });
 });

@@ -254,9 +254,7 @@ describe("DashboardPage", () => {
 
     render(<DashboardPage />);
 
-    expect(screen.getByTestId("dashboard-tablet-prep-status")).toHaveTextContent(
-      "Heating up",
-    );
+    expect(screen.getByTestId("dashboard-tablet-prep-status")).toHaveTextContent("Heating up");
     expect(screen.getByText("90°C / 93°C")).toBeInTheDocument();
     expect(screen.getByText("89°C / 93°C")).toBeInTheDocument();
   });
@@ -274,9 +272,7 @@ describe("DashboardPage", () => {
 
     render(<DashboardPage />);
 
-    expect(screen.getByTestId("dashboard-tablet-prep-status")).toHaveTextContent(
-      "Ready to brew",
-    );
+    expect(screen.getByTestId("dashboard-tablet-prep-status")).toHaveTextContent("Ready to brew");
     expect(screen.getByText("90°C / 93°C")).toBeInTheDocument();
     expect(screen.getByText("89°C / 93°C")).toBeInTheDocument();
   });
@@ -456,11 +452,7 @@ describe("DashboardPage", () => {
   });
 });
 
-function buildSnapshot(
-  state: string,
-  substate = state,
-  overrides: Record<string, unknown> = {},
-) {
+function buildSnapshot(state: string, substate = state, overrides: Record<string, unknown> = {}) {
   return {
     timestamp: "2026-03-25T10:00:00.000Z",
     state: {

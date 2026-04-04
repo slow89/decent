@@ -13,10 +13,7 @@ import {
   type TelemetrySeriesId,
 } from "@/lib/telemetry";
 
-import type {
-  SelectableTelemetryChartPreset,
-  TelemetryChartPreset,
-} from "./shared";
+import type { SelectableTelemetryChartPreset, TelemetryChartPreset } from "./shared";
 
 export function TelemetryConfigOverlay({
   activePreset,

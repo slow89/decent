@@ -11,8 +11,7 @@ export function DashboardWaterAlertOverlay() {
   const dismissed = useWaterAlertStore((state) => state.dismissed);
   const dismiss = useWaterAlertStore((state) => state.dismiss);
   const resetDismiss = useWaterAlertStore((state) => state.resetDismiss);
-  const isThresholdLow =
-    currentLevel != null && refillLevel != null && currentLevel <= refillLevel;
+  const isThresholdLow = currentLevel != null && refillLevel != null && currentLevel <= refillLevel;
   const isNeedsWater = snapshot?.state.state === "needsWater";
   const isLow = isThresholdLow || isNeedsWater;
 

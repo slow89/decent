@@ -2,12 +2,7 @@ import type { MonitorStatusItem } from "@/components/chart-monitor/chrome";
 import type { WorkflowProfile } from "@/rest/types";
 
 export type FrameRecord = Record<string, unknown>;
-export type WorkflowFrameFamily =
-  | "pressure"
-  | "flow"
-  | "temperature"
-  | "progress"
-  | "other";
+export type WorkflowFrameFamily = "pressure" | "flow" | "temperature" | "progress" | "other";
 export type WorkflowFrameChartPreset = "core-frames" | "all-series" | "custom";
 export type WorkflowFrameSeriesId = string;
 export type WorkflowFrameChartSeriesDefinition = {
@@ -148,7 +143,10 @@ export function buildWorkflowFrameStatusItems({
     ...selectedSeries.map((series) => ({
       detail: familyLabels[series.family],
       label: series.shortLabel,
-      value: formatWorkflowSeriesValue(series, selectedSample ? series.accessor(selectedSample) : null),
+      value: formatWorkflowSeriesValue(
+        series,
+        selectedSample ? series.accessor(selectedSample) : null,
+      ),
     })),
   ];
 }
@@ -210,7 +208,9 @@ function buildSeriesDefinitions(
   const seriesFromFrames = numericKeys.map((key) => {
     const family = inferSeriesFamily(key);
     const palette = familyColorPalettes[family];
-    const familyIndex = numericKeys.filter((candidate) => inferSeriesFamily(candidate) === family).indexOf(key);
+    const familyIndex = numericKeys
+      .filter((candidate) => inferSeriesFamily(candidate) === family)
+      .indexOf(key);
     const values = samples
       .map((sample) => sample.values[key])
       .filter((value): value is number => value != null);
@@ -271,7 +271,12 @@ function pickDefaultSeriesIds(series: WorkflowFrameChartSeriesDefinition[]) {
   return [...selected];
 }
 
-function compareFrameKeys(leftKey: string, leftCount: number, rightKey: string, rightCount: number) {
+function compareFrameKeys(
+  leftKey: string,
+  leftCount: number,
+  rightKey: string,
+  rightCount: number,
+) {
   const leftPreferredIndex = getPreferredFrameKeyIndex(leftKey);
   const rightPreferredIndex = getPreferredFrameKeyIndex(rightKey);
 
@@ -288,7 +293,10 @@ function compareFrameKeys(leftKey: string, leftCount: number, rightKey: string, 
   }
 
   if (inferSeriesFamily(leftKey) !== inferSeriesFamily(rightKey)) {
-    return familyOrder.indexOf(inferSeriesFamily(leftKey)) - familyOrder.indexOf(inferSeriesFamily(rightKey));
+    return (
+      familyOrder.indexOf(inferSeriesFamily(leftKey)) -
+      familyOrder.indexOf(inferSeriesFamily(rightKey))
+    );
   }
 
   if (rightCount !== leftCount) {

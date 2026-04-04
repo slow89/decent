@@ -1,8 +1,4 @@
-import type {
-  ShotDetailRecord,
-  ShotMeasurement,
-  ShotRecord,
-} from "@/rest/types";
+import type { ShotDetailRecord, ShotMeasurement, ShotRecord } from "@/rest/types";
 import type { TelemetrySample } from "@/lib/telemetry";
 
 export function adaptShotMeasurementsToTelemetry(
@@ -89,9 +85,7 @@ export function getShotFinalWeight(measurements: ShotMeasurement[]) {
   return null;
 }
 
-export function getShotActualRatio(
-  shot: Pick<ShotDetailRecord, "measurements" | "workflow">,
-) {
+export function getShotActualRatio(shot: Pick<ShotDetailRecord, "measurements" | "workflow">) {
   const dose = shot.workflow?.context?.targetDoseWeight;
   const finalWeight = getShotFinalWeight(shot.measurements);
 

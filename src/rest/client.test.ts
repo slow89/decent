@@ -14,9 +14,7 @@ describe("createBridgeClient", () => {
       text: async () => JSON.stringify({ error: "Bridge offline" }),
     } as Response);
 
-    await expect(
-      createBridgeClient("http://bridge.local:8080").getMachineState(),
-    ).rejects.toEqual(
+    await expect(createBridgeClient("http://bridge.local:8080").getMachineState()).rejects.toEqual(
       expect.objectContaining<Partial<BridgeClientError>>({
         message: "Bridge offline",
         status: 500,
@@ -31,9 +29,7 @@ describe("createBridgeClient", () => {
       text: async () => "upstream timeout",
     } as Response);
 
-    await expect(
-      createBridgeClient("http://bridge.local:8080").getWorkflow(),
-    ).rejects.toEqual(
+    await expect(createBridgeClient("http://bridge.local:8080").getWorkflow()).rejects.toEqual(
       expect.objectContaining<Partial<BridgeClientError>>({
         message: "upstream timeout",
         status: 503,

@@ -8,17 +8,11 @@ import {
 
 test.describe("dashboard", () => {
   function usesTabletDashboardLayout(projectName: string) {
-    return (
-      projectName === "tablet-sm-portrait" ||
-      projectName === "tablet-7-landscape"
-    );
+    return projectName === "tablet-sm-portrait" || projectName === "tablet-7-landscape";
   }
 
   function isTabletProject(projectName: string) {
-    return (
-      usesTabletDashboardLayout(projectName) ||
-      projectName === "tablet-sm-landscape"
-    );
+    return usesTabletDashboardLayout(projectName) || projectName === "tablet-sm-landscape";
   }
 
   test("@smoke renders the idle tablet workspace without layout regressions", async ({
@@ -99,11 +93,7 @@ test.describe("dashboard", () => {
     });
   });
 
-  test("surfaces unpaired-scale guidance on tablet", async ({
-    app,
-    browserSignals,
-    page,
-  }) => {
+  test("surfaces unpaired-scale guidance on tablet", async ({ app, browserSignals, page }) => {
     await app.gotoScenario({
       route: "/",
       scenarioId: "dashboard-no-scale",

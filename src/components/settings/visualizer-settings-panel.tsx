@@ -267,11 +267,7 @@ export function VisualizerSettingsPanel() {
             size="sm"
             type="button"
           >
-            {updateSettingsMutation.isPending
-              ? "Saving"
-              : isEnabled
-                ? "Save"
-                : "Enable uploads"}
+            {updateSettingsMutation.isPending ? "Saving" : isEnabled ? "Save" : "Enable uploads"}
           </Button>
         )}
 

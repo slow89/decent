@@ -3,14 +3,8 @@ import { create } from "zustand";
 import { showVisualizerToast } from "@/lib/toast";
 import { isVisualizerEnabled } from "@/lib/visualizer";
 import { queryClient } from "@/rest/query-client";
-import {
-  bridgeQueryKeys,
-  getGatewayOrigin,
-} from "@/rest/queries";
-import type {
-  MachineSnapshot,
-  VisualizerPluginSettings,
-} from "@/rest/types";
+import { bridgeQueryKeys, getGatewayOrigin } from "@/rest/queries";
+import type { MachineSnapshot, VisualizerPluginSettings } from "@/rest/types";
 
 interface VisualizerRuntimeState {
   handleSnapshot: (snapshot: MachineSnapshot) => void;

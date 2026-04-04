@@ -32,11 +32,7 @@ export function formatSecondaryNumber(
   return `${value.toFixed(digits)}${suffix}`;
 }
 
-export function metricCell(
-  value: number | null | undefined,
-  suffix: string,
-  digits = 1,
-) {
+export function metricCell(value: number | null | undefined, suffix: string, digits = 1) {
   if (value == null || Number.isNaN(value)) {
     return "-";
   }

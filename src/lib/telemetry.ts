@@ -298,9 +298,14 @@ export function getTelemetryTimelineSample(samples: TelemetrySample[]) {
   return shotSamples.length > 0 ? shotSamples : samples;
 }
 
-export function appendTelemetryHistory(telemetry: TelemetrySample[], snapshot: MachineSnapshot, scaleSnapshot?: ScaleSnapshot | null) {
+export function appendTelemetryHistory(
+  telemetry: TelemetrySample[],
+  snapshot: MachineSnapshot,
+  scaleSnapshot?: ScaleSnapshot | null,
+) {
   const previousSample = telemetry[telemetry.length - 1];
-  const firstTimestampMs = getTimestampMs(telemetry[0]?.timestamp) ?? getTimestampMs(snapshot.timestamp);
+  const firstTimestampMs =
+    getTimestampMs(telemetry[0]?.timestamp) ?? getTimestampMs(snapshot.timestamp);
   const currentTimestampMs = getTimestampMs(snapshot.timestamp);
   const elapsedSeconds =
     firstTimestampMs == null || currentTimestampMs == null
@@ -312,8 +317,7 @@ export function appendTelemetryHistory(telemetry: TelemetrySample[], snapshot: M
     previousSample?.shotElapsedSeconds != null && previousSampleTimestampMs != null
       ? previousSampleTimestampMs - previousSample.shotElapsedSeconds * 1000
       : null;
-  const shotStarted =
-    snapshot.state.state === "espresso" && previousSample?.state !== "espresso";
+  const shotStarted = snapshot.state.state === "espresso" && previousSample?.state !== "espresso";
   const shotStartTimestampMs =
     snapshot.state.state !== "espresso"
       ? null

@@ -1,12 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDevicesQuery, useScanDevicesMutation } from "@/rest/queries";
 
 export function DevicesPage() {
@@ -30,8 +24,8 @@ export function DevicesPage() {
             </div>
           </div>
           <CardDescription>
-            Streamline Bridge already owns scan and connection policy. The skin
-            should mostly visualize state and let the bridge stay authoritative.
+            Streamline Bridge already owns scan and connection policy. The skin should mostly
+            visualize state and let the bridge stay authoritative.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
@@ -80,8 +74,7 @@ export function DevicesPage() {
             <CardHeader>
               <CardTitle>No discovered devices</CardTitle>
               <CardDescription>
-                Use scan to let the bridge discover and connect preferred
-                machine and scale devices.
+                Use scan to let the bridge discover and connect preferred machine and scale devices.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -91,13 +84,7 @@ export function DevicesPage() {
   );
 }
 
-function DeviceRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function DeviceRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[18px] border border-border/70 bg-background/50 p-4">
       <p className="font-mono text-[0.58rem] font-medium uppercase tracking-[0.18em] text-muted-foreground">

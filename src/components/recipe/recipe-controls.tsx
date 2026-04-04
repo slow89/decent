@@ -72,7 +72,12 @@ export function RecipeValueControl({
       </RecipeControlButton>
 
       <div className="min-w-0 text-center">
-        <p className={cn("font-mono text-[0.88rem] font-semibold tabular-nums text-foreground", valueClassName)}>
+        <p
+          className={cn(
+            "font-mono text-[0.88rem] font-semibold tabular-nums text-foreground",
+            valueClassName,
+          )}
+        >
           {value}
         </p>
       </div>
@@ -107,7 +112,12 @@ export function RecipePresetRow({
   presets: ReadonlyArray<RecipePreset>;
 }) {
   return (
-    <div className={cn("grid grid-cols-4 gap-1 text-[0.72rem] font-medium text-muted-foreground", className)}>
+    <div
+      className={cn(
+        "grid grid-cols-4 gap-1 text-[0.72rem] font-medium text-muted-foreground",
+        className,
+      )}
+    >
       {presets.map((preset) => (
         <button
           key={preset.label}

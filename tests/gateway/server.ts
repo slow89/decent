@@ -82,10 +82,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
   });
 }
 
-async function handleRequest(
-  request: http.IncomingMessage,
-  response: http.ServerResponse,
-) {
+async function handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
   const method = normalizeMethod(request.method);
   const url = new URL(request.url ?? "/", `http://${gatewayHost}:${gatewayPort}`);
   const path = url.pathname;
@@ -184,7 +181,8 @@ async function handleRequest(
       pressure: nextState === "espresso" ? 8.8 : 0,
       state: {
         state: nextState,
-        substate: nextState === "sleeping" ? "idle" : nextState === "espresso" ? "pouring" : "ready",
+        substate:
+          nextState === "sleeping" ? "idle" : nextState === "espresso" ? "pouring" : "ready",
       },
       timestamp: new Date().toISOString(),
     };
@@ -457,7 +455,9 @@ async function handleRequest(
 
   if (method === "POST" && path === "/api/v1/plugins/visualizer.reaplugin/import") {
     const body = await readJsonBody(request);
-    const shareCode = String(body?.shareCode ?? "").trim().toUpperCase();
+    const shareCode = String(body?.shareCode ?? "")
+      .trim()
+      .toUpperCase();
     const profileId = `profile:imported:${shareCode || "AB12"}`;
     const profileTitle = `Imported ${shareCode || "AB12"}`;
 
@@ -615,9 +615,7 @@ function getChannelPayload(channel: GatewayStreamChannel) {
   return runtime.state.waterLevels;
 }
 
-function createScenarioRuntime(
-  scenarioId: GatewayScenarioId,
-): GatewayRuntimeState {
+function createScenarioRuntime(scenarioId: GatewayScenarioId): GatewayRuntimeState {
   const scenario = gatewayScenarios[scenarioId];
 
   return {
@@ -649,10 +647,7 @@ function summarizeRuntime() {
   };
 }
 
-function takeRouteFault(
-  method: GatewayRouteFault["method"],
-  path: string,
-) {
+function takeRouteFault(method: GatewayRouteFault["method"], path: string) {
   const faultIndex = runtime.activeFaults.findIndex(
     (entry) => entry.method === method && entry.path === path,
   );
@@ -686,11 +681,7 @@ function mergeRuntimeState(
 
     const currentValue = nextState[key];
 
-    if (
-      currentValue != null &&
-      !Array.isArray(currentValue) &&
-      typeof currentValue === "object"
-    ) {
+    if (currentValue != null && !Array.isArray(currentValue) && typeof currentValue === "object") {
       nextState[key] = mergeRecord(currentValue, value) as never;
       continue;
     }
@@ -701,10 +692,7 @@ function mergeRuntimeState(
   return nextState;
 }
 
-function mergeRecord<T extends object>(
-  current: T,
-  patch: unknown,
-): T {
+function mergeRecord<T extends object>(current: T, patch: unknown): T {
   if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
     return current;
   }
@@ -722,10 +710,7 @@ function mergeRecord<T extends object>(
       typeof value === "object" &&
       typeof currentValue === "object"
     ) {
-      next[key] = mergeRecord(
-        currentValue as Record<string, unknown>,
-        value,
-      );
+      next[key] = mergeRecord(currentValue as Record<string, unknown>, value);
       continue;
     }
 
@@ -755,11 +740,7 @@ async function readJsonBody(request: http.IncomingMessage) {
   return JSON.parse(rawBody) as Record<string, unknown>;
 }
 
-function sendJson(
-  response: http.ServerResponse,
-  status: number,
-  payload: unknown,
-) {
+function sendJson(response: http.ServerResponse, status: number, payload: unknown) {
   const body = JSON.stringify(payload);
   response.writeHead(status, {
     ...corsHeaders(),
