@@ -16,6 +16,7 @@ describe("BridgeShellEffects", () => {
       gatewayUrl: "http://bridge.local:8080",
     });
     useDevicesStore.setState({
+      autoConnectRequested: false,
       connection: "live",
       connectionStatus: {
         error: null,
@@ -34,6 +35,7 @@ describe("BridgeShellEffects", () => {
       scan: vi.fn(async () => undefined),
       scanning: false,
       socket: null,
+      requestAutoConnect: vi.fn(async () => undefined),
     });
     useMachineStore.setState({
       error: null,

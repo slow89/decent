@@ -124,4 +124,43 @@ describe("useDevicesStore", () => {
       }),
     ]);
   });
+
+  it("requests one auto-connect scan through the devices socket", async () => {
+    await useDevicesStore.getState().connect();
+    MockWebSocket.instances[0]?.emitOpen();
+
+    await useDevicesStore.getState().requestAutoConnect();
+    await useDevicesStore.getState().requestAutoConnect();
+
+    expect(MockWebSocket.instances[0]?.sent).toEqual([
+      JSON.stringify({
+        command: "scan",
+        connect: true,
+        quick: true,
+      }),
+    ]);
+    expect(useDevicesStore.getState().autoConnectRequested).toBe(true);
+
+    MockWebSocket.instances[0]?.emitMessage({
+      connectionStatus: {
+        error: null,
+        foundMachines: [],
+        foundScales: [],
+        pendingAmbiguity: null,
+        phase: "ready",
+      },
+      devices: [
+        {
+          id: "scale-1",
+          name: "Acaia Lunar",
+          state: "connected",
+          type: "scale",
+        },
+      ],
+      scanning: false,
+      timestamp: "2026-04-04T00:00:00.000Z",
+    });
+
+    expect(useDevicesStore.getState().autoConnectRequested).toBe(true);
+  });
 });

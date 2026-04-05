@@ -18,11 +18,13 @@ type DevicesCommand =
     };
 
 interface DevicesStoreState {
+  autoConnectRequested: boolean;
   connection: DevicesConnectionState;
   connectionStatus: DevicesConnectionStatus | null;
   devices: DeviceSummary[];
   error: string | null;
   scanning: boolean;
+  requestAutoConnect: () => Promise<void>;
   socket: WebSocket | null;
   connect: () => Promise<void>;
   connectDevice: (deviceId: string) => Promise<void>;
@@ -57,6 +59,7 @@ function sendDevicesCommand(socket: WebSocket | null, command: DevicesCommand) {
 }
 
 export const useDevicesStore = create<DevicesStoreState>((set, get) => ({
+  autoConnectRequested: false,
   connection: "idle",
   connectionStatus: null,
   devices: [],
@@ -71,6 +74,7 @@ export const useDevicesStore = create<DevicesStoreState>((set, get) => ({
 
       socket.onopen = () => {
         set({
+          autoConnectRequested: false,
           connection: "live",
           error: null,
         });
@@ -88,6 +92,10 @@ export const useDevicesStore = create<DevicesStoreState>((set, get) => ({
         }
 
         set({
+          autoConnectRequested:
+            parsed.data.devices.some(
+              (device) => device.type === "scale" && device.state === "connected",
+            ) || get().autoConnectRequested,
           connection: "live",
           connectionStatus: parsed.data.connectionStatus ?? null,
           devices: parsed.data.devices,
@@ -114,6 +122,7 @@ export const useDevicesStore = create<DevicesStoreState>((set, get) => ({
       };
 
       set({
+        autoConnectRequested: false,
         connection: "connecting",
         connectionStatus: null,
         devices: [],
@@ -123,6 +132,7 @@ export const useDevicesStore = create<DevicesStoreState>((set, get) => ({
       });
     } catch (error) {
       set({
+        autoConnectRequested: false,
         connection: "error",
         connectionStatus: null,
         devices: [],
@@ -156,6 +166,7 @@ export const useDevicesStore = create<DevicesStoreState>((set, get) => ({
     }
 
     set({
+      autoConnectRequested: false,
       connection: "idle",
       connectionStatus: null,
       devices: [],
@@ -163,6 +174,28 @@ export const useDevicesStore = create<DevicesStoreState>((set, get) => ({
       scanning: false,
       socket: null,
     });
+  },
+  async requestAutoConnect() {
+    if (get().autoConnectRequested) {
+      return;
+    }
+
+    try {
+      sendDevicesCommand(get().socket, {
+        command: "scan",
+        connect: true,
+        quick: true,
+      });
+
+      set({
+        autoConnectRequested: true,
+        error: null,
+      });
+    } catch (error) {
+      set({
+        error: getErrorMessage(error),
+      });
+    }
   },
   async disconnectDevice(deviceId) {
     try {
