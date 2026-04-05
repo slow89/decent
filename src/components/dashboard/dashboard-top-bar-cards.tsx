@@ -65,20 +65,38 @@ export function ReservoirStatusCard() {
     reservoirLevel != null &&
     reservoirRefillLevel != null &&
     reservoirLevel <= reservoirRefillLevel;
-  const statusLabel =
-    reservoirLevel == null
-      ? "No feed"
-      : isLow
-        ? "Refill"
-        : reservoirRefillLevel == null
-          ? "Live"
-          : `Warn ${formatMillimeters(reservoirRefillLevel)}`;
+  const hasLevel = reservoirLevel != null;
+  const hasThreshold = reservoirRefillLevel != null;
+
+  // Calculate fill percentage for the visual bar (cap at 100%)
+  const fillPercent =
+    hasLevel && hasThreshold && reservoirRefillLevel > 0
+      ? Math.min(100, Math.round((reservoirLevel / (reservoirRefillLevel * 4)) * 100))
+      : null;
+  const thresholdPercent =
+    hasThreshold ? Math.min(100, Math.round((1 / 4) * 100))
+      : null;
 
   return (
-    <div className="min-w-[120px] flex-1 rounded-[4px] border border-border bg-panel-strong/80 px-2.5 py-1 md:flex-none md:max-w-[160px]">
+    <div
+      className={cn(
+        "min-w-[120px] flex-1 rounded-[4px] border px-2.5 py-1 md:flex-none md:max-w-[160px]",
+        isLow
+          ? "border-status-warning-foreground/50 bg-status-warning-surface"
+          : "border-border bg-panel-strong/80",
+      )}
+    >
+      {/* Header row: label + level value */}
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1 font-mono text-[0.46rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          <Droplets className="size-2 text-highlight-muted" />
+        <p
+          className={cn(
+            "flex items-center gap-1 font-mono text-[0.46rem] font-semibold uppercase tracking-[0.08em]",
+            isLow ? "text-status-warning-foreground" : "text-muted-foreground",
+          )}
+        >
+          <Droplets
+            className={cn("size-2", isLow ? "text-status-warning-foreground" : "text-highlight-muted")}
+          />
           Res
         </p>
         <p
@@ -91,15 +109,39 @@ export function ReservoirStatusCard() {
         </p>
       </div>
 
-      <div className="mt-1 grid gap-0.5">
-        <p className="shrink-0 font-mono text-[0.42rem] font-medium uppercase tracking-[0.06em] text-muted-foreground/90">
-          {statusLabel}
-        </p>
-        <p className="font-mono text-[0.42rem] uppercase tracking-[0.06em] text-muted-foreground/70">
-          {reservoirRefillLevel == null
-            ? "Threshold unavailable"
-            : `Threshold ${formatMillimeters(reservoirRefillLevel)}`}
-        </p>
+      {/* Visual level bar */}
+      <div className="mt-1.5 mb-0.5">
+        <div className="relative h-[5px] w-full overflow-hidden rounded-full bg-border/60">
+          {fillPercent != null && (
+            <div
+              className={cn(
+                "absolute inset-y-0 left-0 rounded-full transition-all duration-500",
+                isLow
+                  ? "bg-status-warning-foreground"
+                  : "bg-highlight-muted",
+              )}
+              style={{ width: `${fillPercent}%` }}
+            />
+          )}
+          {thresholdPercent != null && (
+            <div
+              className="absolute inset-y-0 w-[2px] -translate-x-1/2 bg-muted-foreground/60"
+              style={{ left: `${thresholdPercent}%` }}
+              title={`Refill at ${formatMillimeters(reservoirRefillLevel)}`}
+            />
+          )}
+        </div>
+        {/* Bar legend */}
+        <div className="mt-0.5 flex items-center justify-between">
+          <p className="font-mono text-[0.38rem] uppercase tracking-[0.06em] text-muted-foreground/70">
+            {hasThreshold ? `Refill @ ${formatMillimeters(reservoirRefillLevel)}` : "No threshold"}
+          </p>
+          {isLow && (
+            <p className="font-mono text-[0.38rem] font-bold uppercase tracking-[0.06em] text-status-warning-foreground">
+              Low
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

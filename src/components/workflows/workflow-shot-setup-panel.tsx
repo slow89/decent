@@ -86,14 +86,13 @@ export function WorkflowShotSetupPanel() {
         onSubmit={handleShotSetupSubmit}
       >
         <section className="border-b border-border/40 px-3 py-2.5 md:px-4 md:py-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <p className="font-mono text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-highlight-muted md:text-[0.64rem]">
               Recipe
             </p>
-            <span className="font-mono text-[0.5rem] text-muted-foreground/60">|</span>
-            <p className="font-mono text-[0.64rem] font-medium tabular-nums text-muted-foreground md:text-[0.68rem]">
-              ({ratio})
-            </p>
+            <span className="inline-flex items-center gap-[0.3em] rounded-full border border-highlight-muted/20 bg-highlight-muted/[0.06] px-2 py-[0.15rem] font-mono text-[0.58rem] font-semibold tabular-nums text-highlight-muted/80 md:text-[0.62rem]">
+              {ratio}
+            </span>
           </div>
 
           <div className="mt-2 grid gap-3 md:grid-cols-2 md:gap-5">
