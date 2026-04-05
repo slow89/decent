@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
+import { useDevicesStore } from "@/stores/devices-store";
 import { useDisplayStore } from "@/stores/display-store";
 import { useMachineStore } from "@/stores/machine-store";
 import { usePresenceStore } from "@/stores/presence-store";
@@ -11,28 +12,20 @@ import { SettingsPage } from "./settings-page";
 
 const {
   routerInvalidate,
-  useConnectDeviceMutationMock,
-  useDevicesQueryMock,
-  useDisconnectDeviceMutationMock,
   usePresenceSettingsQueryMock,
-  useScanDevicesMutationMock,
   useUpdateBridgeSettingsMutationMock,
   useUpdateMachineWaterLevelsMutationMock,
-  useUpdateVisualizerSettingsMutationMock,
   useUpdatePresenceSettingsMutationMock,
+  useUpdateVisualizerSettingsMutationMock,
   useVerifyVisualizerCredentialsMutationMock,
   useVisualizerSettingsQueryMock,
 } = vi.hoisted(() => ({
-  useConnectDeviceMutationMock: vi.fn(),
-  useDisconnectDeviceMutationMock: vi.fn(),
-  usePresenceSettingsQueryMock: vi.fn(),
   routerInvalidate: vi.fn(async () => undefined),
-  useDevicesQueryMock: vi.fn(),
-  useScanDevicesMutationMock: vi.fn(),
+  usePresenceSettingsQueryMock: vi.fn(),
   useUpdateBridgeSettingsMutationMock: vi.fn(),
   useUpdateMachineWaterLevelsMutationMock: vi.fn(),
-  useUpdateVisualizerSettingsMutationMock: vi.fn(),
   useUpdatePresenceSettingsMutationMock: vi.fn(),
+  useUpdateVisualizerSettingsMutationMock: vi.fn(),
   useVerifyVisualizerCredentialsMutationMock: vi.fn(),
   useVisualizerSettingsQueryMock: vi.fn(),
 }));
@@ -48,11 +41,7 @@ vi.mock("@/rest/queries", async () => {
 
   return {
     ...actual,
-    useConnectDeviceMutation: useConnectDeviceMutationMock,
-    useDisconnectDeviceMutation: useDisconnectDeviceMutationMock,
-    useDevicesQuery: useDevicesQueryMock,
     usePresenceSettingsQuery: usePresenceSettingsQueryMock,
-    useScanDevicesMutation: useScanDevicesMutationMock,
     useUpdateBridgeSettingsMutation: useUpdateBridgeSettingsMutationMock,
     useUpdateMachineWaterLevelsMutation: useUpdateMachineWaterLevelsMutationMock,
     useUpdatePresenceSettingsMutation: useUpdatePresenceSettingsMutationMock,
@@ -63,9 +52,9 @@ vi.mock("@/rest/queries", async () => {
 });
 
 describe("SettingsPage", () => {
-  const connectMutateAsync = vi.fn(async () => undefined);
-  const disconnectMutateAsync = vi.fn(async () => undefined);
-  const scanMutateAsync = vi.fn(async () => []);
+  const connectDevice = vi.fn(async () => undefined);
+  const disconnectDevice = vi.fn(async () => undefined);
+  const scan = vi.fn(async () => undefined);
   const updateBridgeSettingsMutateAsync = vi.fn(async (settings: unknown) => settings);
   const updateMachineWaterLevelsMutateAsync = vi.fn(async (levels: unknown) => levels);
   const updatePresenceSettingsMutateAsync = vi.fn(async (patch: unknown) => patch);
@@ -105,6 +94,39 @@ describe("SettingsPage", () => {
     useBridgeConfigStore.setState({
       gatewayUrl: "http://bridge.local:8080",
     });
+    useDevicesStore.setState({
+      connection: "live",
+      connectionStatus: {
+        error: null,
+        foundMachines: [],
+        foundScales: [],
+        pendingAmbiguity: null,
+        phase: "ready",
+      },
+      connect: vi.fn(async () => undefined),
+      connectDevice,
+      devices: [
+        {
+          id: "scale-1",
+          name: "Acaia Lunar",
+          state: "connected",
+          type: "scale",
+        },
+        {
+          id: "machine-2",
+          name: "DE1XL",
+          state: "disconnected",
+          type: "machine",
+        },
+      ],
+      disconnect: vi.fn(() => undefined),
+      disconnectDevice,
+      error: null,
+      reset: vi.fn(() => undefined),
+      scan,
+      scanning: false,
+      socket: null,
+    });
     useDisplayStore.setState({
       connection: "live",
       displayState: {
@@ -123,13 +145,14 @@ describe("SettingsPage", () => {
     });
     useMachineStore.setState({
       error: null,
-      lastScaleReconnectAttemptAt: null,
       liveConnection: "live",
       machineSocket: null,
       scaleConnection: "idle",
       scaleSnapshot: null,
       scaleSocket: null,
       telemetry: [],
+      timeToReady: null,
+      timeToReadySocket: null,
       waterConnection: "live",
       waterLevels: {
         currentLevel: 48,
@@ -140,7 +163,6 @@ describe("SettingsPage", () => {
     usePresenceStore.setState({
       error: null,
       isSending: false,
-      lastHeartbeatAt: null,
       timeoutSeconds: 1800,
     });
     useThemeStore.setState({
@@ -149,37 +171,6 @@ describe("SettingsPage", () => {
     document.documentElement.dataset.theme = "dark";
 
     routerInvalidate.mockResolvedValue(undefined);
-    useConnectDeviceMutationMock.mockReturnValue({
-      error: null,
-      isPending: false,
-      mutateAsync: connectMutateAsync,
-      variables: null,
-    });
-    useDisconnectDeviceMutationMock.mockReturnValue({
-      error: null,
-      isPending: false,
-      mutateAsync: disconnectMutateAsync,
-      variables: null,
-    });
-    useDevicesQueryMock.mockReturnValue({
-      data: [
-        {
-          id: "scale-1",
-          name: "Acaia Lunar",
-          state: "connected",
-          type: "scale",
-        },
-        {
-          id: "machine-2",
-          name: "DE1XL",
-          state: "disconnected",
-          type: "machine",
-        },
-      ],
-      error: null,
-      isFetching: false,
-      refetch: vi.fn(async () => undefined),
-    });
     usePresenceSettingsQueryMock.mockReturnValue({
       data: {
         schedules: [],
@@ -188,11 +179,6 @@ describe("SettingsPage", () => {
       },
       error: null,
       isPending: false,
-    });
-    useScanDevicesMutationMock.mockReturnValue({
-      error: null,
-      isPending: false,
-      mutateAsync: scanMutateAsync,
     });
     useUpdateBridgeSettingsMutationMock.mockReturnValue({
       error: null,
@@ -232,9 +218,6 @@ describe("SettingsPage", () => {
   it("shows the current bridge URL and endpoint preview", () => {
     render(<SettingsPage />);
 
-    expect(useDevicesQueryMock).toHaveBeenCalledWith({
-      refetchInterval: 3000,
-    });
     expect(screen.getByDisplayValue("http://bridge.local:8080")).toBeInTheDocument();
     expect(screen.getByText("http://bridge.local:8080/api/v1/workflow")).toBeInTheDocument();
     expect(screen.getByText("ws://bridge.local:8080/ws/v1/machine/snapshot")).toBeInTheDocument();
@@ -287,7 +270,7 @@ describe("SettingsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Connect machine" }));
 
     await waitFor(() => {
-      expect(connectMutateAsync).toHaveBeenCalledWith("machine-2");
+      expect(connectDevice).toHaveBeenCalledWith("machine-2");
     });
   });
 
@@ -300,13 +283,13 @@ describe("SettingsPage", () => {
       expect(updateBridgeSettingsMutateAsync).toHaveBeenCalledWith({
         preferredScaleId: null,
       });
-      expect(disconnectMutateAsync).toHaveBeenCalledWith("scale-1");
+      expect(disconnectDevice).toHaveBeenCalledWith("scale-1");
     });
   });
 
   it("shows an explicit pair action for discovered scales", () => {
-    useDevicesQueryMock.mockReturnValue({
-      data: [
+    useDevicesStore.setState({
+      devices: [
         {
           id: "scale-1",
           name: "Acaia Lunar",
@@ -314,9 +297,6 @@ describe("SettingsPage", () => {
           type: "scale",
         },
       ],
-      error: null,
-      isFetching: false,
-      refetch: vi.fn(async () => undefined),
     });
 
     render(<SettingsPage />);
@@ -333,7 +313,7 @@ describe("SettingsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Find only" }));
 
     await waitFor(() => {
-      expect(scanMutateAsync).toHaveBeenCalledWith({ connect: false });
+      expect(scan).toHaveBeenCalledWith({ connect: false });
     });
   });
 
@@ -381,12 +361,10 @@ describe("SettingsPage", () => {
     expect(screen.getByLabelText("Water alert threshold")).toBeDisabled();
   });
 
-  it("shows the device loading state when the bridge query is refreshing", () => {
-    useDevicesQueryMock.mockReturnValue({
-      data: [],
-      error: null,
-      isFetching: true,
-      refetch: vi.fn(async () => undefined),
+  it("shows the device loading state while the devices socket is connecting", () => {
+    useDevicesStore.setState({
+      connection: "connecting",
+      devices: [],
     });
 
     render(<SettingsPage />);
@@ -395,11 +373,8 @@ describe("SettingsPage", () => {
   });
 
   it("shows the empty device state when no tracked devices are returned", () => {
-    useDevicesQueryMock.mockReturnValue({
-      data: [],
-      error: null,
-      isFetching: false,
-      refetch: vi.fn(async () => undefined),
+    useDevicesStore.setState({
+      devices: [],
     });
 
     render(<SettingsPage />);
@@ -411,11 +386,9 @@ describe("SettingsPage", () => {
   });
 
   it("shows the device error state when discovery cannot be read", () => {
-    useDevicesQueryMock.mockReturnValue({
-      data: [],
-      error: new Error("Bridge offline"),
-      isFetching: false,
-      refetch: vi.fn(async () => undefined),
+    useDevicesStore.setState({
+      devices: [],
+      error: "Bridge offline",
     });
 
     render(<SettingsPage />);

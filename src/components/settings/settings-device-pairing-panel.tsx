@@ -1,27 +1,18 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  useConnectDeviceMutation,
-  useDevicesQuery,
-  useDisconnectDeviceMutation,
-  useScanDevicesMutation,
-  useUpdateBridgeSettingsMutation,
-} from "@/rest/queries";
+import { useUpdateBridgeSettingsMutation } from "@/rest/queries";
 import type { DeviceSummary } from "@/rest/types";
 import { MetricTile, SettingsSection, StateCallout } from "@/components/settings/settings-shell";
+import { useDevicesStore } from "@/stores/devices-store";
 
 export function SettingsDevicePairingPanel() {
-  const deviceRefreshMs = 3_000;
-  const {
-    data: devices = [],
-    error: devicesError,
-    isFetching: isFetchingDevices,
-  } = useDevicesQuery({
-    refetchInterval: deviceRefreshMs,
-  });
-  const scanDevicesMutation = useScanDevicesMutation();
-  const connectDeviceMutation = useConnectDeviceMutation();
-  const disconnectDeviceMutation = useDisconnectDeviceMutation();
+  const connection = useDevicesStore((state) => state.connection);
+  const devices = useDevicesStore((state) => state.devices);
+  const devicesError = useDevicesStore((state) => state.error);
+  const isScanning = useDevicesStore((state) => state.scanning);
+  const scanDevices = useDevicesStore((state) => state.scan);
+  const connectDevice = useDevicesStore((state) => state.connectDevice);
+  const disconnectDevice = useDevicesStore((state) => state.disconnectDevice);
   const updateBridgeSettingsMutation = useUpdateBridgeSettingsMutation();
   const connectedDevices = devices.filter((device) => device.state === "connected");
   const disconnectedDevices = devices.filter((device) => device.state !== "connected");
@@ -33,7 +24,7 @@ export function SettingsDevicePairingPanel() {
       });
     }
 
-    await disconnectDeviceMutation.mutateAsync(device.id);
+    await disconnectDevice(device.id);
   }
 
   return (
@@ -47,16 +38,16 @@ export function SettingsDevicePairingPanel() {
 
           <Button
             className="col-span-2 min-h-[38px] rounded-[3px] px-3 text-[0.54rem] uppercase tracking-[0.14em] sm:col-span-1"
-            disabled={scanDevicesMutation.isPending}
-            onClick={() => void scanDevicesMutation.mutateAsync(undefined)}
+            disabled={connection !== "live" || isScanning}
+            onClick={() => void scanDevices()}
             size="sm"
           >
-            {scanDevicesMutation.isPending ? "Scanning" : "Find & pair"}
+            {isScanning ? "Scanning" : "Find & pair"}
           </Button>
           <Button
             className="col-span-1 min-h-[38px] rounded-[3px] px-3 text-[0.54rem] uppercase tracking-[0.14em] sm:col-span-1"
-            disabled={scanDevicesMutation.isPending}
-            onClick={() => void scanDevicesMutation.mutateAsync({ connect: false })}
+            disabled={connection !== "live" || isScanning}
+            onClick={() => void scanDevices({ connect: false })}
             size="sm"
             variant="outline"
           >
@@ -65,19 +56,15 @@ export function SettingsDevicePairingPanel() {
         </div>
 
         <DeviceSummaryPanel
-          connectPendingDeviceId={
-            connectDeviceMutation.isPending ? connectDeviceMutation.variables : null
-          }
-          disconnectPendingDeviceId={
-            disconnectDeviceMutation.isPending ? disconnectDeviceMutation.variables : null
-          }
+          connectPendingDeviceId={null}
+          disconnectPendingDeviceId={null}
           devices={devices}
-          errorMessage={devicesError?.message}
-          isFetching={isFetchingDevices}
+          errorMessage={devicesError ?? undefined}
+          isFetching={connection === "connecting"}
           isMutatingSettings={updateBridgeSettingsMutation.isPending}
-          onConnectDevice={(deviceId) => void connectDeviceMutation.mutateAsync(deviceId)}
+          onConnectDevice={(deviceId) => void connectDevice(deviceId)}
           onDisconnectDevice={(device) => void handleDisconnectDevice(device)}
-          scanErrorMessage={scanDevicesMutation.error?.message}
+          scanErrorMessage={undefined}
         />
       </div>
     </SettingsSection>

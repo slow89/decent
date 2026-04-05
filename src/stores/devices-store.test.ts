@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 
-import { useDisplayStore } from "./display-store";
+import { useDevicesStore } from "./devices-store";
 
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
@@ -41,7 +41,7 @@ class MockWebSocket {
   }
 }
 
-describe("useDisplayStore", () => {
+describe("useDevicesStore", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -56,64 +56,71 @@ describe("useDisplayStore", () => {
       gatewayUrl: "http://bridge.local:8080",
     });
 
-    useDisplayStore.getState().reset();
+    useDevicesStore.getState().reset();
   });
 
-  it("connects to the display stream and stores the latest state", async () => {
-    await useDisplayStore.getState().connect();
+  it("connects to the devices stream and stores the latest snapshot", async () => {
+    await useDevicesStore.getState().connect();
 
     expect(MockWebSocket.instances).toHaveLength(1);
-    expect(MockWebSocket.instances[0]?.url).toBe("ws://bridge.local:8080/ws/v1/display");
+    expect(MockWebSocket.instances[0]?.url).toBe("ws://bridge.local:8080/ws/v1/devices");
 
     MockWebSocket.instances[0]?.emitOpen();
     MockWebSocket.instances[0]?.emitMessage({
-      wakeLockEnabled: true,
-      wakeLockOverride: false,
-      brightness: 75,
-      requestedBrightness: 75,
-      lowBatteryBrightnessActive: false,
-      platformSupported: {
-        brightness: true,
-        wakeLock: true,
+      connectionStatus: {
+        error: null,
+        foundMachines: [],
+        foundScales: [],
+        pendingAmbiguity: null,
+        phase: "ready",
       },
+      devices: [
+        {
+          id: "scale-1",
+          name: "Acaia Lunar",
+          state: "connected",
+          type: "scale",
+        },
+      ],
+      scanning: false,
+      timestamp: "2026-04-04T00:00:00.000Z",
     });
 
-    expect(useDisplayStore.getState()).toMatchObject({
+    expect(useDevicesStore.getState()).toMatchObject({
       connection: "live",
-      displayState: {
-        brightness: 75,
-        wakeLockEnabled: true,
-      },
+      devices: [
+        {
+          id: "scale-1",
+          name: "Acaia Lunar",
+          state: "connected",
+          type: "scale",
+        },
+      ],
+      scanning: false,
     });
   });
 
-  it("sends brightness updates through the display socket", async () => {
-    await useDisplayStore.getState().connect();
+  it("sends device commands through the devices socket", async () => {
+    await useDevicesStore.getState().connect();
     MockWebSocket.instances[0]?.emitOpen();
 
-    await useDisplayStore.getState().setBrightness(40);
+    await useDevicesStore.getState().scan({ connect: false });
+    await useDevicesStore.getState().connectDevice("scale-1");
+    await useDevicesStore.getState().disconnectDevice("scale-1");
 
     expect(MockWebSocket.instances[0]?.sent).toEqual([
       JSON.stringify({
-        brightness: 40,
-        command: "setBrightness",
-      }),
-    ]);
-  });
-
-  it("sends wake lock commands through the display socket", async () => {
-    await useDisplayStore.getState().connect();
-    MockWebSocket.instances[0]?.emitOpen();
-
-    await useDisplayStore.getState().requestWakeLock();
-    await useDisplayStore.getState().releaseWakeLock();
-
-    expect(MockWebSocket.instances[0]?.sent).toEqual([
-      JSON.stringify({
-        command: "requestWakeLock",
+        command: "scan",
+        connect: false,
+        quick: undefined,
       }),
       JSON.stringify({
-        command: "releaseWakeLock",
+        command: "connect",
+        deviceId: "scale-1",
+      }),
+      JSON.stringify({
+        command: "disconnect",
+        deviceId: "scale-1",
       }),
     ]);
   });

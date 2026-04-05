@@ -20,6 +20,15 @@ interface DisplayStoreState {
   setBrightness: (brightness: number) => Promise<void>;
 }
 
+type DisplayCommand =
+  | {
+      command: "setBrightness";
+      brightness: number;
+    }
+  | {
+      command: "requestWakeLock" | "releaseWakeLock";
+    };
+
 function getClient() {
   return createBridgeClient(useBridgeConfigStore.getState().gatewayUrl);
 }
@@ -34,6 +43,14 @@ function getErrorMessage(error: unknown) {
   }
 
   return "Unexpected bridge error";
+}
+
+function sendDisplayCommand(socket: WebSocket | null, command: DisplayCommand) {
+  if (socket == null || socket.readyState !== 1) {
+    throw new BridgeClientError("Display stream is not connected");
+  }
+
+  socket.send(JSON.stringify(command));
 }
 
 export const useDisplayStore = create<DisplayStoreState>((set, get) => ({
@@ -134,11 +151,11 @@ export const useDisplayStore = create<DisplayStoreState>((set, get) => ({
   },
   async releaseWakeLock() {
     try {
-      const displayState = await getClient().releaseDisplayWakeLock();
+      sendDisplayCommand(get().socket, {
+        command: "releaseWakeLock",
+      });
 
       set({
-        connection: "live",
-        displayState,
         error: null,
       });
     } catch (error) {
@@ -149,11 +166,11 @@ export const useDisplayStore = create<DisplayStoreState>((set, get) => ({
   },
   async requestWakeLock() {
     try {
-      const displayState = await getClient().requestDisplayWakeLock();
+      sendDisplayCommand(get().socket, {
+        command: "requestWakeLock",
+      });
 
       set({
-        connection: "live",
-        displayState,
         error: null,
       });
     } catch (error) {
@@ -167,11 +184,12 @@ export const useDisplayStore = create<DisplayStoreState>((set, get) => ({
   },
   async setBrightness(brightness) {
     try {
-      const displayState = await getClient().setDisplayBrightness(brightness);
+      sendDisplayCommand(get().socket, {
+        brightness,
+        command: "setBrightness",
+      });
 
       set({
-        connection: "live",
-        displayState,
         error: null,
       });
     } catch (error) {

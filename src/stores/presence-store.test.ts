@@ -22,18 +22,13 @@ describe("usePresenceStore", () => {
     usePresenceStore.getState().reset();
   });
 
-  it("throttles heartbeats to the bridge interval", async () => {
+  it("forwards each activity signal to the gateway", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       json: async () => ({ timeout: 1800 }),
     } as Response);
 
     await usePresenceStore.getState().signalPresence(true);
-    await usePresenceStore.getState().signalPresence();
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-
-    vi.setSystemTime(new Date("2026-03-23T12:00:31Z"));
     await usePresenceStore.getState().signalPresence();
 
     expect(fetchMock).toHaveBeenCalledTimes(2);

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EndpointRow } from "@/components/settings/settings-shell";
 import { toWebSocketUrl } from "@/rest/client";
-import { useDevicesQuery } from "@/rest/queries";
+import { useDevicesStore } from "@/stores/devices-store";
 
 export function SettingsAdvancedBridgePanel({
   draftGatewayUrl,
@@ -18,7 +18,7 @@ export function SettingsAdvancedBridgePanel({
   onUseCurrentOrigin: () => void;
   setDraftGatewayUrl: (value: string) => void;
 }) {
-  const { data: devices = [] } = useDevicesQuery();
+  const devices = useDevicesStore((state) => state.devices);
   const endpointRows = [
     { label: "REST origin", value: gatewayUrl },
     {

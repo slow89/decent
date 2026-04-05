@@ -3,12 +3,9 @@ import { create } from "zustand";
 import { BridgeClientError, createBridgeClient } from "@/rest/client";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
 
-const heartbeatIntervalMs = 30_000;
-
 interface PresenceState {
   error: string | null;
   isSending: boolean;
-  lastHeartbeatAt: number | null;
   timeoutSeconds: number | null;
   reset: () => void;
   signalPresence: (force?: boolean) => Promise<void>;
@@ -33,25 +30,18 @@ function getErrorMessage(error: unknown) {
 export const usePresenceStore = create<PresenceState>((set, get) => ({
   error: null,
   isSending: false,
-  lastHeartbeatAt: null,
   timeoutSeconds: null,
   reset() {
     set({
       error: null,
       isSending: false,
-      lastHeartbeatAt: null,
       timeoutSeconds: null,
     });
   },
-  async signalPresence(force = false) {
-    const { isSending, lastHeartbeatAt } = get();
-    const now = Date.now();
+  async signalPresence(_force = false) {
+    const { isSending } = get();
 
     if (isSending) {
-      return;
-    }
-
-    if (!force && lastHeartbeatAt != null && now - lastHeartbeatAt < heartbeatIntervalMs) {
       return;
     }
 
@@ -66,7 +56,6 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
       set({
         error: null,
         isSending: false,
-        lastHeartbeatAt: Date.now(),
         timeoutSeconds: response.timeout,
       });
     } catch (error) {

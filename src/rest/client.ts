@@ -3,7 +3,6 @@ import { type z } from "zod";
 import {
   bridgeSettingsSchema,
   displayStateSchema,
-  deviceSummaryListSchema,
   heartbeatResponseSchema,
   machineSnapshotSchema,
   machineStateChangeSchema,
@@ -150,39 +149,6 @@ export function createBridgeClient(baseUrl: string) {
     async getProfile(id: string) {
       return request(`/api/v1/profiles/${encodeURIComponent(id)}`, profileRecordSchema);
     },
-    async listDevices() {
-      return request("/api/v1/devices", deviceSummaryListSchema);
-    },
-    async scanDevices(options?: { connect?: boolean; quick?: boolean }) {
-      const searchParams = new URLSearchParams({
-        connect: options?.connect === false ? "false" : "true",
-        quick: options?.quick === true ? "true" : "false",
-      });
-
-      return request(`/api/v1/devices/scan?${searchParams.toString()}`, deviceSummaryListSchema);
-    },
-    async connectDevice(deviceId: string) {
-      const response = await fetch(`${origin}/api/v1/devices/connect`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ deviceId }),
-      });
-
-      await ensureResponseOk(response, "Unable to connect device");
-    },
-    async disconnectDevice(deviceId: string) {
-      const response = await fetch(`${origin}/api/v1/devices/disconnect`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ deviceId }),
-      });
-
-      await ensureResponseOk(response, "Unable to disconnect device");
-    },
     async listShots() {
       return request("/api/v1/shots", shotListResponseSchema);
     },
@@ -311,6 +277,9 @@ export function createBridgeClient(baseUrl: string) {
     },
     createScaleSnapshotSocket() {
       return new WebSocket(`${toWebSocketUrl(origin)}/ws/v1/scale/snapshot`);
+    },
+    createDevicesSocket() {
+      return new WebSocket(`${toWebSocketUrl(origin)}/ws/v1/devices`);
     },
     createTimeToReadySocket() {
       return new WebSocket(

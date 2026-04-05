@@ -91,6 +91,29 @@ export const deviceSummarySchema = z.object({
   type: z.string(),
 });
 
+export const devicesConnectionPhaseSchema = z.enum([
+  "idle",
+  "scanning",
+  "connectingMachine",
+  "connectingScale",
+  "ready",
+]);
+
+export const devicesConnectionStatusSchema = z.looseObject({
+  error: optionalString,
+  foundMachines: z.array(deviceSummarySchema).default([]),
+  foundScales: z.array(deviceSummarySchema).default([]),
+  pendingAmbiguity: z.enum(["machinePicker", "scalePicker"]).nullish(),
+  phase: devicesConnectionPhaseSchema,
+});
+
+export const devicesStateSchema = z.looseObject({
+  connectionStatus: devicesConnectionStatusSchema.nullish(),
+  devices: z.array(deviceSummarySchema),
+  scanning: z.boolean(),
+  timestamp: z.string(),
+});
+
 export const workflowProfileSchema = z.looseObject({
   version: optionalString,
   title: optionalString,
@@ -249,6 +272,9 @@ export type BridgeSettings = z.infer<typeof bridgeSettingsSchema>;
 export type DisplayPlatformSupport = z.infer<typeof displayPlatformSupportSchema>;
 export type DisplayState = z.infer<typeof displayStateSchema>;
 export type DeviceSummary = z.infer<typeof deviceSummarySchema>;
+export type DevicesConnectionPhase = z.infer<typeof devicesConnectionPhaseSchema>;
+export type DevicesConnectionStatus = z.infer<typeof devicesConnectionStatusSchema>;
+export type DevicesState = z.infer<typeof devicesStateSchema>;
 export type WorkflowProfile = z.infer<typeof workflowProfileSchema>;
 export type WorkflowContext = z.infer<typeof workflowContextSchema>;
 export type WorkflowSettings = z.infer<typeof workflowSettingsSchema>;

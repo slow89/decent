@@ -2,12 +2,12 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { dashboardUiDefaultState, useDashboardUiStore } from "@/stores/dashboard-ui-store";
+import { useDevicesStore } from "@/stores/devices-store";
 import { useMachineStore } from "@/stores/machine-store";
 
 import { DashboardPage } from "./dashboard-page";
 
 const queryMocks = vi.hoisted(() => ({
-  useDevicesQuery: vi.fn(),
   useMachineStateQuery: vi.fn(),
   useRequestMachineStateMutation: vi.fn(),
   useTareScaleMutation: vi.fn(),
@@ -24,7 +24,6 @@ vi.mock("@/rest/queries", async () => {
 
   return {
     ...actual,
-    useDevicesQuery: queryMocks.useDevicesQuery,
     useMachineStateQuery: queryMocks.useMachineStateQuery,
     useRequestMachineStateMutation: queryMocks.useRequestMachineStateMutation,
     useTareScaleMutation: queryMocks.useTareScaleMutation,
@@ -59,10 +58,25 @@ describe("DashboardPage", () => {
       timeToReady: null,
       waterLevels: null,
     });
-
-    queryMocks.useDevicesQuery.mockReturnValue({
-      data: [],
+    useDevicesStore.setState({
+      connection: "live",
+      connectionStatus: {
+        error: null,
+        foundMachines: [],
+        foundScales: [],
+        pendingAmbiguity: null,
+        phase: "idle",
+      },
+      connect: vi.fn(async () => undefined),
+      connectDevice: vi.fn(async () => undefined),
+      devices: [],
+      disconnect: vi.fn(() => undefined),
+      disconnectDevice: vi.fn(async () => undefined),
       error: null,
+      reset: vi.fn(() => undefined),
+      scan: vi.fn(async () => undefined),
+      scanning: false,
+      socket: null,
     });
     queryMocks.useTareScaleMutation.mockReturnValue({
       isPending: false,
@@ -176,9 +190,8 @@ describe("DashboardPage", () => {
       data: buildSnapshot("idle"),
       error: null,
     });
-    queryMocks.useDevicesQuery.mockReturnValue({
-      data: [],
-      error: null,
+    useDevicesStore.setState({
+      devices: [],
     });
 
     render(<DashboardPage />);
@@ -327,8 +340,8 @@ describe("DashboardPage", () => {
       data: buildSnapshot("idle"),
       error: null,
     });
-    queryMocks.useDevicesQuery.mockReturnValue({
-      data: [
+    useDevicesStore.setState({
+      devices: [
         {
           id: "scale-1",
           name: "Acaia Lunar",
@@ -336,7 +349,6 @@ describe("DashboardPage", () => {
           type: "scale",
         },
       ],
-      error: null,
     });
 
     render(<DashboardPage />);

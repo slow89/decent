@@ -55,7 +55,6 @@ describe("useMachineStore", () => {
     });
     useMachineStore.setState({
       error: null,
-      lastScaleReconnectAttemptAt: null,
       liveConnection: "idle",
       machineSocket: null,
       scaleConnection: "idle",
@@ -72,6 +71,7 @@ describe("useMachineStore", () => {
 
   it("connects the machine, water, and scale streams and stores incoming telemetry", async () => {
     await useMachineStore.getState().connectLive();
+    await useMachineStore.getState().connectScale();
 
     expect(MockWebSocket.instances.map((socket) => socket.url)).toEqual([
       "ws://bridge.local:8080/ws/v1/machine/snapshot",
@@ -155,33 +155,5 @@ describe("useMachineStore", () => {
 
     expect(useMachineStore.getState().liveConnection).toBe("error");
     expect(useMachineStore.getState().error).toContain("state");
-  });
-
-  it("throttles preferred-scale reconnect scans", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
-      json: async () => [],
-      ok: true,
-    } as Response);
-
-    useMachineStore.setState({
-      lastScaleReconnectAttemptAt: null,
-      liveConnection: "live",
-      scaleConnection: "idle",
-    });
-
-    await useMachineStore.getState().reconnectPreferredScale();
-    await useMachineStore.getState().reconnectPreferredScale();
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-
-    vi.setSystemTime(new Date("2026-03-28T20:00:01.000Z"));
-    await useMachineStore.getState().reconnectPreferredScale();
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-
-    vi.setSystemTime(new Date("2026-03-28T20:00:02.000Z"));
-    await useMachineStore.getState().reconnectPreferredScale();
-
-    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,8 +1,7 @@
 import { useEffect, useEffectEvent } from "react";
 
-import { useDevicesQuery } from "@/rest/queries";
-import { useBridgeSettingsQuery } from "@/rest/queries";
 import { useBridgeConfigStore } from "@/stores/bridge-config-store";
+import { devicesStore, useDevicesStore } from "@/stores/devices-store";
 import { displayStore } from "@/stores/display-store";
 import { useMachineStore } from "@/stores/machine-store";
 import { presenceStore } from "@/stores/presence-store";
@@ -13,13 +12,11 @@ export function BridgeShellEffects() {
   const gatewayUrl = useBridgeConfigStore((state) => state.gatewayUrl);
   const connectScale = useMachineStore((state) => state.connectScale);
   const disconnectScale = useMachineStore((state) => state.disconnectScale);
-  const reconnectPreferredScale = useMachineStore((state) => state.reconnectPreferredScale);
-  const { data: bridgeSettings, dataUpdatedAt: bridgeSettingsUpdatedAt } = useBridgeSettingsQuery({
-    refetchInterval: 5_000,
-  });
-  const { data: devices, dataUpdatedAt: devicesUpdatedAt } = useDevicesQuery({
-    refetchInterval: 2_000,
-  });
+  const connectedScaleId = useDevicesStore(
+    (state) =>
+      state.devices.find((device) => device.type === "scale" && device.state === "connected")?.id ??
+      null,
+  );
   const signalPresence = useEffectEvent(() => {
     void presenceStore.getState().signalPresence();
   });
@@ -32,18 +29,18 @@ export function BridgeShellEffects() {
 
     void connectScale();
   });
-  const connectedScaleId =
-    devices?.find((device) => device.type === "scale" && device.state === "connected")?.id ?? null;
-  const preferredScaleId = bridgeSettings?.preferredScaleId ?? null;
 
   useEffect(() => {
     void useMachineStore.getState().connectLive();
+    devicesStore.getState().reset();
     displayStore.getState().reset();
     presenceStore.getState().reset();
+    void devicesStore.getState().connect();
     void displayStore.getState().connect();
 
     return () => {
       useMachineStore.getState().disconnectLive();
+      devicesStore.getState().disconnect();
       displayStore.getState().disconnect();
       presenceStore.getState().reset();
     };
@@ -57,20 +54,6 @@ export function BridgeShellEffects() {
 
     reconnectScaleFeed();
   }, [connectedScaleId, disconnectScale, reconnectScaleFeed]);
-
-  useEffect(() => {
-    if (!preferredScaleId || connectedScaleId) {
-      return;
-    }
-
-    void reconnectPreferredScale();
-  }, [
-    bridgeSettingsUpdatedAt,
-    connectedScaleId,
-    devicesUpdatedAt,
-    preferredScaleId,
-    reconnectPreferredScale,
-  ]);
 
   useEffect(() => {
     function handleVisibilityChange() {

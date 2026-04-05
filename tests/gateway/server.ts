@@ -22,6 +22,7 @@ interface GatewayRuntimeState {
 }
 
 const channelClients: Record<GatewayStreamChannel, Set<WebSocket>> = {
+  devices: new Set(),
   display: new Set(),
   machine: new Set(),
   scale: new Set(),
@@ -58,6 +59,11 @@ server.on("upgrade", (request, socket, head) => {
 
   webSocketServer.handleUpgrade(request, socket, head, (websocket: WebSocket) => {
     channelClients[channel].add(websocket);
+    if (channel === "devices") {
+      websocket.on("message", (message) => {
+        handleDevicesCommand(message.toString(), websocket);
+      });
+    }
     websocket.on("close", () => {
       channelClients[channel].delete(websocket);
     });
@@ -260,9 +266,12 @@ async function handleRequest(request: http.IncomingMessage, response: http.Serve
         weight: 0,
         weightFlow: 0,
       };
-      broadcastState(["scale"]);
+      broadcastState(["devices", "scale"]);
+      sendJson(response, 200, runtime.state.devices);
+      return;
     }
 
+    broadcastState(["devices"]);
     sendJson(response, 200, runtime.state.devices);
     return;
   }
@@ -293,9 +302,13 @@ async function handleRequest(request: http.IncomingMessage, response: http.Serve
         weight: 0,
         weightFlow: 0,
       };
-      broadcastState(["scale"]);
+      broadcastState(["devices", "scale"]);
+      response.writeHead(204, corsHeaders());
+      response.end();
+      return;
     }
 
+    broadcastState(["devices"]);
     response.writeHead(204, corsHeaders());
     response.end();
     return;
@@ -320,6 +333,7 @@ async function handleRequest(request: http.IncomingMessage, response: http.Serve
       closeChannelSockets("scale");
     }
 
+    broadcastState(["devices"]);
     response.writeHead(204, corsHeaders());
     response.end();
     return;
@@ -553,6 +567,10 @@ function getChangedChannels(
     channels.push("display");
   }
 
+  if (patch.devices) {
+    channels.push("devices");
+  }
+
   return channels;
 }
 
@@ -606,6 +624,10 @@ function getChannelPayload(channel: GatewayStreamChannel) {
     return runtime.state.displayState;
   }
 
+  if (channel === "devices") {
+    return buildDevicesPayload();
+  }
+
   if (channel === "machine") {
     return runtime.state.machineSnapshot;
   }
@@ -641,7 +663,7 @@ function loadScenario(scenarioId: GatewayScenarioId) {
   runtime.scenarioId = nextRuntime.scenarioId;
   runtime.state = nextRuntime.state;
   runtime.stepIndex = nextRuntime.stepIndex;
-  broadcastState(["display", "machine", "scale", "timeToReady", "water"]);
+  broadcastState(["devices", "display", "machine", "scale", "timeToReady", "water"]);
 }
 
 function summarizeRuntime() {
@@ -765,6 +787,10 @@ function corsHeaders() {
 }
 
 function getWebSocketChannel(path: string): GatewayStreamChannel | null {
+  if (path === "/ws/v1/devices") {
+    return "devices";
+  }
+
   if (path === "/ws/v1/display") {
     return "display";
   }
@@ -786,6 +812,115 @@ function getWebSocketChannel(path: string): GatewayStreamChannel | null {
   }
 
   return null;
+}
+
+function buildDevicesPayload() {
+  const connectedDeviceCount = runtime.state.devices.filter(
+    (device) => device.state === "connected",
+  ).length;
+
+  return {
+    connectionStatus: {
+      error: null,
+      foundMachines: runtime.state.devices.filter((device) => device.type === "machine"),
+      foundScales: runtime.state.devices.filter((device) => device.type === "scale"),
+      pendingAmbiguity: null,
+      phase: connectedDeviceCount > 0 ? "ready" : "idle",
+    },
+    devices: runtime.state.devices,
+    scanning: false,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+function handleDevicesCommand(rawMessage: string, websocket: WebSocket) {
+  try {
+    const message = JSON.parse(rawMessage) as {
+      command?: string;
+      connect?: boolean;
+      deviceId?: string;
+    };
+
+    if (message.command === "scan") {
+      const shouldConnect = message.connect !== false;
+      const candidateScale = runtime.state.devices.find(
+        (device) => device.type === "scale" && device.state !== "connected",
+      );
+
+      if (shouldConnect && candidateScale) {
+        candidateScale.state = "connected";
+        runtime.state.bridgeSettings = {
+          ...runtime.state.bridgeSettings,
+          preferredScaleId: candidateScale.id,
+        };
+        runtime.state.scaleSnapshot ??= {
+          batteryLevel: 79,
+          timerValue: 0,
+          timestamp: new Date().toISOString(),
+          weight: 0,
+          weightFlow: 0,
+        };
+        broadcastState(["devices", "scale"]);
+        return;
+      }
+
+      broadcastState(["devices"]);
+      return;
+    }
+
+    if (message.command === "connect" && message.deviceId) {
+      const device = runtime.state.devices.find((entry) => entry.id === message.deviceId);
+
+      if (!device) {
+        return;
+      }
+
+      device.state = "connected";
+
+      if (device.type === "scale") {
+        runtime.state.bridgeSettings = {
+          ...runtime.state.bridgeSettings,
+          preferredScaleId: device.id,
+        };
+        runtime.state.scaleSnapshot ??= {
+          batteryLevel: 80,
+          timerValue: 0,
+          timestamp: new Date().toISOString(),
+          weight: 0,
+          weightFlow: 0,
+        };
+        broadcastState(["devices", "scale"]);
+        return;
+      }
+
+      broadcastState(["devices"]);
+      return;
+    }
+
+    if (message.command === "disconnect" && message.deviceId) {
+      const device = runtime.state.devices.find((entry) => entry.id === message.deviceId);
+
+      if (!device) {
+        return;
+      }
+
+      device.state = "disconnected";
+
+      if (device.type === "scale") {
+        runtime.state.scaleSnapshot = null;
+        closeChannelSockets("scale");
+      }
+
+      broadcastState(["devices"]);
+      return;
+    }
+  } catch (error) {
+    websocket.send(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "Invalid devices command",
+      }),
+    );
+  }
 }
 
 function buildTimeToReadyPayload(snapshot: GatewayScenarioState["machineSnapshot"]) {

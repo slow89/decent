@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { roundValue } from "@/lib/recipe-utils";
 import { cn } from "@/lib/utils";
 import {
-  useDevicesQuery,
   useMachineStateQuery,
   useRequestMachineStateMutation,
   useTareScaleMutation,
@@ -13,6 +12,7 @@ import {
   useWorkflowQuery,
 } from "@/rest/queries";
 import { useDashboardUiStore } from "@/stores/dashboard-ui-store";
+import { useDevicesStore } from "@/stores/devices-store";
 import { type LiveConnectionState, useMachineStore } from "@/stores/machine-store";
 import { getDashboardActiveRecipe } from "./dashboard-view-model";
 
@@ -108,7 +108,7 @@ export function ReservoirStatusCard() {
 export function ScaleStatusCard() {
   const scaleConnection = useMachineStore((state) => state.scaleConnection);
   const scaleSnapshot = useMachineStore((state) => state.scaleSnapshot);
-  const { data: devices } = useDevicesQuery();
+  const devices = useDevicesStore((state) => state.devices);
   const tareScaleMutation = useTareScaleMutation();
   const updateWorkflowMutation = useUpdateWorkflowMutation();
   const connectedScale = devices?.find(
