@@ -275,7 +275,7 @@ describe("DashboardPage", () => {
     });
   });
 
-  it("shows brew heating status above tablet controls while the machine is warming", () => {
+  it("shows ready status above tablet controls when the machine is idle even if time-to-ready is still collecting data", () => {
     useMachineStore.setState({
       timeToReady: {
         currentTemp: 90,
@@ -286,7 +286,7 @@ describe("DashboardPage", () => {
       },
     });
     queryMocks.useMachineStateQuery.mockReturnValue({
-      data: buildSnapshot("idle", "ready", {
+      data: buildSnapshot("idle", "idle", {
         groupTemperature: 89,
         mixTemperature: 90,
         targetGroupTemperature: 93,
@@ -297,7 +297,7 @@ describe("DashboardPage", () => {
 
     render(<DashboardPage />);
 
-    expect(screen.getByTestId("dashboard-tablet-prep-status")).toHaveTextContent("Heating up");
+    expect(screen.getByTestId("dashboard-tablet-prep-status")).toHaveTextContent("Ready to brew");
     expect(screen.queryByText("90°C / 93°C")).not.toBeInTheDocument();
     expect(screen.getByText("89°C / 93°C")).toBeInTheDocument();
   });

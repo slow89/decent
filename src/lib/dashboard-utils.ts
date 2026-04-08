@@ -94,6 +94,22 @@ export function getDashboardPrepStatus({
     };
   }
 
+  if (isMachineHeating(snapshot)) {
+    return {
+      items,
+      title: "Heating up",
+      tone: "warming",
+    };
+  }
+
+  if (isMachineReady(snapshot)) {
+    return {
+      items,
+      title: "Ready to brew",
+      tone: "ready",
+    };
+  }
+
   if (timeToReady?.status !== "reached") {
     return {
       items,
@@ -129,4 +145,16 @@ function hasReliableWaterTemperature(snapshot?: MachineSnapshot | null) {
     default:
       return false;
   }
+}
+
+function isMachineHeating(snapshot: MachineSnapshot) {
+  return (
+    snapshot.state.state === "heating" ||
+    snapshot.state.state === "preheating" ||
+    snapshot.state.substate === "preparingForShot"
+  );
+}
+
+function isMachineReady(snapshot: MachineSnapshot) {
+  return snapshot.state.state === "idle" && snapshot.state.substate === "idle";
 }

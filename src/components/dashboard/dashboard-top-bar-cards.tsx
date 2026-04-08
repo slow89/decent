@@ -78,7 +78,7 @@ export function ReservoirStatusCard() {
   return (
     <div
       className={cn(
-        "min-w-[120px] flex-1 rounded-[4px] border px-2.5 py-1 md:flex-none md:max-w-[160px]",
+        "min-w-[120px] flex-1 rounded-[4px] border px-3 py-1.5 md:flex-none md:max-w-[180px]",
         isLow
           ? "border-status-warning-foreground/50 bg-status-warning-surface"
           : "border-border bg-panel-strong/80",
@@ -88,13 +88,13 @@ export function ReservoirStatusCard() {
       <div className="flex items-center justify-between gap-2">
         <p
           className={cn(
-            "flex items-center gap-1 font-mono text-[0.46rem] font-semibold uppercase tracking-[0.08em]",
+            "flex items-center gap-1 font-mono text-[0.6rem] font-semibold uppercase tracking-[0.08em]",
             isLow ? "text-status-warning-foreground" : "text-muted-foreground",
           )}
         >
           <Droplets
             className={cn(
-              "size-2",
+              "size-3",
               isLow ? "text-status-warning-foreground" : "text-highlight-muted",
             )}
           />
@@ -102,7 +102,7 @@ export function ReservoirStatusCard() {
         </p>
         <p
           className={cn(
-            "font-mono text-[0.72rem] font-semibold tabular-nums",
+            "font-mono text-[0.92rem] font-semibold tabular-nums",
             isLow ? "text-status-warning-foreground" : "text-foreground",
           )}
         >
@@ -111,8 +111,8 @@ export function ReservoirStatusCard() {
       </div>
 
       {/* Visual level bar */}
-      <div className="mt-1.5 mb-0.5">
-        <div className="relative h-[5px] w-full overflow-hidden rounded-full bg-border/60">
+      <div className="mt-2 mb-1">
+        <div className="relative h-[7px] w-full overflow-hidden rounded-full bg-border/60">
           {fillPercent != null && (
             <div
               className={cn(
@@ -132,11 +132,11 @@ export function ReservoirStatusCard() {
         </div>
         {/* Bar legend */}
         <div className="mt-0.5 flex items-center justify-between">
-          <p className="font-mono text-[0.38rem] uppercase tracking-[0.06em] text-muted-foreground/70">
+          <p className="font-mono text-[0.5rem] uppercase tracking-[0.06em] text-muted-foreground/70">
             {hasThreshold ? `Refill @ ${formatMillimeters(reservoirRefillLevel)}` : "No threshold"}
           </p>
           {isLow && (
-            <p className="font-mono text-[0.38rem] font-bold uppercase tracking-[0.06em] text-status-warning-foreground">
+            <p className="font-mono text-[0.5rem] font-bold uppercase tracking-[0.06em] text-status-warning-foreground">
               Low
             </p>
           )}
@@ -182,29 +182,29 @@ export function ScaleStatusCard() {
 
   if (!isPaired) {
     return (
-      <div className="min-w-[200px] flex-[1.1] animate-pulse rounded-[4px] border-2 border-status-warning-foreground/70 bg-status-warning-surface px-2.5 py-1 shadow-[0_0_8px_0_rgba(var(--color-status-warning-foreground)/0.15)] md:flex-none md:max-w-[380px]">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-0.5 md:grid-cols-[minmax(0,1fr)_8ch_auto] md:items-center">
+      <div className="min-w-[200px] flex-[1.1] animate-pulse rounded-[4px] border-2 border-status-warning-foreground/70 bg-status-warning-surface px-3 py-1.5 shadow-[0_0_8px_0_rgba(var(--color-status-warning-foreground)/0.15)] md:flex-none md:max-w-[380px]">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 md:grid-cols-[minmax(0,1fr)_8ch_auto] md:items-center">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <p className="flex items-center gap-1 font-mono text-[0.5rem] font-bold uppercase tracking-[0.08em] text-status-warning-foreground">
-                <Scale className="size-2.5" />
+              <p className="flex items-center gap-1 font-mono text-[0.65rem] font-bold uppercase tracking-[0.08em] text-status-warning-foreground">
+                <Scale className="size-3.5" />
                 Scale
               </p>
-              <span className="rounded-sm bg-status-warning-foreground/20 px-1.5 py-0.5 font-mono text-[0.44rem] font-bold uppercase tracking-[0.06em] text-status-warning-foreground">
+              <span className="rounded-sm bg-status-warning-foreground/20 px-1.5 py-0.5 font-mono text-[0.55rem] font-bold uppercase tracking-[0.06em] text-status-warning-foreground">
                 {getScaleStatusLabel(isPaired, scaleConnection)}
               </span>
             </div>
-            <p className="mt-0.5 truncate font-mono text-[0.5rem] font-medium uppercase tracking-[0.06em] text-status-warning-foreground/80">
+            <p className="mt-0.5 truncate font-mono text-[0.6rem] font-medium uppercase tracking-[0.06em] text-status-warning-foreground/80">
               No scale paired
             </p>
           </div>
 
-          <p className="col-start-1 row-start-2 whitespace-nowrap font-mono text-[0.82rem] font-semibold tabular-nums text-muted-foreground md:col-start-2 md:row-start-1 md:justify-self-end md:text-[0.88rem] md:max-xl:text-[1.05rem]">
+          <p className="col-start-1 row-start-2 whitespace-nowrap font-mono text-[1rem] font-semibold tabular-nums text-muted-foreground md:col-start-2 md:row-start-1 md:justify-self-end md:text-[1.05rem] md:max-xl:text-[1.2rem]">
             {formatScaleWeight(weight)}
           </p>
 
           <Button
-            className="col-start-2 row-span-2 row-start-1 h-full min-h-0 rounded-[4px] border-status-warning-foreground/50 bg-status-warning-foreground/15 px-4 font-mono text-[0.65rem] font-semibold text-status-warning-foreground hover:bg-status-warning-foreground/25 md:col-start-3 md:row-span-1"
+            className="col-start-2 row-span-2 row-start-1 h-full min-h-0 rounded-[4px] border-status-warning-foreground/50 bg-status-warning-foreground/15 px-4 font-mono text-[0.75rem] font-semibold text-status-warning-foreground hover:bg-status-warning-foreground/25 md:col-start-3 md:row-span-1"
             disabled={devicesConnection !== "live" || scanningDevices}
             onClick={handleRefreshScale}
             size="sm"
@@ -222,58 +222,58 @@ export function ScaleStatusCard() {
   return (
     <div
       className={cn(
-        "min-w-[200px] flex-[1.1] rounded-[4px] border px-2.5 py-1 md:flex-none md:max-w-[380px]",
+        "min-w-[200px] flex-[1.1] rounded-[4px] border px-3 py-1.5 md:flex-none md:max-w-[380px]",
         isScaleDisconnected
           ? "border-2 border-destructive/60 bg-destructive/10"
           : "border-border bg-panel-strong/80",
       )}
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-0.5 md:grid-cols-[minmax(0,1fr)_8ch_auto] md:items-center">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 md:grid-cols-[minmax(0,1fr)_8ch_auto] md:items-center">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <p
               className={cn(
-                "flex items-center gap-1 font-mono text-[0.46rem] font-semibold uppercase tracking-[0.08em]",
+                "flex items-center gap-1 font-mono text-[0.6rem] font-semibold uppercase tracking-[0.08em]",
                 isScaleDisconnected ? "text-destructive" : "text-muted-foreground",
               )}
             >
               <Scale
                 className={cn(
-                  "size-2",
+                  "size-3",
                   isScaleDisconnected ? "text-destructive" : "text-status-info-foreground",
                 )}
               />
               Scale
             </p>
             {batteryLevel != null && !isScaleDisconnected ? (
-              <p className="shrink-0 font-mono text-[0.44rem] tabular-nums uppercase tracking-[0.06em] text-muted-foreground/90">
+              <p className="shrink-0 font-mono text-[0.55rem] tabular-nums uppercase tracking-[0.06em] text-muted-foreground/90">
                 {batteryLevel.toFixed(0)}%
               </p>
             ) : null}
             {isScaleDisconnected ? (
-              <span className="rounded-sm bg-destructive/20 px-1.5 py-0.5 font-mono text-[0.44rem] font-bold uppercase tracking-[0.06em] text-destructive">
+              <span className="rounded-sm bg-destructive/20 px-1.5 py-0.5 font-mono text-[0.55rem] font-bold uppercase tracking-[0.06em] text-destructive">
                 {getScaleStatusLabel(isPaired, scaleConnection)}
               </span>
             ) : null}
           </div>
           {!isScaleDisconnected ? (
-            <p className="mt-0.5 truncate font-mono text-[0.5rem] uppercase tracking-[0.06em] text-status-info-foreground">
+            <p className="mt-0.5 truncate font-mono text-[0.6rem] uppercase tracking-[0.06em] text-status-info-foreground">
               {getScaleStatusLabel(isPaired, scaleConnection)}
             </p>
           ) : (
-            <p className="mt-0.5 truncate font-mono text-[0.5rem] font-medium uppercase tracking-[0.06em] text-destructive/80">
+            <p className="mt-0.5 truncate font-mono text-[0.6rem] font-medium uppercase tracking-[0.06em] text-destructive/80">
               Connection lost
             </p>
           )}
         </div>
 
-        <p className="col-start-1 row-start-2 whitespace-nowrap font-mono text-[0.82rem] font-semibold tabular-nums text-foreground md:col-start-2 md:row-start-1 md:justify-self-end md:text-[0.88rem] md:max-xl:text-[1.05rem]">
+        <p className="col-start-1 row-start-2 whitespace-nowrap font-mono text-[1rem] font-semibold tabular-nums text-foreground md:col-start-2 md:row-start-1 md:justify-self-end md:text-[1.05rem] md:max-xl:text-[1.2rem]">
           {formatScaleWeight(weight)}
         </p>
 
         {isScaleDisconnected ? (
           <Button
-            className="col-start-2 row-span-2 row-start-1 h-full min-h-0 rounded-[4px] border-destructive/40 bg-destructive/10 px-4 font-mono text-[0.65rem] font-semibold text-destructive hover:bg-destructive/15 md:col-start-3 md:row-span-1"
+            className="col-start-2 row-span-2 row-start-1 h-full min-h-0 rounded-[4px] border-destructive/40 bg-destructive/10 px-4 font-mono text-[0.75rem] font-semibold text-destructive hover:bg-destructive/15 md:col-start-3 md:row-span-1"
             disabled={devicesConnection !== "live" || scanningDevices}
             onClick={handleRefreshScale}
             size="sm"
@@ -284,7 +284,7 @@ export function ScaleStatusCard() {
         ) : (
           <div className="col-start-2 row-span-2 row-start-1 flex shrink-0 items-stretch gap-1 self-stretch justify-self-end md:col-start-3 md:row-span-1">
             <Button
-              className="h-full min-h-0 min-w-[70px] rounded-[4px] border-status-info-border bg-status-info-surface px-4 font-mono text-[0.65rem] font-semibold text-status-info-foreground hover:brightness-110"
+              className="h-full min-h-0 min-w-[70px] rounded-[4px] border-status-info-border bg-status-info-surface px-4 font-mono text-[0.75rem] font-semibold text-status-info-foreground hover:brightness-110"
               disabled={scaleConnection !== "live" || tareScaleMutation.isPending}
               onClick={() => tareScaleMutation.mutate()}
               size="sm"
@@ -293,7 +293,7 @@ export function ScaleStatusCard() {
               {tareScaleMutation.isPending ? "Taring" : "Tare"}
             </Button>
             <Button
-              className="h-full min-h-0 min-w-[88px] rounded-[4px] border-status-success-border bg-status-success-surface px-4 font-mono text-[0.65rem] font-semibold text-status-success-foreground hover:brightness-110"
+              className="h-full min-h-0 min-w-[88px] rounded-[4px] border-status-success-border bg-status-success-surface px-4 font-mono text-[0.75rem] font-semibold text-status-success-foreground hover:brightness-110"
               disabled={!canUseScaleWeightForDose || updateWorkflowMutation.isPending}
               onClick={handleSetDoseFromScale}
               size="sm"
