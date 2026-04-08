@@ -72,7 +72,6 @@ function getConnectedScaleId() {
 function shouldRequestAutoConnect() {
   const devicesState = useDevicesStore.getState();
   const machineState = useMachineStore.getState();
-  const devicesPhase = devicesState.connectionStatus?.phase ?? null;
 
   if (getConnectedScaleId()) {
     return false;
@@ -82,7 +81,7 @@ function shouldRequestAutoConnect() {
     return false;
   }
 
-  if (devicesState.scanning || (devicesPhase !== "idle" && devicesPhase !== "ready")) {
+  if (devicesState.scanning) {
     return false;
   }
 

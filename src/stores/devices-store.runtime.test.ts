@@ -94,6 +94,37 @@ describe("devices store runtime", () => {
     expect(requestAutoConnectSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps retrying while the gateway reports connectingScale but is not actively scanning", () => {
+    vi.useFakeTimers();
+    const requestAutoConnectSpy = vi
+      .spyOn(useDevicesStore.getState(), "requestAutoConnect")
+      .mockResolvedValue(undefined);
+
+    useDevicesStore.setState({
+      connection: "live",
+      connectionStatus: {
+        error: null,
+        foundMachines: [],
+        foundScales: [],
+        pendingAmbiguity: null,
+        phase: "connectingScale",
+      },
+      scanning: false,
+    });
+
+    cleanupRuntime = initializeDevicesStoreRuntime();
+
+    useMachineStore.setState({
+      liveConnection: "live",
+    });
+
+    expect(requestAutoConnectSpy).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(3000);
+
+    expect(requestAutoConnectSpy).toHaveBeenCalledTimes(2);
+  });
+
   it("does not request auto-connect while the devices stream is scanning", () => {
     const requestAutoConnectSpy = vi
       .spyOn(useDevicesStore.getState(), "requestAutoConnect")
@@ -118,6 +149,43 @@ describe("devices store runtime", () => {
     });
 
     expect(requestAutoConnectSpy).not.toHaveBeenCalled();
+  });
+
+  it("stops retrying once a scale connects", () => {
+    vi.useFakeTimers();
+    const requestAutoConnectSpy = vi
+      .spyOn(useDevicesStore.getState(), "requestAutoConnect")
+      .mockResolvedValue(undefined);
+
+    cleanupRuntime = initializeDevicesStoreRuntime();
+
+    useDevicesStore.setState({
+      connection: "live",
+    });
+    useMachineStore.setState({
+      liveConnection: "live",
+    });
+
+    expect(requestAutoConnectSpy).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(3000);
+
+    expect(requestAutoConnectSpy).toHaveBeenCalledTimes(2);
+
+    useDevicesStore.setState({
+      devices: [
+        {
+          id: "scale-1",
+          name: "Acaia Lunar",
+          state: "connected",
+          type: "scale",
+        },
+      ],
+    });
+
+    vi.advanceTimersByTime(6000);
+
+    expect(requestAutoConnectSpy).toHaveBeenCalledTimes(2);
   });
 
   it("connects the scale feed when a connected scale appears", () => {
