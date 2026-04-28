@@ -1,6 +1,7 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { useDashboardControlPanelModel } from "@/components/dashboard/dashboard-view-model";
 import { dashboardUiDefaultState, useDashboardUiStore } from "@/stores/dashboard-ui-store";
 import { useDevicesStore } from "@/stores/devices-store";
 import { useMachineStore } from "@/stores/machine-store";
@@ -232,6 +233,64 @@ describe("DashboardPage", () => {
 
     expect(screen.getByTestId("dashboard-tablet-prep-board")).toBeInTheDocument();
     expect(screen.queryByTestId("dashboard-tablet-shot-workspace")).not.toBeInTheDocument();
+  });
+
+  it("uses the workflow profile temperature for the brew control instead of the live mix temperature", () => {
+    queryMocks.useMachineStateQuery.mockReturnValue({
+      data: buildSnapshot("idle", "idle", {
+        mixTemperature: 93,
+        targetMixTemperature: 93,
+      }),
+      error: null,
+    });
+    queryMocks.useWorkflowQuery.mockReturnValue({
+      data: {
+        id: "workflow-1",
+        name: "Morning",
+        profile: {
+          title: "House",
+          steps: [
+            { flow: 0, seconds: 0, temperature: 80 },
+            { flow: 2.5, seconds: 5, temperature: 81.5 },
+            { flow: 2.3, seconds: 12, temperature: "82" },
+          ],
+        },
+        context: {
+          targetDoseWeight: 18,
+          targetYield: 36,
+        },
+        steamSettings: {
+          duration: 50,
+          flow: 1.5,
+        },
+        rinseData: {
+          duration: 10,
+        },
+        hotWaterData: {
+          targetTemperature: 75,
+          volume: 50,
+        },
+      },
+      error: null,
+    });
+
+    const { result } = renderHook(() => useDashboardControlPanelModel());
+    const brewRow = result.current.controlRows.find((row) => row.label === "Brew");
+
+    expect(brewRow?.value).toBe("80°C");
+    expect(brewRow?.activePresetValue).toBe(80);
+
+    brewRow?.onIncrease();
+
+    expect(updateWorkflowMutate).toHaveBeenCalledWith({
+      profile: {
+        steps: [
+          { flow: 0, seconds: 0, temperature: 81 },
+          { flow: 2.5, seconds: 5, temperature: 82.5 },
+          { flow: 2.3, seconds: 12, temperature: 83 },
+        ],
+      },
+    });
   });
 
   it("switches tablet focus to telemetry when telemetry reports an espresso shot", async () => {

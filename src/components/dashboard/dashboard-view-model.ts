@@ -49,9 +49,8 @@ export type DashboardRecipeControls = {
 };
 
 type DashboardWorkflowControls = {
+  brewTemperature: number | undefined;
   isUpdatingWorkflow: boolean;
-  machineQueryError: Error | null;
-  snapshot: ReturnType<typeof useMachineStateQuery>["data"];
   updateBrewTemperature: (nextTemperature: number) => void;
   updateDose: (nextDose: number) => void;
   updateFlushDuration: (nextDuration: number) => void;
@@ -59,7 +58,6 @@ type DashboardWorkflowControls = {
   updateSteamDuration: (nextDuration: number) => void;
   updateYield: (nextYield: number) => void;
   workflow: ReturnType<typeof useWorkflowQuery>["data"];
-  workflowQueryError: Error | null;
 };
 
 const dosePresets = [
@@ -76,10 +74,48 @@ const drinkPresets = [
   { label: "1:3.0", value: 3.0 },
 ] as const satisfies ReadonlyArray<RecipePreset>;
 
+function readStepTemperature(step: Record<string, unknown>) {
+  const temperature = step.temperature;
+
+  if (typeof temperature === "number" && Number.isFinite(temperature)) {
+    return temperature;
+  }
+
+  if (typeof temperature === "string") {
+    const parsed = Number(temperature);
+
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return undefined;
+}
+
+export function getWorkflowBrewTemperature(workflow: WorkflowRecord | null | undefined) {
+  for (const step of workflow?.profile?.steps ?? []) {
+    if (typeof step !== "object" || step === null) {
+      continue;
+    }
+
+    const temperature = readStepTemperature(step);
+
+    if (temperature !== undefined) {
+      return temperature;
+    }
+  }
+
+  return undefined;
+}
+
 function useDashboardWorkflowControls(): DashboardWorkflowControls {
-  const { data: snapshot, error: machineQueryError } = useMachineStateQuery();
-  const { data: workflow, error: workflowQueryError } = useWorkflowQuery();
+  const { data: snapshot } = useMachineStateQuery();
+  const { data: workflow } = useWorkflowQuery();
   const updateWorkflowMutation = useUpdateWorkflowMutation();
+  const brewTemperature =
+    getWorkflowBrewTemperature(workflow) ??
+    snapshot?.targetMixTemperature ??
+    snapshot?.mixTemperature;
 
   function updateWorkflow(patch: Record<string, unknown>) {
     updateWorkflowMutation.mutate(patch);
@@ -102,23 +138,32 @@ function useDashboardWorkflowControls(): DashboardWorkflowControls {
   }
 
   function updateBrewTemperature(nextTemperature: number) {
+    if (brewTemperature === undefined) {
+      return;
+    }
+
+    const temperatureDelta = nextTemperature - brewTemperature;
+    let didUpdateStepTemperature = false;
     const nextSteps = workflow?.profile?.steps?.map((step) => {
-      if (
-        typeof step === "object" &&
-        step !== null &&
-        "temperature" in step &&
-        typeof step.temperature === "number"
-      ) {
+      if (typeof step === "object" && step !== null) {
+        const stepTemperature = readStepTemperature(step);
+
+        if (stepTemperature === undefined) {
+          return step;
+        }
+
+        didUpdateStepTemperature = true;
+
         return {
           ...step,
-          temperature: nextTemperature,
+          temperature: roundValue(stepTemperature + temperatureDelta, 0.1),
         };
       }
 
       return step;
     });
 
-    if (!nextSteps?.length) {
+    if (!nextSteps?.length || !didUpdateStepTemperature) {
       return;
     }
 
@@ -154,9 +199,8 @@ function useDashboardWorkflowControls(): DashboardWorkflowControls {
   }
 
   return {
+    brewTemperature,
     isUpdatingWorkflow: updateWorkflowMutation.isPending,
-    machineQueryError,
-    snapshot,
     updateBrewTemperature,
     updateDose,
     updateFlushDuration,
@@ -164,7 +208,6 @@ function useDashboardWorkflowControls(): DashboardWorkflowControls {
     updateSteamDuration,
     updateYield,
     workflow,
-    workflowQueryError,
   };
 }
 
@@ -174,8 +217,8 @@ export function useDashboardControlPanelModel(): {
   workflowDisabled: boolean;
 } {
   const {
+    brewTemperature,
     isUpdatingWorkflow,
-    snapshot,
     updateBrewTemperature,
     updateDose,
     updateFlushDuration,
@@ -191,12 +234,12 @@ export function useDashboardControlPanelModel(): {
   return {
     controlRows: [
       {
-        activePresetValue: snapshot?.mixTemperature ?? 87,
+        activePresetValue: brewTemperature ?? 87,
         detail: undefined,
         label: "Brew",
         onDecrease: () =>
-          updateBrewTemperature(Math.max(70, Math.round((snapshot?.mixTemperature ?? 87) - 1))),
-        onIncrease: () => updateBrewTemperature(Math.round((snapshot?.mixTemperature ?? 87) + 1)),
+          updateBrewTemperature(Math.max(70, Math.round((brewTemperature ?? 87) - 1))),
+        onIncrease: () => updateBrewTemperature(Math.round((brewTemperature ?? 87) + 1)),
         onPresetClick: (value) => updateBrewTemperature(value),
         presets: [
           { label: "75°C", value: 75 },
@@ -205,7 +248,7 @@ export function useDashboardControlPanelModel(): {
           { label: "92°C", value: 92 },
         ],
         tint: "text-highlight-muted",
-        value: formatPrimaryNumber(snapshot?.mixTemperature, "°C", "87°C", 0),
+        value: formatPrimaryNumber(brewTemperature, "°C", "87°C", 0),
       },
       {
         activePresetValue: workflow?.steamSettings?.duration ?? 50,
@@ -283,6 +326,10 @@ export function useDashboardShotSummaryItems(): ReadonlyArray<DashboardShotSumma
   const { data: workflow } = useWorkflowQuery();
   const targetDose = workflow?.context?.targetDoseWeight;
   const targetYield = workflow?.context?.targetYield;
+  const brewTemperature =
+    getWorkflowBrewTemperature(workflow) ??
+    snapshot?.targetMixTemperature ??
+    snapshot?.mixTemperature;
 
   return [
     { label: "Recipe", value: getDashboardActiveRecipe(workflow) },
@@ -291,7 +338,7 @@ export function useDashboardShotSummaryItems(): ReadonlyArray<DashboardShotSumma
     { label: "Ratio", value: formatBrewRatio(targetDose, targetYield) },
     {
       label: "Brew",
-      value: formatPrimaryNumber(snapshot?.mixTemperature, "°C", "87°C", 0),
+      value: formatPrimaryNumber(brewTemperature, "°C", "87°C", 0),
     },
   ] satisfies ReadonlyArray<DashboardShotSummaryItem>;
 }
