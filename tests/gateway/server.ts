@@ -333,7 +333,7 @@ async function handleRequest(request: http.IncomingMessage, response: http.Serve
 
     if (device.type === "scale") {
       runtime.state.scaleSnapshot = null;
-      closeChannelSockets("scale");
+      broadcastState(["scale"]);
     }
 
     broadcastState(["devices"]);
@@ -597,6 +597,11 @@ function broadcastState(channels: GatewayStreamChannel[]) {
 }
 
 function broadcastChannel(channel: GatewayStreamChannel) {
+  if (channel === "scale") {
+    broadcastScaleChannel();
+    return;
+  }
+
   const payload = getChannelPayload(channel);
 
   if (payload == null) {
@@ -607,6 +612,12 @@ function broadcastChannel(channel: GatewayStreamChannel) {
     if (websocket.readyState === websocket.OPEN) {
       websocket.send(JSON.stringify(payload));
     }
+  }
+}
+
+function broadcastScaleChannel() {
+  for (const websocket of channelClients.scale) {
+    sendScaleChannelState(websocket);
   }
 }
 
@@ -626,6 +637,11 @@ function closeChannelSockets(channel: GatewayStreamChannel) {
 }
 
 function sendCurrentChannelState(channel: GatewayStreamChannel, websocket: WebSocket) {
+  if (channel === "scale") {
+    sendScaleChannelState(websocket);
+    return;
+  }
+
   const payload = getChannelPayload(channel);
 
   if (payload == null || websocket.readyState !== websocket.OPEN) {
@@ -633,6 +649,22 @@ function sendCurrentChannelState(channel: GatewayStreamChannel, websocket: WebSo
   }
 
   websocket.send(JSON.stringify(payload));
+}
+
+function sendScaleChannelState(websocket: WebSocket) {
+  if (websocket.readyState !== websocket.OPEN) {
+    return;
+  }
+
+  websocket.send(
+    JSON.stringify({
+      status: runtime.state.scaleSnapshot == null ? "disconnected" : "connected",
+    }),
+  );
+
+  if (runtime.state.scaleSnapshot != null) {
+    websocket.send(JSON.stringify(runtime.state.scaleSnapshot));
+  }
 }
 
 function getChannelPayload(channel: GatewayStreamChannel) {
@@ -924,7 +956,7 @@ function handleDevicesCommand(rawMessage: string, websocket: WebSocket) {
 
       if (device.type === "scale") {
         runtime.state.scaleSnapshot = null;
-        closeChannelSockets("scale");
+        broadcastState(["scale"]);
       }
 
       broadcastState(["devices"]);

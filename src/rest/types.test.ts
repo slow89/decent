@@ -8,6 +8,7 @@ import {
   machineCalibrationSchema,
   machineSnapshotSchema,
   machineWaterLevelsSchema,
+  scaleSnapshotMessageSchema,
   scaleSnapshotSchema,
   timeToReadySnapshotSchema,
 } from "./types";
@@ -86,6 +87,15 @@ describe("bridge realtime schemas", () => {
     ).toMatchObject({
       batteryLevel: 100,
       weight: 26.334892905092403,
+    });
+  });
+
+  it("accepts scale websocket connection status frames", () => {
+    expect(scaleSnapshotMessageSchema.parse({ status: "connected" })).toEqual({
+      status: "connected",
+    });
+    expect(scaleSnapshotMessageSchema.parse({ status: "disconnected" })).toEqual({
+      status: "disconnected",
     });
   });
 

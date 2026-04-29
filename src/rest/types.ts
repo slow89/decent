@@ -55,6 +55,12 @@ export const scaleSnapshotSchema = z.looseObject({
   batteryLevel: optionalNumber,
 });
 
+export const scaleStatusSchema = z.looseObject({
+  status: z.enum(["connected", "disconnected"]),
+});
+
+export const scaleSnapshotMessageSchema = z.union([scaleSnapshotSchema, scaleStatusSchema]);
+
 export const timeToReadyStatusSchema = z.enum([
   "reached",
   "insufficient_data",
@@ -307,6 +313,7 @@ export type MachineState = z.infer<typeof machineStateSchema>;
 export type MachinePhase = z.infer<typeof machinePhaseSchema>;
 export type MachineSnapshot = z.infer<typeof machineSnapshotSchema>;
 export type ScaleSnapshot = z.infer<typeof scaleSnapshotSchema>;
+export type ScaleSnapshotMessage = z.infer<typeof scaleSnapshotMessageSchema>;
 export type TimeToReadySnapshot = z.infer<typeof timeToReadySnapshotSchema>;
 export type MachineWaterLevels = z.infer<typeof machineWaterLevelsSchema>;
 export type MachineCalibration = z.infer<typeof machineCalibrationSchema>;

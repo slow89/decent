@@ -112,6 +112,9 @@ describe("useMachineStore", () => {
       refillLevel: 25,
     });
     MockWebSocket.instances[3]?.emitMessage({
+      status: "connected",
+    });
+    MockWebSocket.instances[3]?.emitMessage({
       batteryLevel: 82,
       timerValue: 8,
       timestamp: "2026-03-28T20:00:08.000Z",
@@ -142,6 +145,45 @@ describe("useMachineStore", () => {
       weight: 15.4,
       weightFlow: 1.2,
     });
+  });
+
+  it("keeps the scale stream open when the bridge emits scale status frames", async () => {
+    await useMachineStore.getState().connectScale();
+
+    const scaleSocket = MockWebSocket.instances[0];
+
+    scaleSocket?.emitOpen();
+    scaleSocket?.emitMessage({
+      status: "connected",
+    });
+
+    expect(useMachineStore.getState()).toMatchObject({
+      scaleConnection: "live",
+      scaleSnapshot: null,
+      scaleSocket,
+    });
+    expect(MockWebSocket.instances).toHaveLength(1);
+
+    useMachineStore.setState({
+      scaleSnapshot: {
+        batteryLevel: 82,
+        timerValue: 8,
+        timestamp: "2026-03-28T20:00:08.000Z",
+        weight: 15.4,
+        weightFlow: 1.2,
+      },
+    });
+
+    scaleSocket?.emitMessage({
+      status: "disconnected",
+    });
+
+    expect(useMachineStore.getState()).toMatchObject({
+      scaleConnection: "live",
+      scaleSnapshot: null,
+      scaleSocket,
+    });
+    expect(MockWebSocket.instances).toHaveLength(1);
   });
 
   it("marks the live machine stream as errored when it receives malformed payloads", async () => {

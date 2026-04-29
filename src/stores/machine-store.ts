@@ -7,6 +7,7 @@ import {
   machineWaterLevelsSchema,
   machineSnapshotSchema,
   scaleSnapshotSchema,
+  scaleStatusSchema,
   timeToReadySnapshotSchema,
   type MachineWaterLevels,
   type MachineStateChange,
@@ -75,9 +76,20 @@ export const useMachineStore = create<MachineState>((set, get) => ({
       };
 
       scaleSocket.onmessage = (event) => {
-        const parsed = scaleSnapshotSchema.safeParse(JSON.parse(event.data));
+        const payload: unknown = JSON.parse(event.data);
+        const parsedStatus = scaleStatusSchema.safeParse(payload);
 
-        if (!parsed.success) {
+        if (parsedStatus.success) {
+          set((state) => ({
+            scaleConnection: "live",
+            scaleSnapshot: parsedStatus.data.status === "connected" ? state.scaleSnapshot : null,
+          }));
+          return;
+        }
+
+        const parsedSnapshot = scaleSnapshotSchema.safeParse(payload);
+
+        if (!parsedSnapshot.success) {
           set({
             scaleConnection: "error",
             scaleSnapshot: null,
@@ -87,8 +99,8 @@ export const useMachineStore = create<MachineState>((set, get) => ({
 
         set((state) => ({
           scaleConnection: "live",
-          scaleSnapshot: parsed.data,
-          telemetry: mergeScaleSnapshotIntoTelemetry(state.telemetry, parsed.data),
+          scaleSnapshot: parsedSnapshot.data,
+          telemetry: mergeScaleSnapshotIntoTelemetry(state.telemetry, parsedSnapshot.data),
         }));
       };
 
