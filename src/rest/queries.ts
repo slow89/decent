@@ -21,6 +21,8 @@ export const bridgeQueryKeys = {
   root: ["bridge"] as const,
   all: (gatewayOrigin: string) => [...bridgeQueryKeys.root, gatewayOrigin] as const,
   settings: (gatewayOrigin: string) => [...bridgeQueryKeys.all(gatewayOrigin), "settings"] as const,
+  machineCalibration: (gatewayOrigin: string) =>
+    [...bridgeQueryKeys.all(gatewayOrigin), "machine-calibration"] as const,
   machineState: (gatewayOrigin: string) =>
     [...bridgeQueryKeys.all(gatewayOrigin), "machine-state"] as const,
   workflow: (gatewayOrigin: string) => [...bridgeQueryKeys.all(gatewayOrigin), "workflow"] as const,
@@ -46,6 +48,12 @@ export const bridgeSettingsQueryOptions = (gatewayOrigin = getGatewayOrigin()) =
   queryOptions({
     queryKey: bridgeQueryKeys.settings(gatewayOrigin),
     queryFn: () => getClient(gatewayOrigin).getSettings(),
+  });
+
+export const machineCalibrationQueryOptions = (gatewayOrigin = getGatewayOrigin()) =>
+  queryOptions({
+    queryKey: bridgeQueryKeys.machineCalibration(gatewayOrigin),
+    queryFn: () => getClient(gatewayOrigin).getMachineCalibration(),
   });
 
 export const workflowQueryOptions = (gatewayOrigin = getGatewayOrigin()) =>
@@ -97,6 +105,11 @@ export function useBridgeSettingsQuery(options?: { refetchInterval?: number | fa
     ...bridgeSettingsQueryOptions(gatewayOrigin),
     ...options,
   });
+}
+
+export function useMachineCalibrationQuery() {
+  const gatewayOrigin = useGatewayOrigin();
+  return useQuery(machineCalibrationQueryOptions(gatewayOrigin));
 }
 
 export function useWorkflowQuery() {
@@ -164,9 +177,12 @@ export function useUpdateBridgeSettingsMutation() {
 
   return useMutation({
     mutationFn: (settings: {
+      gatewayMode?: string | null;
       preferredMachineId?: string | null;
       preferredScaleId?: string | null;
       scalePowerMode?: string | null;
+      volumeFlowMultiplier?: number | null;
+      weightFlowMultiplier?: number | null;
     }) => getClient(gatewayOrigin).updateSettings(settings),
     onSuccess: async (_, variables) => {
       const previousSettings = client.getQueryData(bridgeQueryKeys.settings(gatewayOrigin));
@@ -182,6 +198,35 @@ export function useUpdateBridgeSettingsMutation() {
         });
       } catch (error) {
         client.setQueryData(bridgeQueryKeys.settings(gatewayOrigin), previousSettings);
+        throw error;
+      }
+    },
+  });
+}
+
+export function useUpdateMachineCalibrationMutation() {
+  const client = useQueryClient();
+  const gatewayOrigin = useGatewayOrigin();
+
+  return useMutation({
+    mutationFn: (calibration: { flowMultiplier?: number | null }) =>
+      getClient(gatewayOrigin).updateMachineCalibration(calibration),
+    onSuccess: async (_, variables) => {
+      const previousCalibration = client.getQueryData(
+        bridgeQueryKeys.machineCalibration(gatewayOrigin),
+      );
+
+      client.setQueryData(bridgeQueryKeys.machineCalibration(gatewayOrigin), (current) => ({
+        ...(typeof current === "object" && current ? (current as Record<string, unknown>) : {}),
+        ...variables,
+      }));
+
+      try {
+        await client.invalidateQueries({
+          queryKey: bridgeQueryKeys.machineCalibration(gatewayOrigin),
+        });
+      } catch (error) {
+        client.setQueryData(bridgeQueryKeys.machineCalibration(gatewayOrigin), previousCalibration);
         throw error;
       }
     },

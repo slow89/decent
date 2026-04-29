@@ -4,6 +4,7 @@ import {
   bridgeSettingsSchema,
   displayStateSchema,
   heartbeatResponseSchema,
+  machineCalibrationSchema,
   machineSnapshotSchema,
   machineStateChangeSchema,
   presenceSettingsSchema,
@@ -179,9 +180,12 @@ export function createBridgeClient(baseUrl: string) {
       return request("/api/v1/settings", bridgeSettingsSchema);
     },
     async updateSettings(settings: {
+      gatewayMode?: string | null;
       preferredMachineId?: string | null;
       preferredScaleId?: string | null;
       scalePowerMode?: string | null;
+      volumeFlowMultiplier?: number | null;
+      weightFlowMultiplier?: number | null;
     }) {
       const response = await fetch(`${origin}/api/v1/settings`, {
         method: "POST",
@@ -192,6 +196,20 @@ export function createBridgeClient(baseUrl: string) {
       });
 
       await ensureResponseOk(response, "Unable to update bridge settings");
+    },
+    async getMachineCalibration() {
+      return request("/api/v1/machine/calibration", machineCalibrationSchema);
+    },
+    async updateMachineCalibration(calibration: { flowMultiplier?: number | null }) {
+      const response = await fetch(`${origin}/api/v1/machine/calibration`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(calibration),
+      });
+
+      await ensureResponseOk(response, "Unable to update machine calibration");
     },
     async updateMachineWaterLevels(levels: { refillLevel: number }) {
       const response = await fetch(`${origin}/api/v1/machine/waterLevels`, {

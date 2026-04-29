@@ -60,6 +60,56 @@ describe("createBridgeClient", () => {
     );
   });
 
+  it("posts shot stop calibration to bridge settings", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      status: 204,
+      text: async () => "",
+    } as Response);
+
+    await createBridgeClient("http://bridge.local:8080").updateSettings({
+      scalePowerMode: "displayOff",
+      weightFlowMultiplier: 0.8,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://bridge.local:8080/api/v1/settings",
+      expect.objectContaining({
+        body: JSON.stringify({
+          scalePowerMode: "displayOff",
+          weightFlowMultiplier: 0.8,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      }),
+    );
+  });
+
+  it("posts machine calibration to the machine calibration endpoint", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      status: 202,
+      text: async () => "",
+    } as Response);
+
+    await createBridgeClient("http://bridge.local:8080").updateMachineCalibration({
+      flowMultiplier: 0.96,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://bridge.local:8080/api/v1/machine/calibration",
+      expect.objectContaining({
+        body: JSON.stringify({ flowMultiplier: 0.96 }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      }),
+    );
+  });
+
   it("surfaces bridge errors when updating machine water levels fails", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: false,

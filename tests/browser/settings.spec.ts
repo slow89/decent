@@ -73,6 +73,20 @@ test.describe("settings", () => {
     await page.getByRole("button", { name: "Keep screen on" }).click();
     await expect(page.getByRole("button", { name: "Let screen sleep" })).toBeVisible();
 
+    const weightFlowSlider = page.getByLabel("Weight flow", { exact: true });
+    await weightFlowSlider.focus();
+    await weightFlowSlider.press("ArrowLeft");
+    await expect(weightFlowSlider).toHaveValue("0.9");
+    await expect(page.getByText("0.9x")).toBeVisible();
+
+    await page.getByRole("button", { name: "Display off" }).click();
+    await expect(page.getByText("Display off").first()).toBeVisible();
+
+    const machineFlowSlider = page.getByLabel("Machine flow", { exact: true });
+    await machineFlowSlider.focus();
+    await machineFlowSlider.press("ArrowLeft");
+    await expect(machineFlowSlider).toHaveValue("0.99");
+
     const waterAlertSlider = page.getByLabel("Water alert threshold");
     await waterAlertSlider.focus();
     await waterAlertSlider.press("End");

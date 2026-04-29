@@ -4,6 +4,7 @@ import {
   bridgeSettingsSchema,
   displayStateSchema,
   heartbeatResponseSchema,
+  machineCalibrationSchema,
   machineSnapshotSchema,
   machineWaterLevelsSchema,
   scaleSnapshotSchema,
@@ -27,10 +28,23 @@ describe("bridge realtime schemas", () => {
         preferredMachineId: "machine-1",
         preferredScaleId: "scale-1",
         scalePowerMode: "disabled",
+        volumeFlowMultiplier: 0.3,
+        weightFlowMultiplier: 1.2,
       }),
     ).toMatchObject({
       preferredMachineId: "machine-1",
       preferredScaleId: "scale-1",
+      weightFlowMultiplier: 1.2,
+    });
+  });
+
+  it("accepts machine calibration settings", () => {
+    expect(
+      machineCalibrationSchema.parse({
+        flowMultiplier: 0.96,
+      }),
+    ).toEqual({
+      flowMultiplier: 0.96,
     });
   });
 

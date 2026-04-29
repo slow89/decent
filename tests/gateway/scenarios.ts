@@ -2,6 +2,7 @@ import {
   bridgeSettingsSchema,
   deviceSummaryListSchema,
   displayStateSchema,
+  machineCalibrationSchema,
   machineSnapshotSchema,
   machineWaterLevelsSchema,
   presenceSettingsSchema,
@@ -15,6 +16,7 @@ import {
   type DeviceSummary,
   type DisplayState,
   type MachineSnapshot,
+  type MachineCalibration,
   type MachineWaterLevels,
   type PresenceSettings,
   type ProfileRecord,
@@ -54,6 +56,7 @@ export interface GatewayScenarioState {
   bridgeSettings: BridgeSettings;
   devices: DeviceSummary[];
   displayState: DisplayState;
+  machineCalibration: MachineCalibration;
   machineSnapshot: MachineSnapshot;
   presenceSettings: PresenceSettings;
   profiles: ProfileRecord[];
@@ -251,7 +254,16 @@ function buildBridgeSettings(overrides: Partial<BridgeSettings> = {}): BridgeSet
   return bridgeSettingsSchema.parse({
     preferredMachineId: "machine-1",
     preferredScaleId: "scale-1",
-    scalePowerMode: "alwaysOn",
+    scalePowerMode: "disconnect",
+    volumeFlowMultiplier: 0.3,
+    weightFlowMultiplier: 1,
+    ...overrides,
+  });
+}
+
+function buildMachineCalibration(overrides: Partial<MachineCalibration> = {}): MachineCalibration {
+  return machineCalibrationSchema.parse({
+    flowMultiplier: 1,
     ...overrides,
   });
 }
@@ -419,6 +431,7 @@ function buildBaseState(overrides: Partial<GatewayScenarioState> = {}): GatewayS
     bridgeSettings: buildBridgeSettings(),
     devices: buildDevices(),
     displayState: buildDisplayState(),
+    machineCalibration: buildMachineCalibration(),
     machineSnapshot: buildMachineSnapshot(),
     presenceSettings: buildPresenceSettings(),
     profiles: buildProfiles(),
@@ -440,6 +453,7 @@ function buildScenario(input: GatewayScenario): GatewayScenario {
       bridgeSettings: buildBridgeSettings(input.state.bridgeSettings),
       devices: buildDevices(input.state.devices),
       displayState: buildDisplayState(input.state.displayState),
+      machineCalibration: buildMachineCalibration(input.state.machineCalibration),
       machineSnapshot: buildMachineSnapshot(input.state.machineSnapshot),
       presenceSettings: buildPresenceSettings(input.state.presenceSettings),
       profiles: profileRecordListSchema.parse(input.state.profiles),

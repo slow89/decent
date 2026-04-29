@@ -379,6 +379,19 @@ async function handleRequest(request: http.IncomingMessage, response: http.Serve
     return;
   }
 
+  if (method === "GET" && path === "/api/v1/machine/calibration") {
+    sendJson(response, 200, runtime.state.machineCalibration);
+    return;
+  }
+
+  if (method === "POST" && path === "/api/v1/machine/calibration") {
+    const body = await readJsonBody(request);
+    runtime.state.machineCalibration = mergeRecord(runtime.state.machineCalibration, body);
+    response.writeHead(202, corsHeaders());
+    response.end();
+    return;
+  }
+
   if (method === "GET" && path === "/api/v1/presence/settings") {
     sendJson(response, 200, runtime.state.presenceSettings);
     return;

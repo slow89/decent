@@ -12,8 +12,11 @@ import { SettingsPage } from "./settings-page";
 
 const {
   routerInvalidate,
+  useBridgeSettingsQueryMock,
+  useMachineCalibrationQueryMock,
   usePresenceSettingsQueryMock,
   useUpdateBridgeSettingsMutationMock,
+  useUpdateMachineCalibrationMutationMock,
   useUpdateMachineWaterLevelsMutationMock,
   useUpdatePresenceSettingsMutationMock,
   useUpdateVisualizerSettingsMutationMock,
@@ -21,8 +24,11 @@ const {
   useVisualizerSettingsQueryMock,
 } = vi.hoisted(() => ({
   routerInvalidate: vi.fn(async () => undefined),
+  useBridgeSettingsQueryMock: vi.fn(),
+  useMachineCalibrationQueryMock: vi.fn(),
   usePresenceSettingsQueryMock: vi.fn(),
   useUpdateBridgeSettingsMutationMock: vi.fn(),
+  useUpdateMachineCalibrationMutationMock: vi.fn(),
   useUpdateMachineWaterLevelsMutationMock: vi.fn(),
   useUpdatePresenceSettingsMutationMock: vi.fn(),
   useUpdateVisualizerSettingsMutationMock: vi.fn(),
@@ -41,8 +47,11 @@ vi.mock("@/rest/queries", async () => {
 
   return {
     ...actual,
+    useBridgeSettingsQuery: useBridgeSettingsQueryMock,
+    useMachineCalibrationQuery: useMachineCalibrationQueryMock,
     usePresenceSettingsQuery: usePresenceSettingsQueryMock,
     useUpdateBridgeSettingsMutation: useUpdateBridgeSettingsMutationMock,
+    useUpdateMachineCalibrationMutation: useUpdateMachineCalibrationMutationMock,
     useUpdateMachineWaterLevelsMutation: useUpdateMachineWaterLevelsMutationMock,
     useUpdatePresenceSettingsMutation: useUpdatePresenceSettingsMutationMock,
     useUpdateVisualizerSettingsMutation: useUpdateVisualizerSettingsMutationMock,
@@ -56,6 +65,7 @@ describe("SettingsPage", () => {
   const disconnectDevice = vi.fn(async () => undefined);
   const scan = vi.fn(async () => undefined);
   const updateBridgeSettingsMutateAsync = vi.fn(async (settings: unknown) => settings);
+  const updateMachineCalibrationMutateAsync = vi.fn(async (settings: unknown) => settings);
   const updateMachineWaterLevelsMutateAsync = vi.fn(async (levels: unknown) => levels);
   const updatePresenceSettingsMutateAsync = vi.fn(async (patch: unknown) => patch);
   const updateVisualizerSettingsMutateAsync = vi.fn(async (settings: unknown) => settings);
@@ -180,10 +190,35 @@ describe("SettingsPage", () => {
       error: null,
       isPending: false,
     });
+    useBridgeSettingsQueryMock.mockReturnValue({
+      data: {
+        preferredMachineId: "machine-1",
+        preferredScaleId: "scale-1",
+        scalePowerMode: "disconnect",
+        volumeFlowMultiplier: 0.3,
+        weightFlowMultiplier: 1,
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+    useMachineCalibrationQueryMock.mockReturnValue({
+      data: {
+        flowMultiplier: 1,
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+    });
     useUpdateBridgeSettingsMutationMock.mockReturnValue({
       error: null,
       isPending: false,
       mutateAsync: updateBridgeSettingsMutateAsync,
+    });
+    useUpdateMachineCalibrationMutationMock.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: updateMachineCalibrationMutateAsync,
     });
     useUpdateMachineWaterLevelsMutationMock.mockReturnValue({
       error: null,
@@ -229,6 +264,10 @@ describe("SettingsPage", () => {
     expect(screen.getByText("connected")).toBeInTheDocument();
     expect(screen.getByText("disconnected")).toBeInTheDocument();
     expect(screen.getByText("Scale Pairing")).toBeInTheDocument();
+    expect(screen.getByText("Shot Calibration")).toBeInTheDocument();
+    expect(screen.getByLabelText("Weight flow")).toHaveValue("1");
+    expect(screen.getByLabelText("Volume flow")).toHaveValue("0.3");
+    expect(screen.getByLabelText("Machine flow")).toHaveValue("1");
     expect(screen.getByText("Current tank level 48 mm")).toBeInTheDocument();
     expect(screen.getByText("25 mm")).toBeInTheDocument();
     expect(screen.getByText("Visualizer")).toBeInTheDocument();
@@ -326,6 +365,44 @@ describe("SettingsPage", () => {
       expect(updatePresenceSettingsMutateAsync).toHaveBeenCalledWith({
         sleepTimeoutMinutes: 45,
         userPresenceEnabled: true,
+      });
+    });
+  });
+
+  it("updates bridge-backed shot calibration controls", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.change(screen.getByLabelText("Weight flow"), {
+      target: { value: "0.8" },
+    });
+    fireEvent.pointerUp(screen.getByLabelText("Weight flow"));
+
+    await waitFor(() => {
+      expect(updateBridgeSettingsMutateAsync).toHaveBeenCalledWith({
+        weightFlowMultiplier: 0.8,
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Display off" }));
+
+    await waitFor(() => {
+      expect(updateBridgeSettingsMutateAsync).toHaveBeenCalledWith({
+        scalePowerMode: "displayOff",
+      });
+    });
+  });
+
+  it("updates DE1 machine flow calibration", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.change(screen.getByLabelText("Machine flow"), {
+      target: { value: "0.96" },
+    });
+    fireEvent.pointerUp(screen.getByLabelText("Machine flow"));
+
+    await waitFor(() => {
+      expect(updateMachineCalibrationMutateAsync).toHaveBeenCalledWith({
+        flowMultiplier: 0.96,
       });
     });
   });

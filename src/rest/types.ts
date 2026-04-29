@@ -54,6 +54,10 @@ export const machineWaterLevelsSchema = z.looseObject({
   refillLevel: optionalNumber,
 });
 
+export const machineCalibrationSchema = z.looseObject({
+  flowMultiplier: z.number(),
+});
+
 export const heartbeatResponseSchema = z.looseObject({
   timeout: z.number(),
 });
@@ -65,9 +69,23 @@ export const presenceSettingsSchema = z.looseObject({
 });
 
 export const bridgeSettingsSchema = z.looseObject({
+  automaticUpdateCheck: z.boolean().optional(),
+  chargingMode: optionalString,
+  defaultSkinId: optionalString,
+  gatewayMode: optionalString,
+  logLevel: optionalString,
+  lowBatteryBrightnessLimit: z.boolean().optional(),
+  nightModeEnabled: z.boolean().optional(),
+  nightModeMorningTime: optionalNumber,
+  nightModeSleepTime: optionalNumber,
   preferredMachineId: optionalString,
   preferredScaleId: optionalString,
   scalePowerMode: optionalString,
+  simulatedDevices: z.array(z.string()).optional(),
+  themeMode: optionalString,
+  volumeFlowMultiplier: optionalNumber,
+  webUiPath: optionalString,
+  weightFlowMultiplier: optionalNumber,
 });
 
 export const displayPlatformSupportSchema = z.looseObject({
@@ -266,6 +284,7 @@ export type MachineSnapshot = z.infer<typeof machineSnapshotSchema>;
 export type ScaleSnapshot = z.infer<typeof scaleSnapshotSchema>;
 export type TimeToReadySnapshot = z.infer<typeof timeToReadySnapshotSchema>;
 export type MachineWaterLevels = z.infer<typeof machineWaterLevelsSchema>;
+export type MachineCalibration = z.infer<typeof machineCalibrationSchema>;
 export type HeartbeatResponse = z.infer<typeof heartbeatResponseSchema>;
 export type PresenceSettings = z.infer<typeof presenceSettingsSchema>;
 export type BridgeSettings = z.infer<typeof bridgeSettingsSchema>;
